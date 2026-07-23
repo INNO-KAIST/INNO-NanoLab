@@ -1,0 +1,74 @@
+================================================================================
+INNO NanoLab — Synthesis & ICP
+Copyright (c) 2026 WonJeong Yu. All Rights Reserved.
+================================================================================
+
+[한국어]
+
+1. 권리 귀속
+   본 소프트웨어("INNO NanoLab — Synthesis & ICP", 이하 "소프트웨어")와 이에
+   내장·연동된 연구 데이터(합성 기록, ICP 분석 기록, 물질 정보, 간섭 데이터베이스
+   구성 등)에 대한 저작권 및 일체의 권리는 WonJeong Yu에게 있습니다.
+
+2. 이용 허락 범위
+   본 소프트웨어는 비공개(proprietary) 소프트웨어입니다. 다음의 경우에 한하여
+   사용이 허락됩니다.
+   - 저작권자 본인의 사용
+   - 저작권자가 명시적으로 허락한 소속 연구실 구성원의 내부 연구 목적 사용
+
+3. 금지 행위
+   저작권자의 사전 서면 동의 없이 다음 행위를 할 수 없습니다.
+   - 소프트웨어 또는 내장 데이터의 복제, 배포, 전송, 공개 게시(웹 업로드 포함)
+   - 수정, 번역, 2차적 저작물 작성, 역컴파일·역설계 결과물의 공개
+   - 상업적 이용, 제3자 제공, 재라이선스
+
+4. 보증의 부인
+   본 소프트웨어는 "있는 그대로(AS IS)" 제공됩니다. 저작권자는 정확성, 특정
+   목적 적합성 등에 대해 어떠한 보증도 하지 않으며, 소프트웨어의 사용 또는
+   사용 불능으로 인해 발생하는 손해에 대해 책임을 지지 않습니다. 계산 결과는
+   사용자가 최종 검증할 책임이 있습니다.
+
+5. 유의
+   라이선스 문구가 없더라도 저작권법상 본 소프트웨어는 보호되며, 본 고지는
+   이를 명시적으로 확인하기 위한 것입니다. 소속 기관(대학·연구실)의 연구성과
+   및 직무발명 규정에 따라 권리 귀속이 달라질 수 있으므로 기관 규정을 함께
+   확인하십시오.
+
+--------------------------------------------------------------------------------
+
+[English — Short Form]
+
+This software and the research data embedded in or synchronized with it are
+proprietary. Copyright (c) 2026 WonJeong Yu. All Rights Reserved.
+
+Permission is granted only to the copyright holder and to members of the
+copyright holder's research group explicitly authorized by the copyright
+holder, for internal research purposes only. Any copying, distribution,
+public posting (including uploading to any public website or repository),
+modification, creation of derivative works, sublicensing, or commercial use
+without prior written permission of the copyright holder is prohibited.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. THE AUTHOR
+SHALL NOT BE LIABLE FOR ANY CLAIM OR DAMAGES ARISING FROM THE USE OF THE
+SOFTWARE. Users are responsible for the final verification of all
+calculation results.
+
+================================================================================
+THIRD-PARTY COMPONENTS (고지)
+================================================================================
+
+본 소프트웨어에는 아래 오픈소스 구성요소가 포함되거나 실행 시 로드됩니다.
+각 구성요소는 해당 라이선스를 따르며, 위의 비공개 조건은 이들에는 적용되지
+않습니다.
+
+- SheetJS Community Edition (xlsx 0.18.5) — 파일에 내장(embedded)
+  Copyright (c) SheetJS LLC. Licensed under the Apache License, Version 2.0.
+  https://www.apache.org/licenses/LICENSE-2.0
+
+- Firebase JavaScript SDK (compat 10.14.1) — 클라우드 동기화 사용 시에만
+  Google CDN에서 로드
+  Copyright (c) Google LLC. Licensed under the Apache License, Version 2.0.
+  https://www.apache.org/licenses/LICENSE-2.0
+
+(참고) ICP interference database는 사용자가 자체 구축한 데이터로, 위 연구
+데이터의 일부로서 본 라이선스의 보호 대상입니다.
