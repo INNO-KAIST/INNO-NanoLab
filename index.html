@@ -289,8 +289,6 @@ body.printing #mainUI{display:none}
 .synCard2 .c2badge{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;margin-bottom:2px}
 .synCard2 .c2badge.vac{background:#dbeafe;color:#1e40af} .synCard2 .c2badge.n2{background:#fee2e2;color:#991b1b} .synCard2 .c2badge.inj{background:#dcfce7;color:#166534} .synCard2 .c2badge.addp{background:#fef3c7;color:#92400e}
 .synCard2 .c2full{padding:8px 11px}
-.synCard2 .c2infoRow{display:flex;gap:12px;padding:6px 11px 0}
-.synCard2 .c2infoRow>div{flex:1;min-width:0}
 .synCard2 .stp.stpA{padding:4px 5px}
 .synCard2 .c2rt{display:inline-block;font-size:9px;font-weight:700;color:#334155;background:#eef2f7;padding:1px 6px;border-radius:3px;margin:0 0 2px 3px;vertical-align:middle}
 @media print{ .synCard2{box-shadow:none} }
@@ -300,7 +298,7 @@ body.printing #mainUI{display:none}
 <div id="app">
   <div id="mainUI">
     <div class="topbar">
-      <div class="brand"><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.3.8 · deploy</span></div>
+      <div class="brand"><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.3.7 · deploy</span></div>
       <div class="spacer"></div>
       <button class="chipbtn" id="chipBackup" title="클릭하여 즉시 백업"><span class="dot"></span>백업</button>
       <button class="chipbtn" id="chipSync" title="동기화 설정으로 이동"><span class="dot"></span>로컬 저장</button>
@@ -340,7 +338,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 <script>
 /* deploy build: 연구 데이터·기준 데이터베이스 미포함 (로그인 후 클라우드에서 수신) */
 const APP_DATA = {"materials":{"elements":{},"precursors":[],"solvents":[]},"roles":{"hostCation":["Li","Na","K","Mg","Ca"],"dopant":["Y","La","Ce","Pr","Nd","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu"],"anion":["F","Cl","Br","O"]},"aw":{"H":1.008,"He":4.002602,"Li":6.94,"Be":9.0121831,"B":10.81,"C":12.011,"N":14.007,"O":15.999,"F":18.998403163,"Ne":20.1797,"Na":22.98976928,"Mg":24.305,"Al":26.9815385,"Si":28.085,"P":30.973761998,"S":32.06,"Cl":35.45,"Ar":39.948,"K":39.0983,"Ca":40.078,"Sc":44.955908,"Ti":47.867,"V":50.9415,"Cr":51.9961,"Mn":54.938044,"Fe":55.845,"Co":58.933194,"Ni":58.6934,"Cu":63.546,"Zn":65.38,"Ga":69.723,"Ge":72.63,"As":74.921595,"Se":78.971,"Br":79.904,"Kr":83.798,"Rb":85.4678,"Sr":87.62,"Y":88.90584,"Zr":91.224,"Nb":92.90637,"Mo":95.95,"Tc":98.0,"Ru":101.07,"Rh":102.9055,"Pd":106.42,"Ag":107.8682,"Cd":112.414,"In":114.818,"Sn":118.71,"Sb":121.76,"Te":127.6,"I":126.90447,"Xe":131.293,"Cs":132.90545196,"Ba":137.327,"La":138.90547,"Ce":140.116,"Pr":140.90766,"Nd":144.242,"Pm":145.0,"Sm":150.36,"Eu":151.964,"Gd":157.25,"Tb":158.92535,"Dy":162.5,"Ho":164.93033,"Er":167.259,"Tm":168.93422,"Yb":173.045,"Lu":174.9668,"Hf":178.49,"Ta":180.94788,"W":183.84,"Re":186.207,"Os":190.23,"Ir":192.217,"Pt":195.084,"Au":196.966569,"Hg":200.592,"Tl":204.38,"Pb":207.2,"Bi":208.9804,"Th":232.0377,"U":238.02891},"meta":{"H":[1,"Hydrogen",1,1],"He":[2,"Helium",1,18],"Li":[3,"Lithium",2,1],"Be":[4,"Beryllium",2,2],"B":[5,"Boron",2,13],"C":[6,"Carbon",2,14],"N":[7,"Nitrogen",2,15],"O":[8,"Oxygen",2,16],"F":[9,"Fluorine",2,17],"Ne":[10,"Neon",2,18],"Na":[11,"Sodium",3,1],"Mg":[12,"Magnesium",3,2],"Al":[13,"Aluminium",3,13],"Si":[14,"Silicon",3,14],"P":[15,"Phosphorus",3,15],"S":[16,"Sulfur",3,16],"Cl":[17,"Chlorine",3,17],"Ar":[18,"Argon",3,18],"K":[19,"Potassium",4,1],"Ca":[20,"Calcium",4,2],"Sc":[21,"Scandium",4,3],"Ti":[22,"Titanium",4,4],"V":[23,"Vanadium",4,5],"Cr":[24,"Chromium",4,6],"Mn":[25,"Manganese",4,7],"Fe":[26,"Iron",4,8],"Co":[27,"Cobalt",4,9],"Ni":[28,"Nickel",4,10],"Cu":[29,"Copper",4,11],"Zn":[30,"Zinc",4,12],"Ga":[31,"Gallium",4,13],"Ge":[32,"Germanium",4,14],"As":[33,"Arsenic",4,15],"Se":[34,"Selenium",4,16],"Br":[35,"Bromine",4,17],"Kr":[36,"Krypton",4,18],"Rb":[37,"Rubidium",5,1],"Sr":[38,"Strontium",5,2],"Y":[39,"Yttrium",5,3],"Zr":[40,"Zirconium",5,4],"Nb":[41,"Niobium",5,5],"Mo":[42,"Molybdenum",5,6],"Tc":[43,"Technetium",5,7],"Ru":[44,"Ruthenium",5,8],"Rh":[45,"Rhodium",5,9],"Pd":[46,"Palladium",5,10],"Ag":[47,"Silver",5,11],"Cd":[48,"Cadmium",5,12],"In":[49,"Indium",5,13],"Sn":[50,"Tin",5,14],"Sb":[51,"Antimony",5,15],"Te":[52,"Tellurium",5,16],"I":[53,"Iodine",5,17],"Xe":[54,"Xenon",5,18],"Cs":[55,"Caesium",6,1],"Ba":[56,"Barium",6,2],"Hf":[72,"Hafnium",6,4],"Ta":[73,"Tantalum",6,5],"W":[74,"Tungsten",6,6],"Re":[75,"Rhenium",6,7],"Os":[76,"Osmium",6,8],"Ir":[77,"Iridium",6,9],"Pt":[78,"Platinum",6,10],"Au":[79,"Gold",6,11],"Hg":[80,"Mercury",6,12],"Tl":[81,"Thallium",6,13],"Pb":[82,"Lead",6,14],"Bi":[83,"Bismuth",6,15],"Po":[84,"Polonium",6,16],"At":[85,"Astatine",6,17],"Rn":[86,"Radon",6,18],"Fr":[87,"Francium",7,1],"Ra":[88,"Radium",7,2],"Rf":[104,"Rutherfordium",7,4],"Db":[105,"Dubnium",7,5],"Sg":[106,"Seaborgium",7,6],"Bh":[107,"Bohrium",7,7],"Hs":[108,"Hassium",7,8],"Mt":[109,"Meitnerium",7,9],"Ds":[110,"Darmstadtium",7,10],"Rg":[111,"Roentgenium",7,11],"Cn":[112,"Copernicium",7,12],"Nh":[113,"Nihonium",7,13],"Fl":[114,"Flerovium",7,14],"Mc":[115,"Moscovium",7,15],"Lv":[116,"Livermorium",7,16],"Ts":[117,"Tennessine",7,17],"Og":[118,"Oganesson",7,18],"La":[57,"Lanthanum",8,3],"Ce":[58,"Cerium",8,4],"Pr":[59,"Praseodymium",8,5],"Nd":[60,"Neodymium",8,6],"Pm":[61,"Promethium",8,7],"Sm":[62,"Samarium",8,8],"Eu":[63,"Europium",8,9],"Gd":[64,"Gadolinium",8,10],"Tb":[65,"Terbium",8,11],"Dy":[66,"Dysprosium",8,12],"Ho":[67,"Holmium",8,13],"Er":[68,"Erbium",8,14],"Tm":[69,"Thulium",8,15],"Yb":[70,"Ytterbium",8,16],"Lu":[71,"Lutetium",8,17],"Ac":[89,"Actinium",9,3],"Th":[90,"Thorium",9,4],"Pa":[91,"Protactinium",9,5],"U":[92,"Uranium",9,6],"Np":[93,"Neptunium",9,7],"Pu":[94,"Plutonium",9,8],"Am":[95,"Americium",9,9],"Cm":[96,"Curium",9,10],"Bk":[97,"Berkelium",9,11],"Cf":[98,"Californium",9,12],"Es":[99,"Einsteinium",9,13],"Fm":[100,"Fermium",9,14],"Md":[101,"Mendelevium",9,15],"No":[102,"Nobelium",9,16],"Lr":[103,"Lawrencium",9,17]},"idb":[],"constants":{"naExcess":1,"fExcess":1,"oaPerMmol":0,"odeTotalSmall":0,"odeTotalLarge":0,"oamEq":0,"oamMw":0,"oamDens":0,"mtohPerMgF":0,"shellSol":{"volMl":10,"lnConcM":0,"tfaConcM":0,"naTfaMw":0,"oaMl":0,"odeMl":0,"mtohMl":0},"shellSyn":{"aliquotMl":1,"oaMl":0,"odeMl":0,"inj":[]},"icpStd":[0,0.1,0.5,1.0,2.5,5.0],"icpPrep":{"aliquotUl":10,"hno3Ml":0,"diMl":0,"finalMl":10,"extraBaseMl":0,"extraDiMl":0,"extraFactor":20},"cardSteps":{}},"refDataEmbedded":false,"initial":{"lots":[],"icp":[]}};
-const EMBEDDED_FB_CONFIG = {"apiKey": "AIzaSyBDOpUXKLbgmCkapj03LfwN4M0mmbhKIuw", "authDomain": "inno-nanoil.firebaseapp.com", "projectId": "inno-nanoil", "storageBucket": "inno-nanoil.firebasestorage.app", "messagingSenderId": "641327139165", "appId": "1:641327139165:web:bc83f8a50d965dedba80b4"};
+const EMBEDDED_FB_CONFIG = {"apiKey": "AIzaSyASUCqicjGLh7P86OA2ZLc-8gidrZnRCpI", "authDomain": "inno-synthesis-scheduler.firebaseapp.com", "projectId": "inno-synthesis-scheduler", "storageBucket": "inno-synthesis-scheduler.firebasestorage.app", "messagingSenderId": "662028027818", "appId": "1:662028027818:web:11a1887f10b015c1c20dd3"};
 
 </script>
 <script>
@@ -1303,7 +1301,7 @@ function healNeutralSettings(s, ref) {
   if (s.shellSol && ref.shellSol)
     for (const k of ["volMl", "lnConcM", "tfaConcM", "naTfaMw", "oaMl", "odeMl", "mtohMl"]) fixNum(s.shellSol, k, ref.shellSol[k]);
   if (s.shellSyn && ref.shellSyn) {
-    for (const k of ["aliquotMl", "oaMl", "odeMl"]) fixNum(s.shellSyn, k, ref.shellSyn[k]);
+    fixNum(s.shellSyn, "aliquotMl", ref.shellSyn.aliquotMl);
     if ((!s.shellSyn.inj || !s.shellSyn.inj.length) && ref.shellSyn.inj && ref.shellSyn.inj.length)
       { s.shellSyn.inj = ref.shellSyn.inj.slice(); n++; }
   }
@@ -1701,72 +1699,20 @@ function shellCardHtml(lot, calc, shellComp) {
   const shellInfo = kv("Composition", "si.c", esc(shellComp || lotFormula(lot))) + kv("Thickness [nm]", "si.t", fmtN(lot.thick, 2)) + kv("Volume [nm³]", "si.v", fmtN(calc.volNm3, 1)) + kv("Precursor [mmol]", "si.p", fmtN(calc.precMmol, 4));
   const injInfo = kv("Total [μL]", "ii.tot", fmtN(calc.totalInjUl, 0)) + inj.map((v, i) => kv("#" + (i + 1) + " [μL]", "inj" + i, fmtN(v, 0))).join("");
   const stepRows = renderMods("shell", ov);
-  const hd = `<div class="c2hd"><span class="c2ti">Shell Synthesis</span><span class="c2lot">${ced(ov, "title", esc(label), "cin")}</span></div>`;
-  const meta = `<div class="c2meta"><span class="c2grp">${esc(shellComp || lotFormula(lot))}</span></div>`;
-  const stir = `<div class="c2stir">교반 <b>${ced(ov, "stir", cs("shell", "stir").replace(/<br\s*\/?>/gi, " · "), "cin")}</b></div>`;
-  const protoS = (typeof activeProtocol === "function") ? activeProtocol(APP_DATA.constants) : null;
-  if (protoS && protoHasBind(protoS)) {
-    /* 시퀀스 단위 전체폭 카드 (Core와 동일 구성) — 초기 투입 → 절차. Injection Cycle 블록에 주입량 자동 기입 */
-    const initBlock = `<div class="stp stpA" style="grid-column:span 3"><span class="c2rt">초기 투입</span><table class="c2tb"><tbody>${rgRows}</tbody></table></div>`;
-    const injRows = `<tr><td class="nm"><span class="c2dot cRg"></span>Shell-precursor sol. Total</td><td class="r" colspan="2"><b>${ced(ov, "ii.tot", fmtN(calc.totalInjUl, 0), "cin")} μL</b></td></tr>` +
-      inj.map((v, i) => `<tr><td class="nm">#${i + 1}</td><td class="r" colspan="2"><b>${ced(ov, "inj" + i, fmtN(v, 0), "cin")} μL</b></td></tr>`).join("");
-    const injTbl = `<table class="c2tb"><tbody>${injRows}</tbody></table>`;
-    let injUsed = false;
-    const blocks = procMods("shell").map(m => {
-      const cw = Math.max(1, Math.min(3, m.gw || 3)), chh = Math.max(1, Math.min(6, m.gh || 1));
-      const style = (m.gx != null && m.gy != null) ? `grid-column:${Math.max(1, Math.min(4 - cw, m.gx))} / span ${cw};grid-row:${Math.max(1, m.gy)} / span ${chh}` : `grid-column:span ${cw};grid-row:span ${chh}`;
-      if (m.k === "inject" && !injUsed) {
-        injUsed = true;
-        const note = _sv(m.note) !== "" ? `<div class="snt">${ced(ov, m.id + ".note", _sv(m.note), "cin")}</div>` : "";
-        return `<div class="stp stpA" style="${style}">${modBadges(m)}<span class="c2rt">Injection</span>${note}${injTbl}</div>`;
-      }
-      return modStp(m, ov);
-    }).join("");
-    const injTail = injUsed ? "" : `<div class="stp stpA" style="grid-column:span 3"><span class="c2rt">Injection</span>${injTbl}</div>`;
-    const infoRow = `<div class="c2infoRow"><div><div class="c2sec">Core 정보</div>${coreInfo}</div><div><div class="c2sec">Shell 정보</div>${shellInfo}</div></div>`;
-    return `<div class="synCard2">${hd}${meta}${stir}${infoRow}<div class="c2col c2full"><div class="c2pg">${initBlock}</div><div class="c2pg">${blocks}${injTail}</div></div></div>`;
-  }
-  /* 비-바인딩(기본/레거시): 좌 표 / 우 절차 2열 유지 */
-  return `<div class="synCard2">${hd}${meta}${stir}<div class="c2cols"><div class="c2col c2l"><div class="c2sec">시약</div><table class="c2tb"><thead><tr><th class="lft">시약</th><th colspan="2">부피</th></tr></thead><tbody>${rgRows}</tbody></table><div class="c2sec c2mt">Core 정보</div>${coreInfo}<div class="c2sec c2mt">Shell 정보</div>${shellInfo}<div class="c2sec c2mt">주입</div>${injInfo}</div><div class="c2col"><div class="c2sec">절차</div>${stepRows}</div></div></div>`;
+  return `<div class="synCard2"><div class="c2hd"><span class="c2ti">Shell Synthesis</span><span class="c2lot">${ced(ov, "title", esc(label), "cin")}</span></div><div class="c2meta"><span class="c2grp">${esc(shellComp || lotFormula(lot))}</span></div><div class="c2stir">교반 <b>${ced(ov, "stir", cs("shell", "stir").replace(/<br\s*\/?>/gi, " · "), "cin")}</b></div><div class="c2cols"><div class="c2col c2l"><div class="c2sec">시약</div><table class="c2tb"><thead><tr><th class="lft">시약</th><th colspan="2">부피</th></tr></thead><tbody>${rgRows}</tbody></table><div class="c2sec c2mt">Core 정보</div>${coreInfo}<div class="c2sec c2mt">Shell 정보</div>${shellInfo}<div class="c2sec c2mt">주입</div>${injInfo}</div><div class="c2col"><div class="c2sec">절차</div>${stepRows}</div></div></div>`;
 }
 
 /* ---- Shell-precursor solution card (3열 가로줄 정렬 — 원본 배치) ---- */
 function shellSolutionCardHtml(title, sol, ovStore) {
   const ov = ovStore || {};
   const S = state.db.settings;
-  const lnRows = (sol.rows || []).map((r, i) => r ? `<tr><td class="nm"><span class="c2dot cLn"></span>${ced(ov, "p"+i+".n", esc(r.name), "cin")}</td><td class="r">${ced(ov, "p"+i+".mmol", fmtFix(r.mmol, 3), "cin")}</td><td class="r"><b>${ced(ov, "p"+i+".mg", fmtN(r.mg, 1), "cin")}</b></td></tr>` : "").join("");
-  const tfaRow = `<tr><td class="nm"><span class="c2dot cNa"></span>${ced(ov, "tfa.n", "Na-TFA", "cin")}</td><td class="r">${ced(ov, "tfa.mmol", fmtFix(sol.naTfaMmol, 3), "cin")}</td><td class="r"><b>${ced(ov, "tfa.mg", fmtN(sol.naTfaMg, 0), "cin")}</b></td></tr>`;
-  const precRows = lnRows + tfaRow;
-  const oaRow = `<tr><td class="nm"><span class="c2dot cRg"></span>${ced(ov, "oa.n", "Oleic acid", "cin")}</td><td class="r" colspan="2"><b>${ced(ov, "oa.v", fmtN(S.shellSol.oaMl, 1) + " mL", "cin")}</b></td></tr>`;
-  const odeRow = `<tr><td class="nm"><span class="c2dot cRg"></span>${ced(ov, "ode.n", "1-Octadecene", "cin")}</td><td class="r" colspan="2"><b>${ced(ov, "ode.v", fmtN(S.shellSol.odeMl, 1) + " mL", "cin")}</b></td></tr>`;
-  const rgRows = oaRow + odeRow;
+  const precRows = (sol.rows || []).map((r, i) => r ? `<tr><td class="nm"><span class="c2dot cLn"></span>${ced(ov, "p"+i+".n", esc(r.name), "cin")}</td><td class="r">${ced(ov, "p"+i+".mmol", fmtFix(r.mmol, 3), "cin")}</td><td class="r"><b>${ced(ov, "p"+i+".mg", fmtN(r.mg, 1), "cin")}</b></td></tr>` : "").join("")
+    + `<tr><td class="nm"><span class="c2dot cNa"></span>${ced(ov, "tfa.n", "Na-TFA", "cin")}</td><td class="r">${ced(ov, "tfa.mmol", fmtFix(sol.naTfaMmol, 3), "cin")}</td><td class="r"><b>${ced(ov, "tfa.mg", fmtN(sol.naTfaMg, 0), "cin")}</b></td></tr>`;
+  const rgRows = `<tr><td class="nm"><span class="c2dot cRg"></span>${ced(ov, "oa.n", "Oleic acid", "cin")}</td><td class="r" colspan="2"><b>${ced(ov, "oa.v", fmtN(S.shellSol.oaMl, 1) + " mL", "cin")}</b></td></tr><tr><td class="nm"><span class="c2dot cRg"></span>${ced(ov, "ode.n", "1-Octadecene", "cin")}</td><td class="r" colspan="2"><b>${ced(ov, "ode.v", fmtN(S.shellSol.odeMl, 1) + " mL", "cin")}</b></td></tr>`;
   const tfaNote = ced(ov, "tfa.note", String(cs("sol", "tfanote")).replace("{mtoh}", fmtN(S.shellSol.mtohMl, 1)), "cin");
   const conc = ced(ov, "conc", `Ln-oleate ${fmtN(sol.lnConcM, 3)} M / Na-TFA ${fmtN(sol.tfaConcM, 3)} M · ${fmtN(sol.volMl, 0)} mL`, "cin");
   const steps = renderMods("sol", ov);
-  const hd2 = `<div class="c2hd"><span class="c2ti">Shell-precursor solution</span><span class="c2lot">${ced(ov, "title", esc(title), "cin")}</span></div>`;
-  const stir2 = `<div class="c2stir">교반 <b>${ced(ov, "stir", cs("sol", "stir").replace(/<br\s*\/?>/gi, " · "), "cin")}</b></div>`;
-  const protoS = (typeof activeProtocol === "function") ? activeProtocol(APP_DATA.constants) : null;
-  if (protoS && protoHasBind(protoS)) {
-    /* 시퀀스 단위 전체폭 카드 — Dopant 초기 투입 → 절차. Add Precursor 블록에 Na-TFA+Methanol 자동 기입 */
-    const initBlock = `<div class="stp stpA" style="grid-column:span 3"><span class="c2rt">${esc(ROLE_LABEL.Ln)} · 초기 투입</span><table class="c2tb"><tbody>${lnRows}${oaRow}${odeRow}</tbody></table></div>`;
-    const mtohRow = `<tr><td class="nm"><span class="c2dot cRg"></span>${esc(SOLV_INFO.mtoh.name)}</td><td class="r" colspan="2"><b>${fmtN(S.shellSol.mtohMl, 1)} mL</b></td></tr>`;
-    const addTbl = `<table class="c2tb"><tbody>${tfaRow}${mtohRow}</tbody></table><div class="snt">${tfaNote}</div>`;
-    let addUsed = false;
-    const blocks = procMods("sol").map(m => {
-      const cw = Math.max(1, Math.min(3, m.gw || 3)), chh = Math.max(1, Math.min(6, m.gh || 1));
-      const style = (m.gx != null && m.gy != null) ? `grid-column:${Math.max(1, Math.min(4 - cw, m.gx))} / span ${cw};grid-row:${Math.max(1, m.gy)} / span ${chh}` : `grid-column:span ${cw};grid-row:span ${chh}`;
-      if (m.k === "add" && !addUsed) {
-        addUsed = true;
-        const note = _sv(m.note) !== "" ? `<div class="snt">${ced(ov, m.id + ".note", _sv(m.note), "cin")}</div>` : "";
-        return `<div class="stp stpA" style="${style}">${modBadges(m)}<span class="c2rt">${esc(ROLE_LABEL.Na)}</span>${note}${addTbl}</div>`;
-      }
-      return modStp(m, ov);
-    }).join("");
-    const addTail = addUsed ? "" : `<div class="stp stpA" style="grid-column:span 3"><span class="c2rt">${esc(ROLE_LABEL.Na)}</span>${addTbl}</div>`;
-    return `<div class="synCard2">${hd2}${stir2}<div class="c2col c2full"><div class="c2pg">${initBlock}</div><div class="c2pg">${blocks}${addTail}</div></div><div class="c2note">${conc}</div></div>`;
-  }
-  /* 비-바인딩(기본/레거시): 좌 표 / 우 절차 2열 유지 */
-  return `<div class="synCard2">${hd2}${stir2}<div class="c2cols"><div class="c2col c2l"><div class="c2sec">전구체</div><table class="c2tb"><thead><tr><th class="lft">전구체</th><th>mmol</th><th>mg</th></tr></thead><tbody>${precRows}</tbody></table><div class="c2sec c2mt">시약</div><table class="c2tb"><tbody>${rgRows}</tbody></table><div class="c2note">${tfaNote}</div><div class="c2note">${conc}</div></div><div class="c2col"><div class="c2sec">절차</div>${steps}</div></div></div>`;
+  return `<div class="synCard2"><div class="c2hd"><span class="c2ti">Shell-precursor solution</span><span class="c2lot">${ced(ov, "title", esc(title), "cin")}</span></div><div class="c2stir">교반 <b>${ced(ov, "stir", cs("sol", "stir").replace(/<br\s*\/?>/gi, " · "), "cin")}</b></div><div class="c2cols"><div class="c2col c2l"><div class="c2sec">전구체</div><table class="c2tb"><thead><tr><th class="lft">전구체</th><th>mmol</th><th>mg</th></tr></thead><tbody>${precRows}</tbody></table><div class="c2sec c2mt">시약</div><table class="c2tb"><tbody>${rgRows}</tbody></table><div class="c2note">${tfaNote}</div><div class="c2note">${conc}</div></div><div class="c2col"><div class="c2sec">절차</div>${steps}</div></div></div>`;
 }
 
 /* ---- card for an existing lot (recompute from stored inputs) ---- */
@@ -3040,11 +2986,6 @@ const Sync = (() => {
     state.sync.status = s; state.sync.detail = detail || "";
     const chip = $("#chipSync"); if (chip) renderTopChips();
     const box = $("#syncStatusLine"); if (box) box.textContent = statusText();
-    /* 잠금 화면이 떠 있으면 상태 변화를 즉시 반영 (로그인 후 진단 안내 표시용) */
-    if (document.getElementById("lockLogin") && typeof renderLockView === "function" &&
-        typeof refDataMissing === "function" && refDataMissing()) {
-      try { renderLockView($("#view")); } catch (e) {}
-    }
   }
   function statusText() {
     const s = state.sync;
@@ -3106,14 +3047,7 @@ const Sync = (() => {
       await fullSync();
       subscribe();
       setStatus("on", S.firebase.email);
-      if (!APP_DATA.refDataEmbedded && typeof refDataMissing === "function" && refDataMissing()) {
-        toast("로그인은 성공했지만, 이 계정의 클라우드에 기준 데이터베이스가 없습니다 — 화면의 진단 안내를 확인하세요", "warn");
-      } else if (APP_DATA.refDataEmbedded && APP_DATA.idb.length) {
-        const pj = (typeof _projIdOf === "function" ? _projIdOf(S.firebase.config) : "") || "클라우드";
-        toast("시딩 확인 완료 — 기준 데이터베이스가 " + pj + " / " + S.firebase.email + " 계정에 준비되었습니다", "ok");
-      } else {
-        toast("Google 계정으로 동기화가 켜졌습니다", "ok");
-      }
+      toast("Google 계정으로 동기화가 켜졌습니다", "ok");
     } catch (e) {
       console.error(e);
       setStatus("err", friendly(e));
@@ -3125,7 +3059,6 @@ const Sync = (() => {
     if (c.includes("popup-closed") || c.includes("cancelled-popup")) return "로그인 팝업이 닫혔습니다";
     if (c.includes("popup-blocked")) return "브라우저가 팝업을 차단했습니다 — 팝업 허용 후 재시도";
     if (c.includes("unauthorized-domain")) return "승인되지 않은 도메인 — Firebase 콘솔 승인 도메인에 추가 필요";
-    if (c.includes("operation-not-allowed")) return "이 Firebase 프로젝트에 Google 로그인이 아직 활성화되지 않음 — 콘솔 Authentication → Sign-in method에서 Google 사용 설정 후 재시도";
     if (c.includes("operation-not-supported")) return "이 환경(file://)에서는 Google 로그인이 지원되지 않습니다 — 웹 배포로 사용";
     if (c.includes("permission") || c.includes("insufficient")) return "권한 거부 — Firestore 보안규칙 확인";
     if (c.includes("network")) return "네트워크 오류";
@@ -3168,7 +3101,6 @@ const Sync = (() => {
         batch.set(metaDoc("refdata_info"), { hash, n: chunks.length, updatedAt: Date.now() });
         await batch.commit();
       }
-      state.sync.probe = Object.assign({}, state.sync.probe, { refInfo: "embedded" });
       return true;
     }
     // 배포 빌드: 클라우드에서 수신 (캐시 hash 다를 때만)
@@ -3178,8 +3110,7 @@ const Sync = (() => {
       const legacy = await metaDoc("knowhow_info").get();   // 구버전 문서명 호환
       if (legacy.exists) { info = legacy.data(); prefix = "knowhow_"; }
     }
-    if (!info) { state.sync.probe = Object.assign({}, state.sync.probe, { refInfo: "none" }); return false; }
-    state.sync.probe = Object.assign({}, state.sync.probe, { refInfo: prefix === "knowhow_" ? "legacy" : "ok" });
+    if (!info) return false;
     const cached = state.db.refDataCache;
     if (cached && cached.hash === info.hash && APP_DATA.idb.length) return true;
     const gets = await Promise.all(Array.from({ length: info.n }, (_, i) => metaDoc(prefix + i).get()));
@@ -3198,7 +3129,6 @@ const Sync = (() => {
     const [lotSnap, icpSnap, setSnap] = await Promise.all([
       col("lots").get(), col("icp").get(),
       fb.db.collection("users").doc(fb.user.uid).collection("meta").doc("settings").get()]);
-    state.sync.probe = Object.assign({}, state.sync.probe, { settingsDoc: setSnap.exists, at: Date.now() });
     let pulled = 0;
     lotSnap.forEach(doc => {
       const r = fsDecode(doc.data()); const cur = state.db.lots[r.serial];
@@ -3326,11 +3256,7 @@ service cloud.firestore {
       </div>
       ${S.firebase.email ? `<div class="muted" style="margin-top:6px">마지막 연결 계정: ${esc(S.firebase.email)}</div>` : ""}
       ${location.protocol === "file:" ? `<div class="note warn" style="margin-top:8px">현재 파일(file://)로 열려 있습니다. Google 로그인 팝업은 웹 주소(GitHub Pages 등)로 열었을 때만 동작합니다 — 로컬 사용에는 영향 없음.</div>` : ""}`;
-    const saveCfg = () => {
-      S.firebase.config = root.querySelector("#fbCfg").value;
-      S.firebase.configSource = S.firebase.config.trim() ? "user" : "";   // 비우면 다음 로드에 내장 복귀
-      saveSettings();
-    };
+    const saveCfg = () => { S.firebase.config = root.querySelector("#fbCfg").value; saveSettings(); };
     root.querySelector("#fbCfg").onchange = saveCfg;
     root.querySelector("#fbLogin").onclick = () => { saveCfg(); connect(); };
     root.querySelector("#fbOff").onclick = () => { disconnect(); renderBox(root); };
@@ -3386,19 +3312,11 @@ service cloud.firestore {
     const cfg = parseConfig(txt);
     if (!cfg) return false;
     state.db.settings.firebase.config = String(txt);
-    state.db.settings.firebase.configSource = "user";   // 독립 세팅: 재빌드에도 유지
     saveDb();
     return true;
   }
   function rulesText() { return RULES; }
-  async function recheck() {
-    if (!fb) { connect(); return; }
-    setStatus("connecting");
-    try { await fullSync(); setStatus("on", state.db.settings.firebase.email); }
-    catch (e) { setStatus("err", friendly(e)); }
-  }
-  function isConnected() { return !!fb; }
-  return { push, renderBox, tryAutoConnect, hasConfig, quickConnect, setConfig, rulesText, recheck, isConnected };
+  return { push, renderBox, tryAutoConnect, hasConfig, quickConnect, setConfig, rulesText };
 })();
 
 </script>
@@ -3447,26 +3365,6 @@ function renderLockView(root) {
       <button class="btn primary" id="lockLogin" style="font-size:15px;padding:10px 22px" ${Sync.hasConfig() ? "" : "disabled"}>Google 계정으로 로그인</button>
     </div>
     <div class="muted">${st === "connecting" ? "연결 중…" : st === "err" ? "오류: " + esc(state.sync.detail) : ""}</div>
-    ${st === "on" ? (() => {
-      const pr = state.sync.probe || {};
-      const pj = _projIdOf(state.db.settings.firebase.config) || "(config 없음)";
-      const em = state.db.settings.firebase.email || "(불명)";
-      const space = pr.refInfo === "none"
-        ? (pr.settingsDoc
-            ? "설정 문서는 있으나 기준 DB가 없음 — <b>구버전 설정용 파일</b>로 시딩했을 가능성이 큽니다 (최신 설정용으로 재시딩)"
-            : "완전히 비어 있음 — 이 프로젝트에 이 계정으로 <b>시딩된 흔적이 없습니다</b>")
-        : "확인 중…";
-      return `<div class="note warn" style="text-align:left;margin-top:10px;line-height:1.75">
-        <b>로그인은 성공했지만, 이 계정 공간에 기준 데이터베이스가 없어 진입하지 못했습니다.</b><br>
-        · 로그인 계정: <b>${esc(em)}</b> · 연결 프로젝트: <b>${esc(pj)}</b><br>
-        · 계정 공간 상태: ${space}<br>
-        <b>확인 순서</b> — ① 설정용 파일을 setup.bat으로 열어 <b>같은 계정</b>으로 로그인(시딩)을 완료했는지
-        ② 그 설정용 파일이 최신 배포본(위와 같은 프로젝트)인지
-        ③ 예전에 이 사이트를 쓴 적이 있다면 브라우저 사이트 데이터 삭제 후 재접속했는지.<br>
-        시딩을 마친 뒤 아래 버튼을 누르면 <b>다시 로그인할 필요 없이</b> 바로 진입합니다.
-        <div style="margin-top:8px"><button class="btn sm primary" id="lockRecheck">기준 DB 다시 확인</button></div>
-      </div>`;
-    })() : ""}
     <div class="note" style="text-align:left;margin-top:10px;font-size:12px;line-height:1.6"><b>진단 정보</b> (문제가 계속되면 이 값을 확인·공유하세요)<br>· 연결된 Firebase 프로젝트: <b>${esc(_projIdOf(state.db.settings.firebase.config) || "(config 없음)")}</b><br>· 이 브라우저의 로그인 계정: <b>${esc(state.db.settings.firebase.email || "(로그인 기록 없음)")}</b><br>· 동기화 상태: <b>${esc(st)}</b></div>
     <div class="note" style="text-align:left;margin-top:14px">처음 사용하는 계정이라 로그인 후에도 이 화면이 계속 보인다면, 아직 클라우드에 기준 데이터베이스가 업로드되지 않은 것입니다.
     본편(유원정) 또는 설정용 파일을 <b>INNO NanoLab (setup).bat</b>으로 열어 같은 계정으로 1회 로그인하면 자동 업로드되고, 이 화면을 새로고침하면 열립니다.</div>
@@ -3487,8 +3385,6 @@ function renderLockView(root) {
   </div>`;
   const b = $("#lockLogin");
   if (b) b.onclick = () => { Sync.quickConnect(); };
-  const rc = $("#lockRecheck");
-  if (rc) rc.onclick = () => { Sync.recheck(); };
   $("#lockCfgSave").onclick = () => {
     const txt = $("#lockCfg").value.trim();
     if (!txt) { $("#lockCfgMsg").textContent = "config를 붙여넣어 주세요"; return; }
@@ -3501,53 +3397,6 @@ function renderLockView(root) {
   };
   $("#lockCfgRules").onclick = () =>
     navigator.clipboard.writeText(Sync.rulesText()).then(() => toast("보안규칙을 복사했습니다 — Firestore 규칙 탭에 붙여넣고 게시하세요", "ok"));
-}
-function showSeedIntro() {
-  if (document.getElementById("seedIntro")) return;
-  const isFile = location.protocol === "file:";
-  const pj = _projIdOf(state.db.settings.firebase.config) || "(config 없음)";
-  const ov = h(`<div class="overlay center" id="seedIntro"><div class="modal" style="max-width:560px">
-    <h2>초기 설정 — Google 로그인 1회</h2>
-    <div style="font-size:13px;line-height:1.75">
-      이 파일은 <b>기준 데이터베이스 내장 빌드</b>입니다. 본인 Google 계정으로 <b>1회 로그인</b>하면
-      기준 데이터베이스(파라미터·물질 DB·간섭 DB·카드 프로토콜)가 내 계정 클라우드(<b>${esc(pj)}</b>)에 자동 시딩됩니다.<br>
-      시딩 후에는 아무 기기에서나 <b>배포 주소</b>에 접속해 <b>같은 계정</b>으로 로그인하면 바로 사용됩니다.
-      ${isFile ? `<div class="note warn" style="margin-top:10px">지금은 파일을 직접(더블클릭) 연 상태라 Google 로그인 팝업이 동작하지 않습니다.<br><b>INNO NanoLab (setup).bat</b>으로 다시 열어 주세요.</div>` : ""}
-    </div>
-    <div class="row" style="margin-top:14px">
-      ${isFile ? "" : `<button class="btn primary" id="seedGo">Google 계정으로 로그인 (시딩 시작)</button>`}
-      <button class="btn" id="seedLater">나중에 (로컬로만 사용)</button>
-    </div>
-    <div class="muted" id="seedMsg" style="margin-top:8px"></div>
-  </div></div>`);
-  document.body.appendChild(ov);
-  let iv = null;
-  ov.querySelector("#seedLater").onclick = () => {
-    try { sessionStorage.setItem("nanolab_seed_later", "1"); } catch (e) {}
-    clearInterval(iv); ov.remove();
-  };
-  const go = ov.querySelector("#seedGo");
-  if (go) go.onclick = () => {
-    ov.querySelector("#seedMsg").textContent = "로그인 창을 확인하세요…";
-    Sync.quickConnect();
-    clearInterval(iv);
-    iv = setInterval(() => {
-      const st = state.sync.status;
-      if (st === "on") {
-        clearInterval(iv);
-        const box = ov.querySelector(".modal");
-        box.innerHTML = `<h2>✅ 시딩 완료</h2><div style="font-size:13px;line-height:1.75">
-          기준 데이터베이스가 <b>${esc(_projIdOf(state.db.settings.firebase.config) || "")}</b> /
-          <b>${esc(state.db.settings.firebase.email || "")}</b> 계정에 준비되었습니다.<br>
-          이제 배포 주소에서 <b>같은 계정</b>으로 로그인하면 바로 사용할 수 있습니다.</div>
-          <div class="row" style="margin-top:14px"><button class="btn primary" id="seedDone">확인</button></div>`;
-        box.querySelector("#seedDone").onclick = () => ov.remove();
-      } else if (st === "err") {
-        const m = ov.querySelector("#seedMsg");
-        if (m) m.textContent = "오류: " + (state.sync.detail || "") + " — 해결 후 다시 시도하세요";
-      }
-    }, 400);
-  };
 }
 function renderView() {
   const root = $("#view");
@@ -4419,29 +4268,10 @@ function editPrecursor(idx) {
   if (state.db.materialsOverride && state.db.materialsOverride.precursors && state.db.materialsOverride.precursors.length) {
     APP_DATA.materials = state.db.materialsOverride;
   }
-  // 내장 firebaseConfig 적용 정책:
-  //  - 저장된 config가 없으면 내장값 적용 (출처=embedded)
-  //  - 출처가 embedded인 저장값은 재빌드로 내장값이 바뀌면 자동 추종
-  //  - 사용자가 직접 붙여넣은 config(출처=user, 독립 세팅)는 절대 덮어쓰지 않음
-  //  - 과거 빌드 오염 회수: 스케줄러 프로젝트(inno-synthesis-scheduler) config가 저장돼 있고
-  //    현재 내장값이 다른 프로젝트라면 내장값으로 교정 (NanoLab이 그 프로젝트를 쓸 일은 없음)
-  if (typeof EMBEDDED_FB_CONFIG !== "undefined") {
-    const FB = state.db.settings.firebase;
-    const emb = JSON.stringify(EMBEDDED_FB_CONFIG);
-    const savedPid = (FB.config || "").match(/["']?projectId["']?\s*[:=]\s*["']([A-Za-z0-9_.-]+)["']/);
-    const pid = savedPid ? savedPid[1] : "";
-    if (!FB.config) {
-      FB.config = emb; FB.configSource = "embedded"; saveDb();
-    } else if (FB.configSource === "embedded" && FB.config !== emb) {
-      FB.config = emb; saveDb();
-    } else if (!FB.configSource) {
-      if (pid === "inno-synthesis-scheduler" && emb.indexOf("inno-synthesis-scheduler") === -1) {
-        FB.config = emb; FB.configSource = "embedded";
-      } else {
-        FB.configSource = FB.config === emb ? "embedded" : "user";
-      }
-      saveDb();
-    }
+  // 배포용 빌드에 firebaseConfig가 내장된 경우 자동 적용 (새 기기에서 로그인 버튼만 누르면 됨)
+  if (typeof EMBEDDED_FB_CONFIG !== "undefined" && !state.db.settings.firebase.config) {
+    state.db.settings.firebase.config = JSON.stringify(EMBEDDED_FB_CONFIG);
+    saveDb();
   }
   syncConstants();
   try { migrateProcedures(); } catch (e) {}
@@ -4450,13 +4280,6 @@ function editPrecursor(idx) {
   }
   render();
   Sync.tryAutoConnect();
-  /* 기준 DB 내장 빌드(본편·설정용) 최초 실행: 시딩 로그인 안내 — 로그인 이력이 생기면 더 뜨지 않음 */
-  if (APP_DATA.refDataEmbedded && APP_DATA.idb.length && !state.db.settings.firebase.enabled &&
-      typeof showSeedIntro === "function") {
-    let later = false;
-    try { later = sessionStorage.getItem("nanolab_seed_later") === "1"; } catch (e) {}
-    if (!later) setTimeout(showSeedIntro, 300);
-  }
   // backup reminder (클라우드 동기화 사용 중에는 생략)
   const age = backupAgeDays();
   if (!state.db.settings.firebase.enabled && age !== Infinity && age > state.db.settings.backupReminderDays)
