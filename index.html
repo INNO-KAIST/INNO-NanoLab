@@ -1280,7 +1280,7 @@ function syncConstants() {
   C.odeTotalSmall = s.odeTotalSmall; C.odeTotalLarge = s.odeTotalLarge;
   C.oamEq = s.oamEq; C.oamMw = s.oamMw; C.oamDens = s.oamDens; C.mtohPerMgF = s.mtohPerMgF;
   Object.assign(C.shellSol, s.shellSol);
-  C.shellSyn.aliquotMl = s.shellSyn.aliquotMl; C.shellSyn.inj = s.shellSyn.inj.slice();
+  C.shellSyn.aliquotMl = s.shellSyn.aliquotMl; C.shellSyn.oaMl = s.shellSyn.oaMl; C.shellSyn.odeMl = s.shellSyn.odeMl; C.shellSyn.inj = s.shellSyn.inj.slice();
   Object.assign(C.icpPrep, s.icpPrep); C.icpStd = s.icpStd.slice();
   setLotPrefix(s.lotPrefix === undefined ? "WJ" : s.lotPrefix);
 }
@@ -1302,6 +1302,8 @@ function healNeutralSettings(s, ref) {
     for (const k of ["volMl", "lnConcM", "tfaConcM", "naTfaMw", "oaMl", "odeMl", "mtohMl"]) fixNum(s.shellSol, k, ref.shellSol[k]);
   if (s.shellSyn && ref.shellSyn) {
     fixNum(s.shellSyn, "aliquotMl", ref.shellSyn.aliquotMl);
+    fixNum(s.shellSyn, "oaMl", ref.shellSyn.oaMl);
+    fixNum(s.shellSyn, "odeMl", ref.shellSyn.odeMl);
     if ((!s.shellSyn.inj || !s.shellSyn.inj.length) && ref.shellSyn.inj && ref.shellSyn.inj.length)
       { s.shellSyn.inj = ref.shellSyn.inj.slice(); n++; }
   }
@@ -1691,8 +1693,8 @@ function shellCardHtml(lot, calc, shellComp) {
   const kv = (k, key, v) => `<div class="c2kv"><span class="c2k">${k}</span><span class="c2v"><b>${ced(ov, key, v, "cin")}</b></span></div>`;
   const rgDefs = [
     ["Core aliquot", "ali", fmtN(lot.src ? lot.src.volMl : S.shellSyn.aliquotMl, 1) + " mL"],
-    ["Oleic acid", "oa", fmtN(S.shellSyn.oaMl, 1) + " mL"],
-    ["1-Octadecene", "ode", fmtN(S.shellSyn.odeMl, 1) + " mL"]
+    ["Oleic acid", "oa", fmtN(lot.oaMl ?? S.shellSyn.oaMl, 1) + " mL"],
+    ["1-Octadecene", "ode", fmtN(lot.odeMl ?? S.shellSyn.odeMl, 1) + " mL"]
   ];
   const rgRows = rgDefs.map(d => `<tr><td class="nm"><span class="c2dot cRg"></span>${ced(ov, d[1]+".n", d[0], "cin")}</td><td class="r" colspan="2"><b>${ced(ov, d[1]+".v", d[2], "cin")}</b></td></tr>`).join("");
   const coreInfo = kv("Lot", "ci.lot", esc(srcLabel)) + kv("Particle# [mmol]", "ci.pm", fmtN(calc.particleMmol ?? (derivedOf(lot.serial) || {}).I, 4)) + kv("Radius [nm]", "ci.r", fmtN(lot.radius, 2));
@@ -1831,7 +1833,7 @@ function defaultPlannerCtx(mode) {
   const S = state.db.settings;
   if (mode === "shell") {
     return { mode: "shell", editSerial: null,
-      src: null, volMl: S.shellSyn.aliquotMl, radius: 4, thick: 2,
+      src: null, volMl: S.shellSyn.aliquotMl, radius: 4, thick: 2, oaMl: S.shellSyn.oaMl, odeMl: S.shellSyn.odeMl,
       stockVol: S.defaultStockVolShell, date: todayYYMMDD(), heat: null, memo: "",
       dopants: [{ el: "Y", coeff: 1 }],
       solPrecs: null, solLnMmol: S.shellSol.lnConcM * S.shellSol.volMl, solVolMl: S.shellSol.volMl,
@@ -2080,7 +2082,7 @@ function renderPlannerShell(root, ctx) {
   const I = (srcD && isNum(srcD.D) && isNum(E) && E > 0 && isNum(ctx.volMl)) ? srcD.D * ctx.volMl / E : null;
 
   const preview = { serial: ctx.editSerial ?? nextSerial(), type: "Shell", date: ctx.date, stockVol: ctx.stockVol,
-    src: { serial: ctx.src, volMl: ctx.volMl }, radius: ctx.radius, thick: ctx.thick,
+    src: { serial: ctx.src, volMl: ctx.volMl }, radius: ctx.radius, thick: ctx.thick, oaMl: ctx.oaMl, odeMl: ctx.odeMl,
     stoich: shellStoich(ctx), cardEdits: ctx.cardEdits };
   // derived preview (uses live DB + this preview lot)
   const tmpMap = Object.assign({}, activeLots()); tmpMap[preview.serial] = preview;
@@ -2126,6 +2128,11 @@ function renderPlannerShell(root, ctx) {
         <label class="f"><span>Aliquot (<b><i>v</i></b>) [mL]</span><input type="number" step="0.1" class="w80" id="sVol" value="${ctx.volMl}"></label>
       </div>
       ${srcLot ? `<div class="note">source ${lotLabel(srcLot)}: stock ${fmtN(srcD && srcD.D, 4)} mmol / ${fmtN(E, 1)} mL · 잔량 추정 ${fmtN(remain, 1)} mL ${remain !== null && ctx.volMl > remain ? '<b style="color:var(--risk)">— 사용량이 잔량을 초과!</b>' : ""} · Aliquot core-trace (<b><i>n</i></b>) = <b>${fmtN(I, 4)} mmol</b>${srcLot && isFinite(srcLot.temRadius) && srcLot.temRadius > 0 ? ` · <span title="source lot에 저장된 TEM 실측 반지름 — R 기본값으로 적용됨">TEM R=${fmtN(srcLot.temRadius, 1)} nm</span>` : ""}</div>` : `<div class="note warn">source lot이 없습니다. 먼저 Core를 저장하세요.</div>`}
+      <div class="row" style="margin-top:10px">
+        <label class="f"><span>Oleic acid [mL]</span><input type="number" step="0.5" class="w80" id="sOa" value="${ctx.oaMl}"></label>
+        <label class="f"><span>1-Octadecene [mL]</span><input type="number" step="0.5" class="w80" id="sOde" value="${ctx.odeMl}"></label>
+        <span class="muted" style="align-self:flex-end;font-size:11px;padding-bottom:6px">Core aliquot과 함께 넣는 <b>초기 배스</b> — mmol 환산 없이 직접 입력</span>
+      </div>
       <div class="row" style="margin-top:10px">
         <label class="f">합성일 (YYMMDD)<input type="text" class="w100" id="sDate" value="${esc(ctx.date)}"></label>
         <label class="f"><span>Stock volume (<b><i>V</i></b>) [mL]</span><input type="number" step="0.5" class="w80" id="sStock" value="${ctx.stockVol}"></label>
@@ -2191,6 +2198,8 @@ function renderPlannerShell(root, ctx) {
     rr();
   };
   $("#sVol").onchange = e => { ctx.volMl = parseFloat(e.target.value) || 0; rr(); };
+  $("#sOa").onchange = e => { ctx.oaMl = parseFloat(e.target.value) || 0; rr(); };
+  $("#sOde").onchange = e => { ctx.odeMl = parseFloat(e.target.value) || 0; rr(); };
   $("#sRad").onchange = e => { ctx.radius = parseFloat(e.target.value) || 0; rr(); };
   $("#sThk").onchange = e => { ctx.thick = parseFloat(e.target.value) || 0; rr(); };
   $("#sStock").onchange = e => { ctx.stockVol = parseFloat(e.target.value) || null; rr(); };
@@ -2217,7 +2226,7 @@ function renderPlannerShell(root, ctx) {
   $("#sSave").onclick = () => {
     const serial = ctx.editSerial !== null ? ctx.editSerial : nextSerial();
     upsertLot({ serial, type: "Shell", date: ctx.date, stockVol: ctx.stockVol, tgtMmol: null,
-      src: { serial: Number(ctx.src), volMl: ctx.volMl }, radius: ctx.radius, thick: ctx.thick,
+      src: { serial: Number(ctx.src), volMl: ctx.volMl }, radius: ctx.radius, thick: ctx.thick, oaMl: ctx.oaMl, odeMl: ctx.odeMl,
       stoich: shellStoich(ctx), heat: ctx.heat ?? null, memo: ctx.memo,
       solLnMmol: ctx.solLnMmol, solVolMl: ctx.solVolMl, inj: ctx.inj.slice(),
       cardEdits: ctx.cardEdits, solCardEdits: ctx.solCardEdits || {}, deleted: false });
@@ -4126,6 +4135,8 @@ function renderSettings(root) {
           <label class="f">Core Stock 기본값 [mL]<input type="number" class="w100" id="cStC" value="${S.defaultStockVolCore}"></label>
           <label class="f">Shell Stock 기본값 [mL]<input type="number" class="w100" id="cStS" value="${S.defaultStockVolShell}"></label>
           <label class="f">Core aliquot 기본 [mL]<input type="number" step="0.5" class="w100" id="cAli" value="${S.shellSyn.aliquotMl}"></label>
+          <label class="f">Shell OA 기본 [mL]<input type="number" step="0.5" class="w100" id="cShOa" value="${S.shellSyn.oaMl}"></label>
+          <label class="f">Shell ODE 기본 [mL]<input type="number" step="0.5" class="w100" id="cShOde" value="${S.shellSyn.odeMl}"></label>
           <label class="f"><span>Lot 접두사</span><input type="text" class="w80" id="cLotPre" value="${esc(S.lotPrefix ?? "WJ")}"
             title="Lot 표시 이름의 접두사 — 본인 이니셜 등을 입력하면 '접두사-0001c' 형태로 표기됩니다. 비우면 숫자만. 저장하면 이 계정의 모든 기기에 유지·적용됩니다."></label>
           </span></td></tr>
@@ -4201,6 +4212,8 @@ function renderSettings(root) {
     S.defaultStockVolCore = parseFloat($("#cStC").value) || 10;
     S.defaultStockVolShell = parseFloat($("#cStS").value) || 5;
     S.shellSyn.aliquotMl = parseFloat($("#cAli").value) || 1;
+    S.shellSyn.oaMl = parseFloat($("#cShOa").value) || 4;
+    S.shellSyn.odeMl = parseFloat($("#cShOde").value) || 6;
     S.lnPerNm3 = parseFloat($("#cLnRho").value) || 13.85;
     S.lotPrefix = $("#cLotPre").value.trim();
     saveSettings(); syncConstants();
