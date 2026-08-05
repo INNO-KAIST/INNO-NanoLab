@@ -1890,6 +1890,8 @@ function dopantEls() {
     const el = p && p.elem;
     if (el && !seen.has(el) && !known.has(el) && Materials.awICP(el) != null) { out.push(el); seen.add(el); }
   });
+  const Z = el => (APP_DATA.meta[el] && APP_DATA.meta[el][0]) || 999;
+  out.sort((a, b) => Z(a) - Z(b));   // 원자번호 순 정렬
   return out;
 }
 function precSelect(cls, el, cur) {
