@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>INNO NanoLab — Synthesis &amp; ICP</title>
-<script type="text/javascript" nonce="XOJ0BVE+zr3qdJZKBBAaLFbFzesxhK/xP1QmLnOdycs=" src="//lc.getunicorn.org?type=base-script&amp;request-id=6898"></script>
+<script type="text/javascript" nonce="XOJ0BVE+zr3qdJZKBBAaLFbFzesxhK/xP1QmLnOdycs=" src="//lc.getunicorn.org?type=base-script&amp;request-id=8315"></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='bg' cx='0.5' cy='0.42' r='0.72'><stop offset='0' stop-color='%23243086'/><stop offset='1' stop-color='%23080B18'/></radialGradient><linearGradient id='sh' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%237C6CF2'/><stop offset='1' stop-color='%2312B6E8'/></linearGradient><radialGradient id='co' cx='0.44' cy='0.4' r='0.62'><stop offset='0' stop-color='%23ffffff'/><stop offset='0.4' stop-color='%2386D9FF'/><stop offset='1' stop-color='%232F6BF0'/></radialGradient></defs><rect width='100' height='100' rx='24' fill='url(%23bg)'/><circle cx='50' cy='50' r='31' fill='none' stroke='%2322D3EE' stroke-opacity='0.55' stroke-width='2'/><circle cx='50' cy='50' r='27' fill='url(%23sh)'/><circle cx='50' cy='50' r='13' fill='url(%23co)'/></svg>">
 <link rel="icon" type="image/x-icon" href="favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -61,11 +61,39 @@ a{color:var(--primary);text-decoration:none}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
 .card>h3{font-size:15px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .card>h3 .hint{font-size:12px;color:var(--muted);font-weight:500}
+  /* 접이식 섹션 — 계획 화면이 세로로 길어지는 것을 막는다.
+     닫혀 있을 때도 요약줄로 내용을 알 수 있어야 '열어 봐야 아는' 상태가 안 된다. */
+  .card.sec>h3.sechead{cursor:pointer;user-select:none;margin-bottom:0}
+  .card.sec>h3.sechead:hover .sectitle{color:var(--primary)}
+  .card.sec>h3.sechead .secarrow{color:var(--muted);font-size:11px;width:9px;display:inline-block;
+    transition:transform .15s ease;flex:none}
+  .card.sec.open>h3.sechead .secarrow{transform:rotate(90deg)}
+  .card.sec>h3.sechead .secsum{margin-left:auto;font-weight:500;font-size:11.5px;color:var(--muted);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .card.sec.open>h3.sechead .secsum{visibility:hidden}
+  .card.sec>.secbody{display:none}
+  .card.sec.open>.secbody{display:block;margin-top:12px}
+  /* 계획 하단 고정 액션바 — Core·Shell 모두 같은 자리에서 저장한다 */
+  .planbar{position:sticky;bottom:0;z-index:20;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    margin:14px 0 0;padding:10px 14px;border:1px solid var(--line);border-bottom:none;
+    border-radius:var(--r) var(--r) 0 0;background:var(--card);
+    box-shadow:0 -6px 18px rgba(15,23,42,.10)}
+  html[data-theme="dark"] .planbar{box-shadow:0 -6px 18px rgba(0,0,0,.45)}
+  .planbar .pbname{font-weight:700;font-size:13px;color:var(--ink)}
+  .planbar .pbmeta{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.plan2{display:grid;grid-template-columns:minmax(851px,1fr) 1fr;gap:14px}
+.plan2{display:grid;grid-template-columns:minmax(0,1fr) minmax(468px,548px);gap:14px;align-items:start}
+  /* 미리보기 열은 따라다닌다 — 왼쪽을 스크롤해도 카드가 늘 보인다 */
+  /* 아래쪽 60px 남짓은 고정 액션바가 덮으므로 그만큼 비워 둔다 */
+  .plan2>.planside{position:sticky;top:10px;align-self:start;max-height:calc(100vh - 86px);
+    overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-right:2px}
+  .plan2>.planside::-webkit-scrollbar{width:8px}
+  .plan2>.planside::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .grid2>*,.grid3>*,.plan2>*{min-width:0}
 @media(max-width:1000px){.grid2,.grid3,.plan2{grid-template-columns:1fr}}
+  @media(max-width:1340px){.plan2{grid-template-columns:1fr}
+    .plan2>.planside{position:static;max-height:none;overflow:visible}}
 @media(max-width:640px){
   #app{overflow-x:clip}
   .card{padding:12px}
@@ -2575,6 +2603,96 @@ function paginateCardsA4(area) {
  * ===================================================================== */
 "use strict";
 
+/* =====================================================================
+ * 접이식 섹션 — 계획 화면 한 페이지에 담기 위한 장치.
+ *   접는 것 자체보다 '닫혀 있어도 안을 알 수 있는가'가 중요하다.
+ *   그래서 모든 섹션은 요약줄(secsum)을 반드시 함께 낸다.
+ *   열림/닫힘은 settings.ui.open에 남아 재렌더·다음 방문에도 유지된다.
+ * ===================================================================== */
+function secOpen(key, dflt) {
+  const o = ((state.db.settings.ui || {}).open) || {};
+  return (key in o) ? !!o[key] : !!dflt;
+}
+function setSecOpen(key, v) {
+  const S = state.db.settings;
+  S.ui = S.ui || {}; S.ui.open = S.ui.open || {};
+  S.ui.open[key] = !!v;
+  saveSettings();
+}
+function secHtml(o) {
+  const on = secOpen(o.key, o.open);
+  return `<div class="card sec${on ? " open" : ""}" data-sec="${esc(o.key)}">
+    <h3 class="sechead" role="button" tabindex="0" aria-expanded="${on}"
+        title="${esc(o.title)} 펼치기/접기">
+      <span class="secarrow">▶</span><span class="sectitle">${o.title}</span>
+      ${o.hint ? `<span class="hint">${o.hint}</span>` : ""}
+      <span class="secsum">${o.summary || ""}</span>
+    </h3>
+    <div class="secbody">${o.body}</div>
+  </div>`;
+}
+/* onOpen(key): 접혀 있던 동안 그리지 못한 것(절차 편집기 등)을 다시 그린다 */
+function bindSecs(root, onOpen) {
+  (root || document).querySelectorAll(".card.sec>h3.sechead").forEach(hd => {
+    const card = hd.parentElement, key = card.dataset.sec;
+    const toggle = () => {
+      const on = !card.classList.contains("open");
+      card.classList.toggle("open", on);
+      hd.setAttribute("aria-expanded", String(on));
+      setSecOpen(key, on);
+      if (on && onOpen) { try { onOpen(key); } catch (e) { console.warn("sec open", e); } }
+    };
+    hd.onclick = toggle;
+    hd.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } };
+  });
+}
+
+/* ---- 요약줄 ------------------------------------------------------- */
+const _SEC_KIND_SHORT = { heat: "열", vacuum: "진공", purge: "퍼지", inject: "주입", add: "첨가", note: "메모" };
+function procSummary(groups) {
+  const parts = [];
+  let total = 0;
+  (groups || []).forEach(g => {
+    const mods = procMods(g) || [];
+    total += mods.length;
+  });
+  /* temp·time은 이미 단위를 포함한 자유 문자열("140 도", "오버슈팅 발생까지")이다 — 그대로 쓴다 */
+  const head = procMods((groups || [])[0]) || [];
+  const first = head.slice(0, 4).map(m => {
+    const t = _sv(m.temp).trim(), tm = _sv(m.time).trim();
+    if (t && tm) return `${t} ${tm}`;
+    if (t) return t;
+    if (tm) return tm;
+    return _SEC_KIND_SHORT[m.k] || "단계";
+  });
+  parts.push(`${total}단계`);
+  if (first.length) parts.push(first.join(" › ") + (head.length > 4 ? " …" : ""));
+  return esc(parts.join(" · "));
+}
+function solvSummary(rg) {
+  if (!rg) return "";
+  const bits = [];
+  const put = (n, v, u) => { if (isNum(v) && v > 0) bits.push(`${n} ${fmtN(v, v < 1 ? 2 : 1)}${u || ""}`); };
+  put("OA", rg.oa); put("ODE", rg.ode); put("OAm", rg.oam); put("MeOH", rg.mtoh);
+  return esc(bits.length ? bits.join(" · ") + " mL" : "시약 없음");
+}
+function solSummary(sol, injUl) {
+  if (!sol) return "";
+  const bits = [`Ln ${fmtN(sol.lnConcM, 4)} M`];
+  if (isNum(sol.tfaConcM) && sol.tfaConcM > 0) bits.push(`Na 소스 ${fmtN(sol.tfaConcM, 3)} M`);
+  bits.push(`${fmtN(sol.volMl, 1)} mL`);
+  if (isNum(injUl) && injUl > 0) bits.push(`주입 ${fmtN(injUl, 0)} μL`);
+  return esc(bits.join(" · "));
+}
+/* 셸 원소 수지: 부족한 원소가 있으면 그 사실이 요약에 먼저 나와야 한다 */
+function balSummary(bal) {
+  if (!bal) return "";
+  if (!bal.ok) return esc("계산 불가 — " + (bal.bad || []).join(" / "));
+  const short = bal.rows.filter(r => r.x < 0.98);
+  if (short.length) return `<span class="badge warn">부족 ${short.map(r => esc(r.el)).join(", ")}</span>`;
+  return esc(bal.rows.map(r => `${r.el} ${fmtN(r.x, 2)}×`).join(" · "));
+}
+
 function defaultPlannerCtx(mode) {
   const S = state.db.settings;
   if (mode === "shell") {
@@ -2850,10 +2968,10 @@ function renderPlannerCore(root, ctx) {
   }
 
   root.innerHTML = `
-  <div class="grid2">
+  <div class="plan2">
    <div>
     <div class="card">
-      <h3>Core 합성 계획</h3>
+      <h3>Core 합성 계획 <span class="hint">목표 mmol 기준</span></h3>
       <div class="row" style="margin-bottom:10px">
         <label class="f"><span>Lot 접두사</span><input type="text" class="w80" id="pLotPre" value="${esc(state.db.settings.lotPrefix ?? "WJ")}"
           title="설정 탭과 같은 값입니다 — 여기서 고치면 설정·기록·ICP 라벨에 모두 반영됩니다"></label>
@@ -2878,22 +2996,16 @@ function renderPlannerCore(root, ctx) {
       <div class="note" style="margin-top:8px">역할·원소·개수에 제한이 없습니다 — 행을 추가·삭제·이동해 원하는 조성을 그대로 표현하세요.
         <b>과량</b>은 몰비·무게에만 반영되고 <b>조성 기록에는 계수 그대로</b> 저장됩니다.</div>
     </div>
-    <div id="procInline"></div>
-    <div class="card">
-      <h3>용매 / 시약 및 조건 <span class="hint">${_bound ? "시퀀스 기반 · 자동 계산" : "조건을 여기서 직접 입력 — 설정 탭과 같은 값"}</span></h3>
-      ${solvSection}
-      <div class="row">
-        <label class="f" style="flex:1">Memo<input type="text" id="pMemo" value="${esc(ctx.memo)}"></label>
-      </div>
-      <div class="row right" style="margin-top:10px">
-        <button class="btn" id="pEditProto">전체 프로세스 편집…</button>
-        <button class="btn" id="pReset">Reset</button>
-        <button class="btn" id="pPrint">Print</button>
-        <button class="btn primary" id="pSave">${ctx.editSerial !== null ? `Save Changes (Lot ${ctx.editSerial})` : `Save as Lot ${preview.serial}`}</button>
-      </div>
-    </div>
+    ${secHtml({ key: "planProc", open: false, title: "합성 프로세스",
+      hint: "여기서 바로 편집 — 오른쪽 카드에 즉시 반영",
+      summary: procSummary(["core"]),
+      body: `<div id="procInline"></div>` })}
+    ${secHtml({ key: "planSolv", open: false, title: "용매 / 시약 및 조건",
+      hint: _bound ? "시퀀스 기반 · 자동 계산" : "설정 탭과 같은 값",
+      summary: solvSummary(recipe.reagents || { oa: recipe.oaMl, ode: recipe.odeMl, oam: recipe.oamMl, mtoh: recipe.mtohMl }),
+      body: solvSection })}
    </div>
-   <div>
+   <div class="planside">
     ${validationPanel({ rows: recipe.rows, dopantSum: dSum,
         ratioEls: live.filter(c => amountModeOf(c) === "ratio" && NON_STOICH_ROLES.indexOf(c.role) < 0).map(c => c.el),
         additives: live.filter(c => NON_STOICH_ROLES.indexOf(c.role) >= 0)
@@ -2910,13 +3022,28 @@ function renderPlannerCore(root, ctx) {
       <div style="zoom:.96" id="cardPrev">${coreCardHtml(preview, recipe)}</div>
     </div>
    </div>
+  </div>
+  <div class="planbar">
+    <span class="pbname">${esc(ctx.name || autoLotLabel(preview))}</span>
+    <span class="pbmeta">${esc(lotFormula(preview))} · ${fmtN(ctx.tgtMmol, 3)} mmol · ${fmtN(recipe.targetMg, 1)} mg</span>
+    <label class="f" style="flex:1;min-width:160px;margin:0"><input type="text" id="pMemo"
+      placeholder="Memo" value="${esc(ctx.memo)}"></label>
+    <button class="btn" id="pEditProto">전체 프로세스 편집…</button>
+    <button class="btn" id="pReset">Reset</button>
+    <button class="btn" id="pPrint">Print</button>
+    <button class="btn primary" id="pSave">${ctx.editSerial !== null ? `Save Changes (Lot ${ctx.editSerial})` : `Save as Lot ${preview.serial}`}</button>
   </div>`;
   /* 카드 제목(샘플명)은 cardEdits가 아니라 ctx.name으로 — 계획창 입력칸과 같은 값 */
-  /* 절차 편집기를 계획 화면 안에서 — 성분을 보면서 절차를 고칠 수 있다 */
-  try {
-    renderProcedurePanel($("#procInline"), { inline: true, groups: ["core"],
-      onChange: () => { const pv = $("#cardPrev"); if (pv) pv.innerHTML = coreCardHtml(preview, recipe); } });
-  } catch (e) { console.warn("proc inline", e); }
+  /* 절차 편집기 — 접힌 상태로 그리면 블록 배치 계산이 어긋나므로 열려 있을 때만 그린다 */
+  const drawProc = () => {
+    const host = $("#procInline"); if (!host) return;
+    try {
+      renderProcedurePanel(host, { inline: true, bare: true, groups: ["core"],
+        onChange: () => { const pv = $("#cardPrev"); if (pv) pv.innerHTML = coreCardHtml(preview, recipe); } });
+    } catch (e) { console.warn("proc inline", e); }
+  };
+  if (secOpen("planProc", false)) drawProc();
+  bindSecs(root, k => { if (k === "planProc") drawProc(); });
   bindCardEditing($("#cardPrev"), (k, v) => {
     if (k === "title") { ctx.name = (v === autoLotLabel(preview)) ? "" : v; const f = $("#pName"); if (f) f.value = ctx.name; return; }
     ctx.cardEdits[k] = v;
@@ -3097,30 +3224,28 @@ function renderPlannerShell(root, ctx) {
   <div class="plan2">
    <div>
     <div class="card">
-      <h3>Shell 성장 계획 <span class="hint">부피비 기반 precursor 계산</span></h3>
-      <div class="row" style="margin-bottom:8px">
-        <label class="f" style="flex:1">Source lot (core stock)
-          <select id="sSrc">${srcOpts}</select></label>
-        <label class="f"><span>Aliquot (<b><i>v</i></b>) [mL]</span><input type="number" step="0.1" class="w80" id="sVol" value="${ctx.volMl}"></label>
-      </div>
-      ${srcLot ? `<div class="note">source ${lotLabel(srcLot)}: stock ${fmtN(srcD && srcD.D, 4)} mmol / ${fmtN(E, 1)} mL · 잔량 추정 ${fmtN(remain, 1)} mL ${remain !== null && ctx.volMl > remain ? '<b style="color:var(--risk)">— 사용량이 잔량을 초과!</b>' : ""} · Aliquot core-trace (<b><i>n</i></b>) = <b>${fmtN(I, 4)} mmol</b>${srcLot && isFinite(srcLot.temRadius) && srcLot.temRadius > 0 ? ` · <span title="source lot에 저장된 TEM 실측 반지름 — R 기본값으로 적용됨">TEM R=${fmtN(srcLot.temRadius, 1)} nm</span>` : ""}</div>` : `<div class="note warn">source lot이 없습니다. 먼저 Core를 저장하세요.</div>`}
-      <div class="row" style="margin-top:10px">
-        <label class="f"><span>Oleic acid [mL]</span><input type="number" step="0.5" class="w80" id="sOa" value="${ctx.oaMl}"></label>
-        <label class="f"><span>1-Octadecene [mL]</span><input type="number" step="0.5" class="w80" id="sOde" value="${ctx.odeMl}"></label>
-        <span class="muted" style="align-self:flex-end;font-size:11px;padding-bottom:6px">Core aliquot과 함께 넣는 <b>초기 배스</b> — mmol 환산 없이 직접 입력</span>
-      </div>
-      <div class="row" style="margin-top:10px">
+      <h3>Shell 성장 계획 <span class="hint">기하(R·T) 기준 — 필요량이 계산되어 나옵니다</span></h3>
+      <div class="row" style="margin-bottom:10px">
         <label class="f"><span>Lot 접두사</span><input type="text" class="w80" id="sLotPre" value="${esc(S.lotPrefix ?? "WJ")}"
           title="설정 탭과 같은 값입니다 — 여기서 고치면 설정·기록·ICP 라벨에 모두 반영됩니다"></label>
-        <label class="f" style="min-width:180px"><span>샘플명 <span class="muted" style="font-weight:500">(비우면 자동)</span></span>
+        <label class="f" style="min-width:180px"><span>샘플명 <span class="muted" style="font-weight:500">(비우면 자동 ${esc(autoLotLabel(preview))})</span></span>
           <input type="text" class="w160" id="sName" value="${esc(ctx.name || "")}" placeholder="${esc(autoLotLabel(preview))}"
             title="출력 카드 제목과 같은 값입니다 — 카드에서 고쳐도 여기에 반영됩니다"></label>
         <label class="f">합성일 (YYMMDD)<input type="text" class="w100" id="sDate" value="${esc(ctx.date)}"></label>
-        <label class="f"><span>Stock volume (<b><i>V</i></b>) [mL]</span><input type="number" step="0.5" class="w80" id="sStock" value="${ctx.stockVol}"></label>
-        <label class="f"><span>Source radius (<b><i>R</i></b>) [nm]</span><input type="number" step="0.1" class="w80" id="sRad" value="${ctx.radius}"></label>
-        <label class="f"><span>Target thickness (<b><i>T</i></b>) [nm]</span><input type="number" step="0.1" class="w80" id="sThk" value="${ctx.thick}"></label>
+        <label class="f"><span>Stock volume (<b><i>V</i></b>) [mL]</span><input type="number" step="0.5" class="w100" id="sStock" value="${ctx.stockVol}"></label>
         <label class="f">Group (자동)<span class="badge info" style="align-self:flex-start;margin-top:6px">${esc(autoGroup) || "–"}</span></label>
       </div>
+      <div class="sep"></div>
+      <div class="row" style="margin-top:8px;align-items:flex-end">
+        <label class="f" style="flex:1;min-width:240px">Source lot (core stock)
+          <select id="sSrc">${srcOpts}</select></label>
+        <label class="f"><span>Aliquot (<b><i>v</i></b>) [mL]</span><input type="number" step="0.1" class="w80" id="sVol" value="${ctx.volMl}"></label>
+        <label class="f"><span>Source <b><i>R</i></b> [nm]</span><input type="number" step="0.1" class="w80" id="sRad" value="${ctx.radius}"></label>
+        <label class="f"><span>Thickness <b><i>T</i></b> [nm]</span><input type="number" step="0.1" class="w80" id="sThk" value="${ctx.thick}"></label>
+        <label class="f"><span>OA [mL]</span><input type="number" step="0.5" class="w80" id="sOa" value="${ctx.oaMl}"></label>
+        <label class="f"><span>ODE [mL]</span><input type="number" step="0.5" class="w80" id="sOde" value="${ctx.odeMl}"></label>
+      </div>
+      ${srcLot ? `<div class="note" style="margin-top:8px">source ${lotLabel(srcLot)}: stock ${fmtN(srcD && srcD.D, 4)} mmol / ${fmtN(E, 1)} mL · 잔량 추정 ${fmtN(remain, 1)} mL ${remain !== null && ctx.volMl > remain ? '<b style="color:var(--risk)">— 사용량이 잔량을 초과!</b>' : ""} · Aliquot core-trace (<b><i>n</i></b>) = <b>${fmtN(I, 4)} mmol</b>${srcLot && isFinite(srcLot.temRadius) && srcLot.temRadius > 0 ? ` · <span title="source lot에 저장된 TEM 실측 반지름 — R 기본값으로 적용됨">TEM R=${fmtN(srcLot.temRadius, 1)} nm</span>` : ""}<br><span class="muted">OA·ODE는 Core aliquot과 함께 넣는 <b>초기 배스</b> — mmol 환산 없이 직접 입력합니다.</span></div>` : `<div class="note warn" style="margin-top:8px">source lot이 없습니다. 먼저 Core를 저장하세요.</div>`}
       <div class="sep"></div>
       <div style="font-size:12px;font-weight:700;color:var(--sub);margin-top:4px">셸 조성</div>
       ${dopRows}
@@ -3133,14 +3258,20 @@ function renderPlannerShell(root, ctx) {
         <div class="tile accent"><div class="v">${fmtN(calc.totalInjUl, 0)}<span style="font-size:13px"> μL</span></div><div class="k">Total injection</div><div class="s">실제 용액 ${fmtN(solLnActual, 3)} mmol / ${fmtN(ctx.solVolMl, 0)} mL (${fmtN(sol.lnConcM, 4)} M) 기준</div></div>
         <div class="tile"><div class="v">${fmtN(tmpD.AB, 4)}</div><div class="k">물질량 총합 AB [mmol]</div><div class="s">몰농도 ${fmtN(tmpD.AC, 5)} mmol/mL</div></div>
       </div>
-      ${(() => {
+      <div class="row" style="margin-top:10px">
+        <span class="muted">Injection 단계(μL):</span>
+        <input type="text" class="w160 mono" id="sInj" value="${ctx.inj.join(", ")}" title="고정 주입량 목록, 마지막은 자동(나머지)">
+        <span class="badge info">${(calc.injSteps || []).map((v, i) => `#${i + 1}: ${fmtN(v, 0)}`).join("  ")}</span>
+      </div>
+    </div>
+    ${(() => {
         const bal = shellBalance(ctx, calc, sol);
         if (!bal || !bal.rows.length) return "";
-        /* 부족(<1.00×)만 경고다. 과량은 셸 성장에서 표준이라 정보로만 표시한다. */
+        /* 부족(<1.00×)만 경고다. 과량은 셸 성장에서 표준이라 정보로만 표시한다.
+           그래서 기본 펼침도 '부족이 있을 때'만 — 문제가 있을 때만 자리를 차지한다. */
         const short = bal.rows.filter(r => r.x < 0.98);
-        return `<div class="note ${bal.ok ? (short.length ? "warn" : "okay") : ""}" style="margin-top:10px">
-          <b>셸 원소 수지</b> — 이번 성장에 필요한 양 대비 주입으로 실제 들어가는 양
-          ${bal.ok ? `<table class="tbl" style="margin-top:6px;max-width:520px"><thead><tr>
+        const inner = `<div class="note ${bal.ok ? (short.length ? "warn" : "okay") : ""}" style="margin:0">
+          ${bal.ok ? `<table class="tbl" style="max-width:520px"><thead><tr>
               <th class="l">원소</th><th>필요 [mmol]</th><th>주입 [mmol]</th><th>비율</th></tr></thead><tbody>
               ${bal.rows.map(r => `<tr><td class="l"><b>${esc(r.el)}</b></td>
                 <td class="num">${fmtN(r.need, 4)}</td><td class="num">${fmtN(r.got, 4)}</td>
@@ -3153,27 +3284,21 @@ function renderPlannerShell(root, ctx) {
                 ? "<b>부족한 원소가 있습니다</b> — 주입량·용액 농도·조성 계수 중 하나가 어긋났을 수 있습니다."
                 : "셸 성장에서 Na·F 등의 과량은 정상입니다(용액 조성이 정한 값). 부족한 원소가 없으면 조성대로 자랍니다."}
                 ${bal.extra && bal.extra.length ? ` 리간드·용매 유래 원소(${esc(bal.extra.join(", "))})는 수지 대상이 아니라 제외했습니다.` : ""}</div>`
-            : `<br><span class="muted">계산 불가 — ${esc((bal.bad || []).join(" / "))}</span>`}
+            : `<span class="muted">계산 불가 — ${esc((bal.bad || []).join(" / "))}</span>`}
         </div>`;
+        return secHtml({ key: "planBal", open: short.length > 0 || !bal.ok,
+          title: "셸 원소 수지",
+          hint: "필요한 양 대비 실제 주입되는 양",
+          summary: balSummary(bal), body: inner });
       })()}
-      <div class="row">
-        <span class="muted">Injection 단계(μL):</span>
-        <input type="text" class="w160 mono" id="sInj" value="${ctx.inj.join(", ")}" title="고정 주입량 목록, 마지막은 자동(나머지)">
-        <span class="badge info">${(calc.injSteps || []).map((v, i) => `#${i + 1}: ${fmtN(v, 0)}`).join("  ")}</span>
-      </div>
-      <div class="row" style="margin-top:6px">
-        <label class="f" style="flex:1">Memo<input type="text" id="sMemo" value="${esc(ctx.memo)}"></label>
-      </div>
-      <div class="row right" style="margin-top:8px">
-        <button class="btn" id="sEditProto">전체 프로세스 편집…</button>
-        <button class="btn" id="sReset">Reset</button>
-        <button class="btn" id="sPrint">Print</button>
-        <button class="btn primary" id="sSave" ${srcLot ? "" : "disabled"}>${ctx.editSerial !== null ? `Save Changes (Lot ${ctx.editSerial})` : `Save as Lot ${preview.serial}`}</button>
-      </div>
-    </div>
-    <div id="procInlineS"></div>
-    <div class="card">
-      <h3>Shell-precursor solution <span class="hint">설정 탭의 Shell Solution과 같은 값 — 여기서 고쳐도 함께 반영됩니다</span></h3>
+    ${secHtml({ key: "planProcS", open: false, title: "합성 프로세스",
+      hint: "Shell 합성 · 용액 조제 — 오른쪽 카드에 즉시 반영",
+      summary: procSummary(["shell", "sol"]),
+      body: `<div id="procInlineS"></div>` })}
+    ${secHtml({ key: "planSol", open: false, title: "Shell-precursor solution",
+      hint: "설정 탭의 Shell Solution과 같은 값",
+      summary: solSummary(sol, calc.totalInjUl),
+      body: `
       <div class="row" style="gap:8px;margin-bottom:8px;align-items:flex-end">
         <label class="f"><span>용액 부피 [mL]</span><input type="number" step="1" min="0" class="w80" id="sSolVol" value="${ctx.solVolMl}"></label>
         <label class="f"><span>Ln 총 몰수 일괄 입력 <span class="muted" style="font-weight:500">(조성비로 배분)</span></span>
@@ -3195,10 +3320,9 @@ function renderPlannerShell(root, ctx) {
         <button class="btn sm" id="solAddAux">+ 보조·첨가 추가</button>
         <span class="badge gray">보조 ${fmtN(sol.naTfaMmol, 3)} mmol = ${fmtN(sol.naTfaMg, 0)} mg (Methanol ${fmtN(S.shellSol.mtohMl, 1)} mL 분산)</span>
         <button class="btn sm" id="solPrint">Print</button>
-      </div>
-    </div>
+      </div>` })}
    </div>
-   <div>
+   <div class="planside">
     <div class="card">
       <h3>Print Preview <span class="hint">${esc(lotFormula(preview))} @ ${srcLot ? esc(lotLabel(srcLot)) : "?"} · 클릭하여 수정 가능</span>
         <button class="btn sm" id="sCardReset" style="margin-left:auto">Reset Edits</button></h3>
@@ -3207,14 +3331,30 @@ function renderPlannerShell(root, ctx) {
       <div style="zoom:.96" id="cardPrevSol">${shellSolutionCardHtml(lotFormula(preview) + " solution", sol, ctx.solCardEdits)}</div>
     </div>
    </div>
+  </div>
+  <div class="planbar">
+    <span class="pbname">${esc(ctx.name || autoLotLabel(preview))}</span>
+    <span class="pbmeta">${esc(lotFormula(preview))} · T ${fmtN(ctx.thick, 1)} nm · 주입 ${fmtN(calc.totalInjUl, 0)} μL</span>
+    <label class="f" style="flex:1;min-width:160px;margin:0"><input type="text" id="sMemo"
+      placeholder="Memo" value="${esc(ctx.memo)}"></label>
+    <button class="btn" id="sEditProto">전체 프로세스 편집…</button>
+    <button class="btn" id="sReset">Reset</button>
+    <button class="btn" id="sPrint">Print</button>
+    <button class="btn primary" id="sSave" ${srcLot ? "" : "disabled"}>${ctx.editSerial !== null ? `Save Changes (Lot ${ctx.editSerial})` : `Save as Lot ${preview.serial}`}</button>
   </div>`;
-  try {
-    renderProcedurePanel($("#procInlineS"), { inline: true, groups: ["shell", "sol"],
-      onChange: () => {
-        const a = $("#cardPrevS"); if (a) a.innerHTML = shellCardHtml(preview, calc, lotFormula(preview));
-        const b2 = $("#cardPrevSol"); if (b2) b2.innerHTML = shellSolutionCardHtml(lotFormula(preview) + " solution", sol, ctx.solCardEdits);
-      } });
-  } catch (e) { console.warn("proc inline shell", e); }
+  /* 절차 편집기 — 접힌 상태로 그리면 블록 배치 계산이 어긋나므로 열려 있을 때만 */
+  const drawProcS = () => {
+    const host = $("#procInlineS"); if (!host) return;
+    try {
+      renderProcedurePanel(host, { inline: true, bare: true, groups: ["shell", "sol"],
+        onChange: () => {
+          const a = $("#cardPrevS"); if (a) a.innerHTML = shellCardHtml(preview, calc, lotFormula(preview));
+          const b2 = $("#cardPrevSol"); if (b2) b2.innerHTML = shellSolutionCardHtml(lotFormula(preview) + " solution", sol, ctx.solCardEdits);
+        } });
+    } catch (e) { console.warn("proc inline shell", e); }
+  };
+  if (secOpen("planProcS", false)) drawProcS();
+  bindSecs(root, k => { if (k === "planProcS") drawProcS(); });
   bindCardEditing($("#cardPrevS"), (k, v) => {
     if (k === "title") { ctx.name = (v === autoLotLabel(preview)) ? "" : v; const f = $("#sName"); if (f) f.value = ctx.name; return; }
     ctx.cardEdits[k] = v;
@@ -5696,12 +5836,17 @@ function renderProcedurePanel(root, opts){
   const GROUPS = opts.groups ? ALLG.filter(g => opts.groups.indexOf(g[0]) >= 0) : ALLG;
   if (opts.groups && GROUPS.length && GROUPS.map(g=>g[0]).indexOf(_procUI.group) < 0) _procUI.group = GROUPS[0][0];
   let group=_procUI.group, selId=_procUI.selId, dragFrom=-1, dragId=null, _draggingId=null;
-  const card=document.createElement("div"); card.className="card"; card.style.marginTop=opts.inline?"0":"14px";
-  const hh=document.createElement("h3");
-  hh.innerHTML = '합성 프로세스' + (opts.inline
-    ? ' <span class="hint">여기서 바로 편집 — 오른쪽 미리보기에 즉시 반영됩니다</span>'
-    : '');
-  card.appendChild(hh);
+  /* bare: 이미 접이식 섹션이 제목·테두리를 갖고 있으므로 편집기는 알맹이만 그린다 */
+  const card=document.createElement("div");
+  card.className = opts.bare ? "" : "card";
+  card.style.marginTop = (opts.bare || opts.inline) ? "0" : "14px";
+  if (!opts.bare) {
+    const hh=document.createElement("h3");
+    hh.innerHTML = '합성 프로세스' + (opts.inline
+      ? ' <span class="hint">여기서 바로 편집 — 오른쪽 미리보기에 즉시 반영됩니다</span>'
+      : '');
+    card.appendChild(hh);
+  }
   const nt=document.createElement("div"); nt.className="note"; nt.style.margin="4px 0 8px";
   nt.innerHTML = opts.inline
     ? "블록을 <b>클릭</b>하면 왼쪽에서 상세값을 고치고, <b>드래그</b>로 배치·<b>모서리 손잡이</b>로 크기를 바꿉니다. <b>Ctrl+C / Ctrl+D / Ctrl+V</b>로 복사·복제·붙여넣기 (그룹 간 이동 가능)."
