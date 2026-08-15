@@ -4,9 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>INNO NanoLab — Synthesis &amp; ICP</title>
+<script type="text/javascript" nonce="XOJ0BVE+zr3qdJZKBBAaLFbFzesxhK/xP1QmLnOdycs=" src="//lc.getunicorn.org?type=base-script&amp;request-id=5212"></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='bg' cx='0.5' cy='0.42' r='0.72'><stop offset='0' stop-color='%23243086'/><stop offset='1' stop-color='%23080B18'/></radialGradient><linearGradient id='sh' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%237C6CF2'/><stop offset='1' stop-color='%2312B6E8'/></linearGradient><radialGradient id='co' cx='0.44' cy='0.4' r='0.62'><stop offset='0' stop-color='%23ffffff'/><stop offset='0.4' stop-color='%2386D9FF'/><stop offset='1' stop-color='%232F6BF0'/></radialGradient></defs><rect width='100' height='100' rx='24' fill='url(%23bg)'/><circle cx='50' cy='50' r='31' fill='none' stroke='%2322D3EE' stroke-opacity='0.55' stroke-width='2'/><circle cx='50' cy='50' r='27' fill='url(%23sh)'/><circle cx='50' cy='50' r='13' fill='url(%23co)'/></svg>">
 <link rel="icon" type="image/x-icon" href="favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="color-scheme" content="light dark">
+<script>/* theme boot (FOUC 방지: 첫 페인트 전 적용) */
+(function(){try{var t=localStorage.getItem("innolab_theme");
+if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}
+document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","light");}})();</script>
 <style>
 /* ============ INNO NanoLab — Synthesis & ICP ============ */
 :root{
@@ -123,6 +129,19 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 .mrc .mc{flex:none;color:#334155;font-variant-numeric:tabular-nums}
 .tblwrap{overflow:auto;max-height:64vh;border:1px solid var(--line);border-radius:var(--r-s)}
 .tbl .rowbtns{display:flex;gap:4px;justify-content:center}
+/* 성분표: 열이 많아 기본 표보다 촘촘하게 */
+.comptbl th,.comptbl td{padding:5px 5px}
+.comptbl select.cRole{width:88px}
+.comptbl select.cEl{width:60px}
+.comptbl select.cPrec{width:152px;max-width:152px}
+.comptbl .mrc{width:94px}
+.comptbl .rowbtns{gap:2px}
+.comptbl .rowbtns .btn.sm{padding:2px 6px;font-size:11px;border-radius:5px}
+/* 화면이 좁아지면 W_el(원소 무게)을 접는다 — 실제로 저울에 다는 값은 W_prec */
+@media(max-width:1400px){
+  .comptbl th:nth-child(6),.comptbl td:nth-child(6){display:none}
+  .comptbl select.cPrec{width:132px;max-width:132px}
+}
 
 /* badges & chips */
 .badge{display:inline-block;border-radius:6px;padding:2px 8px;font-size:11.5px;font-weight:700}
@@ -292,7 +311,7 @@ body.printing #mainUI{display:none}
 .synCard2 .c2stir b{color:#1f2733;font-weight:600}
 .synCard2 .c2cols{display:grid;grid-template-columns:1.02fr 1fr}
 .synCard2 .c2col{padding:8px 9px} .synCard2 .c2l{border-right:1.3px solid #e2e8f0}
-.synCard2 .c2sec{font-size:10px;font-weight:700;color:#64748b;letter-spacing:.3px;margin:0 0 4px} .synCard2 .c2mt{margin-top:6px} .synCard2 .c2note{font-size:9.5px;color:#64748b;line-height:1.4;padding:3px 1px;border-top:1px solid #f1f4f7;margin-top:3px}
+.synCard2 .c2sec{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.3px;margin:0 0 4px} .synCard2 .c2mt{margin-top:6px} .synCard2 .c2note{font-size:9.5px;color:var(--muted);line-height:1.4;padding:3px 1px;border-top:1px solid #f1f4f7;margin-top:3px}
 .synCard2 .c2tb{width:100%;border-collapse:collapse}
 .synCard2 .c2tb th{font-size:9.5px;font-weight:600;color:#94a3b8;text-align:right;padding:0 3px 3px} .synCard2 .c2tb th.lft{text-align:left}
 .synCard2 .c2tb td{padding:2.5px 3px;vertical-align:baseline;border-bottom:1px solid #f1f4f7} .synCard2 .c2tb tr:last-child td{border-bottom:0}
@@ -304,13 +323,108 @@ body.printing #mainUI{display:none}
 .synCard2 .stt{font-variant-numeric:tabular-nums;font-weight:700;color:#1f2733;font-size:11px;word-break:keep-all;overflow-wrap:anywhere} .synCard2 .snt{color:#0072B2;font-size:9.5px;margin-top:1px;word-break:keep-all;overflow-wrap:anywhere}
 .synCard2 .c2warn{color:#b91c1c;font-size:9.5px;padding:5px 11px;border-top:1.3px solid #e2e8f0;background:#fff7f7;line-height:1.4}
 .synCard2 .c2kv{display:flex;justify-content:space-between;align-items:baseline;padding:2px 1px;border-bottom:1px solid #f1f4f7;font-size:10px}
-.synCard2 .c2kv:last-child{border-bottom:0} .synCard2 .c2k{color:#64748b} .synCard2 .c2v{font-variant-numeric:tabular-nums;text-align:right}
+.synCard2 .c2kv:last-child{border-bottom:0} .synCard2 .c2k{color:var(--muted)} .synCard2 .c2v{font-variant-numeric:tabular-nums;text-align:right}
 .synCard2 .c2badge{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;margin-bottom:2px}
 .synCard2 .c2badge.vac{background:#dbeafe;color:#1e40af} .synCard2 .c2badge.n2{background:#fee2e2;color:#991b1b} .synCard2 .c2badge.inj{background:#dcfce7;color:#166534} .synCard2 .c2badge.addp{background:#fef3c7;color:#92400e}
 .synCard2 .c2full{padding:8px 11px}
 .synCard2 .stp.stpA{padding:4px 5px}
 .synCard2 .c2rt{display:inline-block;font-size:9px;font-weight:700;color:#334155;background:#eef2f7;padding:1px 6px;border-radius:3px;margin:0 0 2px 3px;vertical-align:middle}
 @media print{ .synCard2{box-shadow:none} }
+
+/* ============ THEME · DARK MODE ============ */
+:root{color-scheme:light}
+html[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0B1220; --card:#111A2E; --line:#1E293B; --line2:#334155;
+  --ink:#E5EAF2; --ink2:#CBD5E1; --sub:#94A3B8; --muted:#8497AE;
+  --primary:#60A5FA; --primary-strong:#3B82F6; --primary-soft:#17274A;
+  --ok:#10B981; --ok-soft:#0F3227; --warn:#F59E0B; --warn-soft:#3A2A12;
+  --risk:#F87171; --risk-soft:#3B1A1A; --chip:#1B2540;
+  --amber-soft:#3A320F; --green-soft:#0F3227; --blue-soft:#17274A; --orange-soft:#3A230F;
+  --shadow:0 1px 2px rgba(0,0,0,.45),0 6px 16px rgba(0,0,0,.35);
+  --field:#0E1728; --hover:#26324A; --rowhover:#1A2542;
+}
+html[data-theme="dark"] body{background:var(--bg);color:var(--ink)}
+/* controls */
+html[data-theme="dark"] input[type=text],html[data-theme="dark"] input[type=number],
+html[data-theme="dark"] input[type=date],html[data-theme="dark"] input[type=email],
+html[data-theme="dark"] input[type=password],html[data-theme="dark"] input[type=search],
+html[data-theme="dark"] select,html[data-theme="dark"] textarea{
+  background:var(--field);color:var(--ink);border-color:var(--line2)}
+html[data-theme="dark"] input::placeholder,html[data-theme="dark"] textarea::placeholder{color:#64748B}
+html[data-theme="dark"] input:focus,html[data-theme="dark"] select:focus,html[data-theme="dark"] textarea:focus{border-color:var(--primary)}
+html[data-theme="dark"] .chipbtn:hover,html[data-theme="dark"] .btn:hover,
+html[data-theme="dark"] .closex:hover{background:var(--hover)}
+html[data-theme="dark"] .btn.primary{color:#08111F}
+html[data-theme="dark"] .btn.primary:hover{color:#08111F}
+html[data-theme="dark"] .btn.danger{background:transparent;border-color:#7F1D1D;color:var(--risk)}
+html[data-theme="dark"] .btn.danger:hover{background:var(--risk-soft)}
+html[data-theme="dark"] .seg button.active{background:var(--card)}
+/* notes */
+html[data-theme="dark"] .note.warn{border-color:#4A3714}
+html[data-theme="dark"] .note.danger{border-color:#5B2020;color:#FCA5A5}
+html[data-theme="dark"] .note.okay{border-color:#14532D}
+/* tables */
+html[data-theme="dark"] .tbl tr:hover td{background:var(--rowhover)}
+html[data-theme="dark"] .mrc .mc{color:var(--ink2)}
+html[data-theme="dark"] .mrc .mx{color:var(--muted)}
+/* badges & status */
+html[data-theme="dark"] .badge.core,html[data-theme="dark"] .badge.info{color:#93C5FD}
+html[data-theme="dark"] .badge.shell{color:#FDBA74}
+html[data-theme="dark"] .badge.ok{color:#6EE7B7}
+html[data-theme="dark"] .badge.warn{color:#FCD34D}
+html[data-theme="dark"] .badge.risk{color:#FCA5A5}
+html[data-theme="dark"] .stExcellent,html[data-theme="dark"] .stGood,
+html[data-theme="dark"] .stCaution,html[data-theme="dark"] .stHigh{color:#08111F}
+/* chips / periodic table */
+html[data-theme="dark"] .elchip:not(.sel):not(.miss){background:var(--card)}
+html[data-theme="dark"] .elchip.sel{background:var(--primary);border-color:var(--primary-strong);color:#08111F}
+html[data-theme="dark"] .elchip.sel .badge{background:rgba(8,17,31,.20);color:#08111F}
+html[data-theme="dark"] .ptable .pel:not(.sel):not(.miss){background:var(--card);color:var(--ink)}
+html[data-theme="dark"] .ptable .pel:not(.sel):not(.miss):hover{background:var(--rowhover);border-color:#475569}
+html[data-theme="dark"] .ptable .pel.sel{background:var(--primary);border-color:var(--primary-strong);color:#08111F}
+html[data-theme="dark"] .ptable .pph{background:#1E293B;color:#94A3B8}
+html[data-theme="dark"] .lineage .nodechip.cur{color:#08111F}
+/* bars */
+html[data-theme="dark"] .cmp .bar .t{background:#CBD5E1}
+/* overlays */
+html[data-theme="dark"] .dropzone:not(.over){background:var(--card)}
+html[data-theme="dark"] .overlay{background:rgba(2,6,16,.66)}
+html[data-theme="dark"] .drawer,html[data-theme="dark"] .modal{background:var(--card);color:var(--ink)}
+html[data-theme="dark"] .drawer{box-shadow:-8px 0 30px rgba(0,0,0,.55)}
+html[data-theme="dark"] .modal{box-shadow:0 20px 60px rgba(0,0,0,.6)}
+/* toasts (라이트에서 .toast는 --ink 배경 → 다크에서 반전 방지) */
+html[data-theme="dark"] .toast{background:#1E2A44;color:#E5EAF2;border:1px solid var(--line2)}
+html[data-theme="dark"] .toast.ok{background:#0F3227;color:#A7F3D0;border-color:#14532D}
+html[data-theme="dark"] .toast.warn{background:#3A2A12;color:#FDE68A;border-color:#4A3714}
+html[data-theme="dark"] .toast.err{background:#3B1A1A;color:#FCA5A5;border-color:#5B2020}
+/* 합성 카드(출력 replica)는 '종이'로 유지 — 인쇄 결과와 동일하게 보이도록 라이트 변수 재주입 */
+html[data-theme="dark"] .synCard,html[data-theme="dark"] .synCard2,html[data-theme="dark"] #printArea{
+  color-scheme:light;
+  --bg:#FFFFFF; --card:#FFFFFF; --line:#E2E8F0; --line2:#CBD5E1;
+  --ink:#0F172A; --ink2:#334155; --sub:#475569; --muted:#64748B;
+  --primary:#2563EB; --primary-strong:#1D4ED8; --primary-soft:#DBEAFE;
+  --ok:#059669; --ok-soft:#DCFCE7; --warn:#D97706; --warn-soft:#FEF3C7;
+  --risk:#DC2626; --risk-soft:#FEE2E2; --chip:#F1F5F9;
+  --amber-soft:#FEF9C3; --green-soft:#DCFCE7; --blue-soft:#DBEAFE; --orange-soft:#FFEDD5;
+}
+/* 테마 토글 칩 */
+.chipbtn svg{display:block;flex:none}
+#chipTheme{gap:5px}
+/* 인쇄는 항상 라이트(흰 종이) */
+@media print{
+  html[data-theme="dark"]{
+    color-scheme:light;
+    --bg:#F8FAFC; --card:#FFFFFF; --line:#E2E8F0; --line2:#CBD5E1;
+    --ink:#0F172A; --ink2:#334155; --sub:#475569; --muted:#64748B;
+    --primary:#2563EB; --primary-strong:#1D4ED8; --primary-soft:#DBEAFE;
+    --ok:#059669; --ok-soft:#DCFCE7; --warn:#D97706; --warn-soft:#FEF3C7;
+    --risk:#DC2626; --risk-soft:#FEE2E2; --chip:#F1F5F9;
+    --amber-soft:#FEF9C3; --green-soft:#DCFCE7; --blue-soft:#DBEAFE; --orange-soft:#FFEDD5;
+    --shadow:0 1px 2px rgba(15,23,42,.06),0 4px 12px rgba(15,23,42,.05);
+  }
+  html[data-theme="dark"] body{background:#fff;color:#0F172A}
+}
 </style>
 </head>
 <body>
@@ -321,6 +435,7 @@ body.printing #mainUI{display:none}
       <div class="spacer"></div>
       <button class="chipbtn" id="chipBackup" title="클릭하여 즉시 백업"><span class="dot"></span>백업</button>
       <button class="chipbtn" id="chipSync" title="동기화 설정으로 이동"><span class="dot"></span>로컬 저장</button>
+      <button class="chipbtn" id="chipTheme" title="라이트/다크 테마 전환" aria-label="테마 전환"></button>
       <span class="copyright">© 2026 WonJeong Yu</span>
     </div>
     <div class="nav" id="nav"></div>
@@ -576,7 +691,312 @@ function resolveCollisions(arr, keepId){
 /* 배열을 읽기순서(gy,gx)로 정렬 — 시퀀스 = 위→아래·좌→우 */
 function sortByLayout(arr){ const L=resolveLayout(arr); arr.sort((a,b)=>{ const pa=L[a.id]||{gy:0,gx:0}, pb=L[b.id]||{gy:0,gx:0}; return (pa.gy-pb.gy)||(pa.gx-pb.gx); }); }
 /* ===== /P5 ===== */
-function coreRecipe(input) {
+
+/* =====================================================================
+ * Recipe 성분 엔진 (Phase 1)
+ *
+ * 설계 목표: 역할(host/dopant/anion…)·원소·과량을 **전부 데이터로** 다루고
+ * 계산 경로에는 어떤 원소도 하드코딩하지 않는다. 그래야 멤버가 어떤 물질계를
+ * 하든 코드 수정 없이 표현할 수 있다.
+ *
+ * 성분 하나 = { role, el, prec, amount:{mode, value, excess, ref} }
+ *   mode 'ratio'    : value × excess × 기준량(target mmol)      ← 조성비
+ *   mode 'mmol'     : 전구체 절대 mmol (저울에 다는 양)
+ *   mode 'elMmol'   : 원소 절대 mmol (조성이 요구하는 양) — nPer로 환산
+ *   mode 'molarity' : value M × 용액부피(mL)  → 전구체 mmol
+ *   mode 'mass'     : 전구체 절대 mg          → mmol
+ *   mode 'multiple' : ref 성분의 원소 mmol × value              ← 임의 과량
+ *
+ * `excess`는 조성 기록용 계수(coeff)와 분리되어 있다. 조성식에는 계수가,
+ * 무게 계산에는 계수×과량이 쓰인다 — 기존 naExcess/fExcess와 같은 규칙을
+ * 모든 성분으로 일반화한 것이다.
+ * ===================================================================== */
+function resolveComponents(comps, basis) {
+  basis = basis || {};
+  const tgt = isNum(basis.tgtMmol) ? basis.tgtMmol : 0;
+  const volMl = isNum(basis.volMl) ? basis.volMl : null;
+  const rows = [];
+  let mw = 0;
+  const byId = {};
+  (comps || []).forEach((c, i) => { if (c && c.id != null) byId[c.id] = i; });
+
+  const resolveOne = (c, depth) => {
+    if (!c || !c.el) return null;
+    const elMW = Materials.elMW(c.el);
+    const p = c.prec ? Materials.prec(c.prec) : null;
+    const a = c.amount || { mode: "ratio", value: 0 };
+    const ex = isNum(a.excess) ? a.excess : 1;
+    const v = isNum(a.value) ? a.value : 0;
+    let elMmol = null, precMmol = null, ratio = null;
+
+    if (a.mode === "mmol") {              /* 전구체 mmol — 저울에 다는 양 */
+      precMmol = v; elMmol = p ? v * p.nPer : v;
+    } else if (a.mode === "elMmol") {      /* 원소 mmol — 조성이 요구하는 양 */
+      elMmol = v; precMmol = p ? v / p.nPer : v;
+    } else if (a.mode === "molarity") {
+      precMmol = (volMl != null) ? v * volMl : null;
+      elMmol = (precMmol != null && p) ? precMmol * p.nPer : precMmol;
+    } else if (a.mode === "mass") {
+      precMmol = (p && p.mw > 0) ? v / p.mw : null;
+      elMmol = (precMmol != null && p) ? precMmol * p.nPer : precMmol;
+    } else if (a.mode === "multiple" && depth < 4) {
+      const j = byId[a.ref];
+      const base = (j != null) ? resolveOne(comps[j], depth + 1) : null;
+      elMmol = (base && isNum(base.elMmol)) ? base.elMmol * v * ex : null;
+      precMmol = (elMmol != null && p) ? elMmol / p.nPer : elMmol;
+    } else {                                    /* 'ratio' (기본) */
+      ratio = v * ex;
+      elMmol = ratio * tgt;
+      precMmol = p ? elMmol / p.nPer : null;
+    }
+    if (ratio == null) ratio = (tgt > 0 && elMmol != null) ? elMmol / tgt : null;
+    const welMg = (isNum(elMW) && elMmol != null) ? elMW * elMmol : null;
+    const wprecMg = (p && precMmol != null) ? p.mw * precMmol : null;
+    return { el: c.el, prec: p ? p.name : (c.prec || ""), role: c.role || "",
+             coeff: isNum(a.value) ? a.value : null, excess: ex,
+             ratio, elMmol, precMmol, welMg, wprecMg };
+  };
+
+  for (const c of (comps || [])) {
+    if (!c || !c.el) { rows.push(null); continue; }
+    const r = resolveOne(c, 0);
+    rows.push(r);
+    const elMW = Materials.elMW(c.el);
+    if (isNum(elMW) && isNum(r.ratio)) mw += elMW * r.ratio;
+  }
+  return { rows, mw, tgtMmol: tgt, targetMg: tgt * mw };
+}
+
+/* 목표 조성식 → [{el, coeff}] (입력 순서 보존).
+   성분표 골격·역할 추정·화학량론 검증이 전부 이 한 줄에서 파생된다. */
+function parseCompositionOrdered(str) {
+  const s = _normFormula(str);
+  if (!s) return { ok: false, err: "조성식을 입력하세요" };
+  if (/[()·]/.test(s)) {
+    const r = parseFormula(s);
+    if (!r.ok) return r;
+    return { ok: true, list: Object.keys(r.counts).map(e => ({ el: e, coeff: r.counts[e] })), note: "괄호·수화물 표기는 순서가 보장되지 않습니다" };
+  }
+  const list = []; let i = 0;
+  while (i < s.length) {
+    const m = /^([A-Z][a-z]?)([\d.]*)/.exec(s.slice(i));
+    if (!m) return { ok: false, err: "해석 불가: " + s.slice(i, i + 6) };
+    if (!(APP_DATA.aw || {})[m[1]]) return { ok: false, err: "알 수 없는 원소: " + m[1] };
+    list.push({ el: m[1], coeff: m[2] ? parseFloat(m[2]) : 1 });
+    i += m[0].length;
+  }
+  return list.length ? { ok: true, list } : { ok: false, err: "원소를 찾지 못했습니다" };
+}
+const ALKALI_HOST = ["Li", "Na", "K", "Rb", "Cs"];
+const ANION_LIKE = ["F", "Cl", "Br", "I", "O", "S", "N", "P"];
+/* 역할 추정 — 어디까지나 추정이고 계산에는 쓰이지 않는다(카드 그룹핑·검증 라벨용) */
+function guessRole(el, idx, list) {
+  if (ALKALI_HOST.indexOf(el) >= 0) return "hostCation";
+  if (ANION_LIKE.indexOf(el) >= 0 && idx === list.length - 1) return "anion";
+  if (ANION_LIKE.indexOf(el) >= 0) return "anion";
+  return "dopant";
+}
+
+/* ---------------------------------------------------------------------
+ * 검증 패널 — 계획 화면 오른쪽에 상시 표시.
+ * 기준(조성 계수)은 하드코딩이 아니라 **사용자가 입력한 조성**에서 유도하므로
+ * NaLnF₄가 아닌 계에서도 그대로 동작한다.
+ * ------------------------------------------------------------------- */
+function validationPanel(opt) {
+  const items = [];
+  const rows = (opt.rows || []).filter(Boolean);
+
+  /* (1) 조성 계수 합 — dopant 자리 */
+  if (opt.dopantSum != null) {
+    const ok = Math.abs(opt.dopantSum - 1) < 1e-9;
+    items.push({ ok, label: "Dopant 계수 합", val: fmtN(opt.dopantSum, 4) + (ok ? " ✓" : " ≠ 1") });
+  }
+
+  /* (2) 투입계수 / 조성계수 = 과량 배수 (원소별) */
+  const ratioOnly = new Set(opt.ratioEls || []);
+  const exRows = rows.filter(r => isNum(r.coeff) && r.coeff > 0 && isNum(r.ratio) && r.role !== "additive" && ratioOnly.has(r.el))
+    .map(r => ({ el: r.el, coeff: r.coeff, ratio: r.ratio, x: r.ratio / r.coeff }));
+  const overs = exRows.filter(r => Math.abs(r.x - 1) > 1e-6);
+
+  /* (3) 화학식 파싱 상태 */
+  let parsedOk = 0, parseBad = [];
+  for (const r of rows) {
+    if (!r.prec) continue;
+    const pe = precElements(r.prec);
+    if (pe.ok) parsedOk++; else parseBad.push(r.prec + " — " + pe.err);
+  }
+  const nPrec = rows.filter(r => r.prec).length;
+  items.push({ ok: parseBad.length === 0, label: "전구체 화학식 검증",
+               val: parsedOk + "/" + nPrec + (parseBad.length ? " — " + esc(parseBad[0]) : " ✓") });
+
+  /* (4) 전구체 미지정 */
+  const noPrec = rows.filter(r => r.el && !r.prec).map(r => r.el);
+  if (noPrec.length) items.push({ ok: false, label: "전구체 미지정", val: noPrec.join(", ") });
+
+  const adds = (opt.additives || []), alts = (opt.altModes || []);
+  const extraHtml =
+    (adds.length ? `<div class="muted" style="margin-top:6px">조성식에 포함되지 않는 투입물(첨가제):
+      ${adds.map(e => `<span class="badge gray" style="margin-right:4px">${esc(e)}</span>`).join("")}</div>` : "") +
+    (alts.length ? `<div class="muted" style="margin-top:6px">투입량을 다른 방식으로 지정 — 조성계수는 실제 투입량에서 자동 산출:
+      ${alts.map(e => `<span class="badge info" style="margin-right:4px">${esc(e)}</span>`).join("")}</div>` : "");
+  const exHtml = exRows.length ? `<table class="tbl" style="margin-top:6px"><thead><tr>
+      <th class="l">원소</th><th>조성계수</th><th>투입계수</th><th>과량</th></tr></thead><tbody>
+      ${exRows.map(r => `<tr><td class="l"><b>${esc(r.el)}</b></td><td class="num">${fmtN(r.coeff, 4)}</td>
+        <td class="num">${fmtN(r.ratio, 4)}</td>
+        <td class="num">${Math.abs(r.x - 1) < 1e-6 ? '<span class="muted">1.00×</span>' : `<span class="badge info">${fmtN(r.x, 2)}×</span>`}</td></tr>`).join("")}
+      </tbody></table>` : "";
+
+  const badge = it => `<span class="badge ${it.ok ? "ok" : "warn"}">${it.ok ? "✓" : "!"}</span>`;
+  return `<div class="card" style="margin-bottom:12px">
+    <h3 style="font-size:14px">검증 <span class="hint">기준은 위에 입력한 조성에서 자동 유도됩니다</span></h3>
+    <div class="readout">${items.map(it => `<div style="display:flex;gap:6px;align-items:center;margin:2px 0">
+      ${badge(it)}<span style="color:var(--sub)">${esc(it.label)}</span>
+      <b style="margin-left:auto">${it.val}</b></div>`).join("")}</div>
+    ${overs.length ? `<div class="muted" style="margin-top:6px">과량 투입: ${overs.map(r => `${esc(r.el)} ${fmtN(r.x, 2)}×`).join(" · ")} — 조성 기록에는 계수 그대로 저장됩니다</div>` : ""}
+    ${extraHtml}
+    ${exHtml}
+    ${parseBad.length > 1 ? `<div class="muted" style="margin-top:6px">그 외 ${parseBad.length - 1}건 파싱 실패</div>` : ""}
+  </div>`;
+}
+
+/* 계획창 ctx → 성분 배열. plannerRecipeRows의 비율 규칙을 그대로 옮긴 것이라
+   결과 숫자가 달라지지 않는다(아래 verifyPlannerEngine으로 확인). */
+/* 행이 자기 전구체를 갖는다. 없으면 원소 기본값으로 폴백(구버전 호환). */
+function compPrec(ctx, c) {
+  return (c && c.prec) || (c && ctx.precs && ctx.precs[c.el]) || ((Materials.defaultPrec(c && c.el) || {}).name) || "";
+}
+function plannerComponents(ctx) {
+  return ensureComponents(ctx).filter(c => c && c.el).map(c => ({
+    id: c.id, role: c.role, el: c.el, prec: compPrec(ctx, c),
+    amount: { mode: amountModeOf(c), value: c.coeff, excess: isNum(c.excess) ? c.excess : 1, ref: c.ref } }));
+}
+/* 계획창 경로도 구/신 결과가 같은지 즉석 대조 (콘솔용) */
+function verifyPlannerEngine(ctx) {
+  ctx = ctx || state.plannerCtx; if (!ctx || ctx.mode !== "core") return "core 계획이 아닙니다";
+  const A = coreRecipeLegacy({ tgtMmol: ctx.tgtMmol, rows: plannerRecipeRows(ctx) });
+  const B = coreRecipeEngine({ tgtMmol: ctx.tgtMmol,
+    components: plannerComponents(ctx).filter(c => c.amount.mode === "ratio") });
+  const d = [];
+  const near = (a, b) => (a == null && b == null) || (isNum(a) && isNum(b) && Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a)));
+  for (const k of ["mw", "targetMg", "oaMl", "odeMl", "oamMl", "mtohMl"]) if (!near(A[k], B[k])) d.push(k);
+  A.rows.filter(Boolean).forEach((r, i) => { const q = B.rows.filter(Boolean)[i];
+    for (const k of ["ratio", "precMmol", "welMg", "wprecMg"]) if (!q || !near(r[k], q[k])) d.push(`row${i}.${k}`); });
+  return { mismatched: d.length, fields: d };
+}
+
+/* Core 계획을 성분 배열로 — 기존 stoich/과량 규칙을 데이터로 옮긴 것 */
+function coreComponentsOf(opt) {
+  const naEx = isNum(opt.naExcess) ? opt.naExcess : 1;
+  const fEx = isNum(opt.fExcess) ? opt.fExcess : 1;
+  return (opt.stoich || []).filter(s => s && s.el).map((s, i) => {
+    let excess = 1, coeff = s.coeff;
+    if (isNum(s.excess)) { excess = s.excess; coeff = s.coeff ?? 1; }   // 새 형식: 행마다 과량
+    else if (s.role === "hostCation" && ["Na", "Li", "K"].indexOf(s.el) >= 0) { excess = naEx; coeff = s.coeff ?? 1; }
+    else if (s.role === "anion") { excess = fEx; coeff = s.coeff ?? 4; }
+    return { id: "c" + i, role: s.role, el: s.el,
+             prec: (opt.precursors && opt.precursors[s.el]) || (Materials.defaultPrec(s.el) || {}).name,
+             amount: { mode: "ratio", value: coeff, excess } };
+  });
+}
+
+/* 엔진 경로로 계산한 Core 레시피 — 반환 형태는 기존 coreRecipe와 동일 */
+function coreRecipeEngine(input) {
+  const C = APP_DATA.constants;
+  const res = resolveComponents(input.components, { tgtMmol: input.tgtMmol });
+  const _rg = computeReagents(activeProtocol(C), { tgt: input.tgtMmol, rows: res.rows });
+  return { tgtMmol: input.tgtMmol, mw: res.mw, targetMg: res.targetMg, rows: res.rows,
+           oaMl: _rg.oa, odeMl: _rg.ode, oamMl: _rg.oam, mtohMl: _rg.mtoh, reagents: _rg };
+}
+
+/* ---------------------------------------------------------------------
+ * 재현 검증기 — 저장된 모든 Core lot을 (구)경로와 (신)엔진으로 각각 계산해
+ * 값이 완전히 같은지 대조한다. 이게 통과하기 전에는 화면을 바꾸지 않는다.
+ * 콘솔에서 verifyEngine() 으로 실행 가능.
+ * ------------------------------------------------------------------- */
+function verifyEngine(tol) {
+  tol = tol || 1e-9;
+  const near = (a, b) => (a == null && b == null) || (isNum(a) && isNum(b) && Math.abs(a - b) <= tol * Math.max(1, Math.abs(a)));
+  const bad = [];
+  let n = 0;
+  for (const lot of Object.values(activeLots())) {
+    if (lot.type !== "Core") continue;
+    n++;
+    const naEx = lot.naExcessUsed ?? state.db.settings.naExcess;
+    const fEx = lot.fExcessUsed ?? state.db.settings.fExcess ?? 1;
+    const legacyRows = (lot.stoich || []).filter(s => s && s.el).map(s => {
+      let ratio = s.coeff;
+      if (isNum(s.excess)) ratio = (s.coeff ?? 1) * s.excess;
+      else if ((s.role === "hostCation") && ["Na", "Li", "K"].includes(s.el)) ratio = (s.coeff ?? 1) * naEx;
+      else if (s.role === "anion") ratio = (s.coeff ?? 4) * fEx;
+      return { el: s.el, prec: (lot.precursors && lot.precursors[s.el]) || (Materials.defaultPrec(s.el) || {}).name,
+               ratio, role: s.role };
+    });
+    const tgt = lot.tgtMmol ?? 0.1;
+    const A = coreRecipeLegacy({ tgtMmol: tgt, rows: legacyRows });
+    const B = coreRecipeEngine({ tgtMmol: tgt,
+      components: coreComponentsOf({ stoich: lot.stoich, precursors: lot.precursors, naExcess: naEx, fExcess: fEx }) });
+    const diffs = [];
+    if (!near(A.mw, B.mw)) diffs.push(`mw ${A.mw} vs ${B.mw}`);
+    if (!near(A.targetMg, B.targetMg)) diffs.push(`targetMg ${A.targetMg} vs ${B.targetMg}`);
+    for (const k of ["oaMl", "odeMl", "oamMl", "mtohMl"]) if (!near(A[k], B[k])) diffs.push(`${k} ${A[k]} vs ${B[k]}`);
+    const ar = A.rows.filter(Boolean), br = B.rows.filter(Boolean);
+    if (ar.length !== br.length) diffs.push(`rows ${ar.length} vs ${br.length}`);
+    else ar.forEach((r, i) => {
+      const q = br[i];
+      if (r.el !== q.el) diffs.push(`row${i}.el ${r.el} vs ${q.el}`);
+      if (r.prec !== q.prec) diffs.push(`row${i}.prec ${r.prec} vs ${q.prec}`);
+      for (const k of ["ratio", "precMmol", "welMg", "wprecMg"])
+        if (!near(r[k], q[k])) diffs.push(`row${i}.${k} ${r[k]} vs ${q[k]}`);
+    });
+    if (diffs.length) bad.push({ serial: lot.serial, diffs });
+  }
+  /* Shell lot: 용액 조제 경로(구 shellSolutionCalc vs 엔진)를 같은 방식으로 대조 */
+  let nShell = 0, nShellNew = 0;
+  for (const lot of Object.values(activeLots())) {
+    if (lot.type !== "Shell") continue;
+    nShell++;
+    let precs;
+    if (Array.isArray(lot.solPrecs) && lot.solPrecs.length) precs = lot.solPrecs;
+    else {
+      const lnEls = (lot.stoich || []).filter(s => s && s.el && s.role !== "anion" && !["Na", "Li", "K"].includes(s.el));
+      const cs = lnEls.reduce((a, s) => a + (s.coeff || 0), 0) || 1;
+      precs = lnEls.map(s => ({ name: (lot.precursors && lot.precursors[s.el]) || ((Materials.defaultPrec(s.el) || {}).name),
+                                mmol: excelRound((lot.solLnMmol || 0) * (s.coeff || 0) / cs, 4) }));
+    }
+    const o = { volMl: lot.solVolMl, tfaConcM: (isNum(lot.solTfaMmol) && lot.solVolMl > 0) ? lot.solTfaMmol / lot.solVolMl : undefined };
+    /* 신형식(kind 보유) 용액은 레거시가 표현할 수 없다 — 용질만 떼어 대조한다.
+       aux가 Na 소스 하나뿐일 때만 naTfa 항목까지 비교 대상에 넣는다. */
+    const newFmt = precs.some(x => x && x.kind);
+    let A, B, keys, lrows;
+    if (newFmt) {
+      nShellNew++;
+      const solutes = precs.filter(x => x && x.kind !== "aux");
+      const auxes = precs.filter(x => x && x.kind === "aux");
+      const naOnly = auxes.length > 0 && auxes.every(x => x.name === SHELL_NA_SOURCE);
+      const auxMmol = auxes.reduce((a, x) => a + (isNum(x.mmol) ? x.mmol : 0), 0);
+      const o2 = { volMl: o.volMl, tfaConcM: (naOnly && lot.solVolMl > 0) ? auxMmol / lot.solVolMl : 0 };
+      A = shellSolutionCalcLegacy(solutes, o2); B = shellSolutionCalc(precs, o);
+      keys = naOnly ? ["lnTotalMmol", "naTfaMmol", "naTfaMg", "lnConcM", "tfaConcM", "volMl"]
+                    : ["lnTotalMmol", "lnConcM", "volMl"];
+      lrows = A.rows;
+    } else {
+      A = shellSolutionCalcLegacy(precs, o); B = shellSolutionCalc(precs, o);
+      keys = ["lnTotalMmol", "naTfaMmol", "naTfaMg", "lnConcM", "tfaConcM", "volMl"];
+      lrows = A.rows;
+    }
+    const diffs = [];
+    for (const k of keys) if (!near(A[k], B[k])) diffs.push(`${k} ${A[k]} vs ${B[k]}`);
+    lrows.forEach((r, i) => { const q = B.rows[i];
+      if (!q || r.name !== q.name || !near(r.mg, q.mg) || !near(r.mmol, q.mmol))
+        diffs.push(`row${i} ${JSON.stringify(r)} vs ${JSON.stringify(q)}`); });
+    if (diffs.length) bad.push({ serial: lot.serial, kind: "shellSolution", newFmt, diffs });
+  }
+  return { checkedCore: n, checkedShell: nShell, shellNewFmt: nShellNew,
+           checked: n + nShell, mismatched: bad.length, bad };
+}
+
+/* 기존 경로 — 검증 기준으로 남겨 둔다 */
+function coreRecipeLegacy(input) {
   const C = APP_DATA.constants;
   const tgt = input.tgtMmol;
   const rows = [];
@@ -597,6 +1017,13 @@ function coreRecipe(input) {
   return { tgtMmol: tgt, mw, targetMg: tgt * mw, rows, oaMl, odeMl, oamMl, mtohMl, reagents: _rg };
 }
 
+/* 공개 API: 성분 배열이 오면 엔진으로, 기존 rows 형태가 오면 레거시 경로로.
+   두 경로의 결과가 모든 저장 lot에서 일치함을 verifyEngine()으로 확인했다. */
+function coreRecipe(input) {
+  if (input && Array.isArray(input.components)) return coreRecipeEngine(input);
+  return coreRecipeLegacy(input);
+}
+
 /* =====================================================================
  * 2. SHELL CALCULATOR  (Calculator AC/AI block + Shell-precursor S block)
  *   volNm3   = 4/3·π·((r+t)³ − r³)                     (AI20)
@@ -604,6 +1031,7 @@ function coreRecipe(input) {
  *   totalInjUl = precMmol / (ΣsolLnMmol / solVolMl) · 1000   (AI24)
  *   lastInjUl  = totalInjUl − Σ(fixed inj)              (AI28)
  * ===================================================================== */
+/* 기하 basis: 반지름 R·두께 T·입자 몰수 → 셸 형식단위 mmol·주입 부피 */
 function shellCalc(input) {
   const C = APP_DATA.constants;
   const r = input.radius, t = input.thick, pm = input.particleMmol;
@@ -628,9 +1056,102 @@ function shellCalc(input) {
   }
   return { volNm3, precMmol, concMmolMl: conc, totalInjUl, injSteps: steps, lastInjUl: lastUl };
 }
+/* =====================================================================
+ * 화학식 파서 — 전구체가 실제로 공급하는 원소 몰수를 세기 위한 것.
+ * 결과는 DB에 적힌 M.W.와 대조해 **스스로 검증**하고, 어긋나면 unreliable로
+ * 표시한다. 파싱을 못 믿을 바에는 비율을 아예 보여주지 않는 편이 안전하다.
+ *   지원: 괄호 그룹, 하이드레이트(·), 유니코드 아래첨자(₃), (4)H2O, 1.5H2O,
+ *        "(water)" 같은 알파벳 주석
+ * ===================================================================== */
+const _SUB = { "₀":"0","₁":"1","₂":"2","₃":"3","₄":"4","₅":"5","₆":"6","₇":"7","₈":"8","₉":"9" };
+function _normFormula(f) {
+  let s = String(f || "");
+  s = s.replace(/[₀-₉]/g, c => _SUB[c] || c);
+  s = s.replace(/\([A-Za-z][A-Za-z\s]*\)/g, m => /^\([A-Z][a-z]?\d*\)$/.test(m) ? m : "");  // (water) 등 주석 제거
+  s = s.replace(/[*x×]/g, "·").replace(/\s+/g, "");
+  return s;
+}
+/* 한 조각(하이드레이트 분리 후)을 원소별 개수로 */
+function _parseChunk(str) {
+  const counts = {};
+  let i = 0;
+  function group() {
+    const acc = {};
+    while (i < str.length) {
+      const c = str[i];
+      if (c === ")") break;
+      if (c === "(") {
+        i++;
+        const inner = group();
+        if (str[i] !== ")") throw new Error("괄호 불일치");
+        i++;
+        let num = ""; while (i < str.length && /[\d.]/.test(str[i])) num += str[i++];
+        const k = num ? parseFloat(num) : 1;
+        for (const e in inner) acc[e] = (acc[e] || 0) + inner[e] * k;
+        continue;
+      }
+      const m = /^([A-Z][a-z]?)([\d.]*)/.exec(str.slice(i));
+      if (!m) throw new Error("해석 불가: " + str.slice(i, i + 6));
+      i += m[0].length;
+      const k = m[2] ? parseFloat(m[2]) : 1;
+      acc[m[1]] = (acc[m[1]] || 0) + k;
+    }
+    return acc;
+  }
+  const g = group();
+  if (i < str.length) throw new Error("남은 문자: " + str.slice(i));
+  for (const e in g) counts[e] = (counts[e] || 0) + g[e];
+  return counts;
+}
+function parseFormula(f) {
+  const s = _normFormula(f);
+  if (!s) return { ok: false, err: "화학식 없음" };
+  try {
+    const counts = {};
+    for (let part of s.split("·")) {
+      if (!part) continue;
+      let mult = 1;
+      let m = /^\((\d+(?:\.\d+)?)\)/.exec(part);            // (4)H2O
+      if (m) { mult = parseFloat(m[1]); part = part.slice(m[0].length); }
+      else { m = /^(\d+(?:\.\d+)?)(?=[A-Z(])/.exec(part); if (m) { mult = parseFloat(m[1]); part = part.slice(m[0].length); } }
+      const c = _parseChunk(part);
+      for (const e in c) counts[e] = (counts[e] || 0) + c[e] * mult;
+    }
+    let mw = 0, unknown = null;
+    for (const e in counts) {
+      const a = (APP_DATA.aw || {})[e];
+      if (!(a > 0)) { unknown = e; break; }
+      mw += a * counts[e];
+    }
+    if (unknown) return { ok: false, err: "원자량 미상: " + unknown, counts };
+    return { ok: true, counts, mw };
+  } catch (e) { return { ok: false, err: e.message }; }
+}
+/* 파싱 결과를 DB M.W.와 대조 — 2% 넘게 어긋나면 신뢰하지 않는다 */
+function precElements(name) {
+  const p = Materials.prec(name);
+  if (!p) return { ok: false, err: "전구체 없음" };
+  const r = parseFormula(p.formula);
+  if (!r.ok) return { ok: false, err: r.err, prec: p };
+  const dev = (p.mw > 0) ? Math.abs(r.mw - p.mw) / p.mw : 1;
+  if (dev > 0.02) return { ok: false, err: `M.W. 불일치 (식 ${r.mw.toFixed(2)} vs DB ${p.mw})`, counts: r.counts, prec: p };
+  return { ok: true, counts: r.counts, mw: r.mw, prec: p, dev };
+}
+/* 성분 목록 → 원소별 총 mmol (하나라도 못 읽으면 ok:false) */
+function solElementBudget(rows) {
+  const el = {}; const bad = [];
+  for (const r of (rows || [])) {
+    if (!r || !r.name || !isNum(r.mmol)) continue;
+    const pe = precElements(r.name);
+    if (!pe.ok) { bad.push(r.name + " — " + pe.err); continue; }
+    for (const e in pe.counts) el[e] = (el[e] || 0) + pe.counts[e] * r.mmol;
+  }
+  return { ok: bad.length === 0, el, bad };
+}
+
 /* Shell-precursor solution: per precursor  mg = ROUND(mw/nPer · mmol, 1)  (S7)
    Ln·Na-TFA 양은 몰농도(M) × 용액 부피로 정의됨 */
-function shellSolutionCalc(precList, opts) {
+function shellSolutionCalcLegacy(precList, opts) {
   const C = APP_DATA.constants;
   opts = opts || {};
   const volMl = isNum(opts.volMl) ? opts.volMl : C.shellSol.volMl;
@@ -644,6 +1165,94 @@ function shellSolutionCalc(precList, opts) {
   const lnTot = rows.reduce((a, r) => a + (isNum(r.mmol) ? r.mmol : 0), 0);
   return { rows, volMl, lnTotalMmol: lnTot, naTfaMmol: tfa, naTfaMg: excelRound(C.shellSol.naTfaMw * tfa, 1),
            lnConcM: lnTot / volMl, tfaConcM: tfa / volMl };
+}
+
+/* 용액 조제도 같은 성분 엔진으로 — 입력 mmol은 '원소 mmol'로 해석한다
+   (기존 식이 mw/nPer × mmol 이었으므로 의미가 정확히 일치). */
+/* 용액 성분 목록. 항목에 kind가 있으면 그대로 쓰고(신형식),
+   없으면 전부 용질(Ln)로 보고 opts.tfaConcM에서 Na 소스를 합성한다(구형식 호환).
+     kind 'solute' : 주입 농도 계산에 들어가는 성분 (보통 Ln)
+     kind 'aux'    : 함께 녹이지만 농도 기준에는 안 들어가는 성분 (Na 소스·첨가제)
+   Na-TFA를 특별 취급하지 않으므로 다른 Na 소스나 임의 첨가제를 넣을 수 있고,
+   질량도 상수(naTfaMw)가 아니라 물질 DB의 M.W.에서 나온다(단일 출처). */
+function normalizeSolComps(list, opts) {
+  const C = APP_DATA.constants;
+  const arr = (list || []).filter(Boolean);
+  if (arr.some(x => x.kind)) return arr.map(x => ({ name: x.name, mmol: x.mmol, kind: x.kind || "solute" }));
+  const volMl = isNum(opts && opts.volMl) ? opts.volMl : C.shellSol.volMl;
+  const tfaConcM = isNum(opts && opts.tfaConcM) ? opts.tfaConcM : C.shellSol.tfaConcM;
+  const out = arr.map(x => ({ name: x.name, mmol: x.mmol, kind: "solute" }));
+  const tfa = tfaConcM * volMl;
+  if (tfa > 0) out.push({ name: SHELL_NA_SOURCE, mmol: tfa, kind: "aux" });
+  return out;
+}
+const SHELL_NA_SOURCE = "Sodium trifluoroacetate";
+function shellSolutionCalc(precList, opts) {
+  const C = APP_DATA.constants;
+  opts = opts || {};
+  const volMl = isNum(opts.volMl) ? opts.volMl : C.shellSol.volMl;
+  const list = normalizeSolComps(precList, opts);
+  const comps = list.map((x, i) => {
+    const p = Materials.prec(x.name);
+    return { id: "s" + i, role: x.kind, el: p ? p.elem : (x.name || ""), prec: x.name,
+             amount: { mode: "elMmol", value: isNum(x.mmol) ? x.mmol : null } };
+  });
+  const res = resolveComponents(comps, { volMl });
+  const all = list.map((x, i) => {
+    const p = Materials.prec(x.name), r = res.rows[i];
+    if (!p || !isNum(x.mmol)) return { name: x.name || "", mmol: x.mmol, mg: null, kind: x.kind };
+    return { name: p.name, mmol: x.mmol, mg: excelRound(r.wprecMg, 1), elem: p.elem, kind: x.kind };
+  });
+  const rows = all.filter(r => r.kind !== "aux");
+  const aux = all.filter(r => r.kind === "aux");
+  const lnTot = rows.reduce((a, r) => a + (isNum(r.mmol) ? r.mmol : 0), 0);
+  const tfaMmol = aux.reduce((a, r) => a + (isNum(r.mmol) ? r.mmol : 0), 0);
+  const tfaMg = aux.reduce((a, r) => a + (isNum(r.mg) ? r.mg : 0), 0);
+  return { rows, aux, all, volMl, lnTotalMmol: lnTot,
+           naTfaMmol: tfaMmol, naTfaMg: excelRound(tfaMg, 1),
+           lnConcM: lnTot / volMl, tfaConcM: tfaMmol / volMl };
+}
+
+/* ---------------------------------------------------------------------
+ * 셸 성장의 basis는 '기하'다 — 목표 mmol을 사람이 입력하는 Core와 달리,
+ * 입자 반지름·두께에서 셸 형식단위 mmol(precMmol)이 나온다.
+ * 그 값을 목표량으로 삼아 성분 엔진에 넣으면, 셸 조성이 요구하는
+ * 원소별 몰수가 Core와 완전히 같은 방식으로 계산된다.
+ *
+ *   기하  →  precMmol  →  resolveComponents(셸 조성, {tgtMmol: precMmol})
+ *
+ * 이렇게 하면 "이번 성장에 필요한 원소별 몰수"와 "주입으로 실제 들어가는
+ * 원소별 몰수"를 나란히 놓고 비교할 수 있다(shellBalance).
+ * ------------------------------------------------------------------- */
+function shellLayerNeeds(ctx, precMmol) {
+  if (!isNum(precMmol) || precMmol <= 0) return null;
+  const comps = ensureComponents(ctx).filter(c => c && c.el && NON_STOICH_ROLES.indexOf(c.role) < 0)
+    .map(c => ({ id: c.id, role: c.role, el: c.el, prec: c.prec || (Materials.defaultPrec(c.el) || {}).name,
+                 amount: { mode: "ratio", value: c.coeff, excess: 1 } }));
+  const res = resolveComponents(comps, { tgtMmol: precMmol });
+  const el = {};
+  res.rows.forEach(r => { if (r && r.el && isNum(r.elMmol)) el[r.el] = (el[r.el] || 0) + r.elMmol; });
+  return el;
+}
+/* 주입으로 실제 들어가는 원소별 몰수 — 용액 성분의 화학식에서 센다 */
+function shellInjectDelivers(sol, totalInjUl) {
+  if (!isNum(totalInjUl) || !(sol.volMl > 0)) return { ok: false, el: {}, bad: ["주입량 미정"] };
+  const frac = (totalInjUl / 1000) / sol.volMl;          // 용액 전체 중 주입되는 비율
+  const b = solElementBudget(sol.all || sol.rows);
+  const el = {};
+  for (const e in b.el) el[e] = b.el[e] * frac;
+  return { ok: b.ok, el, bad: b.bad, frac };
+}
+/* 필요 vs 주입 비교 — 어긋나면 조성이 의도대로 안 나온다는 신호 */
+function shellBalance(ctx, calc, sol) {
+  const need = shellLayerNeeds(ctx, calc && calc.precMmol);
+  if (!need) return null;
+  const got = shellInjectDelivers(sol, calc && calc.totalInjUl);
+  /* 행은 '셸 조성에 속한 원소'만 — 리간드·용매에서 오는 C/H/O는 수지의 대상이 아니다 */
+  const els = Object.keys(need).filter(e => need[e] > 0);
+  const extra = Object.keys(got.el).filter(e => !(need[e] > 0) && got.el[e] > 0);
+  return { ok: got.ok, bad: got.bad, extra, rows: els.map(e => ({
+    el: e, need: need[e], got: got.el[e] || 0, x: (got.el[e] || 0) / need[e] })) };
 }
 
 /* =====================================================================
@@ -711,8 +1320,14 @@ function serialTag(serial) {
   const n = String(serial).padStart(4, "0");
   return LOT_PREFIX ? `${LOT_PREFIX}-${n}` : n;
 }
-function lotLabel(lot) {
+function autoLotLabel(lot) {
   return `${serialTag(lot.serial)}${lot.type === "Shell" ? "s" : "c"}`;
+}
+/* 표시용 이름: 사용자가 지정한 샘플명이 있으면 그것을, 없으면 접두사-일련번호 자동 이름.
+   ICP 라벨(serialTag)은 기계 파싱 대상이라 여기 영향을 받지 않는다. */
+function lotLabel(lot) {
+  const nm = lot && typeof lot.name === "string" ? lot.name.trim() : "";
+  return nm || autoLotLabel(lot);
 }
 /* composition formula string e.g. NaLu0.8Tm0.2F4 */
 function lotFormula(lot) {
@@ -1073,8 +1688,8 @@ const state = {
   db: null,
   derived: null,          // serial -> derived cols
   view: "dash",
-  dirty: { lots: new Set(), icp: new Set(), settings: false, refData: false },  // for cloud sync
-  sync: { status: "off", detail: "" },
+  dirty: { lots: new Set(), icp: new Set(), recipes: new Set(), settings: false, refData: false },  // for cloud sync
+  sync: { status: "off", detail: "", labErr: "" },
   importCtx: null,        // ICP import wizard context
   plannerCtx: null,
 };
@@ -1094,7 +1709,7 @@ function defaultSettings() {
     icpPreDil: false,                 // 가져오기 '희석배율 사전입력' 기본값 (자동 감지 실패 시)
     lnPerNm3: 13.85,                  // 격자 Ln 수밀도 [Ln/nm³] — β-NaLnF₄ (TEM 입자수 계산용)
     backupReminderDays: 7, lastBackupAt: null,
-    firebase: { config: "", email: "", enabled: false },
+    firebase: { config: "", email: "", enabled: false, labId: "" },   // labId: 랩 공용 레시피 라이브러리
     defaultStockVolCore: 10, defaultStockVolShell: 5,
     defaultProtocolId: null,          // 사용자 지정 기본 프로토콜(있으면 내장 '기본값' 대체·숨김)
     lotPrefix: "WJ",                  // Lot 표기 접두사 (사용자별 — 비우면 숫자만 표기)
@@ -1104,9 +1719,45 @@ function defaultSettings() {
 /* v1 -> v2 마이그레이션: OA 상수 단순화·Shell용액 몰농도 기준·Stock 기본값·열처리 분단위 */
 function migrateDb(db) {
   const s = db.settings || {};
+  /* 레시피를 settings blob에서 문서 단위 저장소로 이관(Phase 4a).
+     settings.recipes는 지우지 않는다 — 구버전 빌드로 열어도 레시피가 사라지지 않도록.
+     같은 id가 양쪽에 있으면 updatedAt이 최신인 쪽을 남긴다. */
+  if (!db.recipes || typeof db.recipes !== "object") db.recipes = {};
+  if (s.recipes && typeof s.recipes === "object") {
+    for (const [id, r] of Object.entries(s.recipes)) {
+      if (!r || typeof r !== "object") continue;
+      const cur = db.recipes[id];
+      if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0))
+        db.recipes[id] = Object.assign({}, r, { id, deleted: !!r.deleted });
+    }
+  }
+  if (!db.labRecipes || typeof db.labRecipes !== "object") db.labRecipes = {};
+  if (s.firebase && typeof s.firebase.labId !== "string") s.firebase.labId = "";
   if (db.knowhowCache && !db.refDataCache) {   // 구버전 캐시 키 호환
     db.refDataCache = db.knowhowCache;
     delete db.knowhowCache;
+  }
+  /* precursor DB 데이터 오류 교정: Cerium acetate의 화학식이 Dy로 잘못 적혀 있었다.
+     (M.W. 344.27은 Ce(CH3CO2)3·1.5H2O와 일치하므로 질량 계산은 영향 없음) */
+  const CE_OLD = "Cerium acetate 4hydrate", CE_NEW = "Cerium acetate 1.5hydrate (sesquihydrate)";
+  const mo = db.materialsOverride && db.materialsOverride.precursors;
+  if (Array.isArray(mo)) for (const p of mo) {
+    if (!p) continue;
+    if (/Cerium/i.test(p.name || "") && /Dy/.test(p.formula || "")) p.formula = "(CH3CO2)3Ce·1.5H2O";
+    if (p.name === CE_OLD) p.name = CE_NEW;          // M.W. 344.27 = Ce(CH3CO2)3·1.5H2O
+  }
+  /* 이름은 lot이 참조하는 키라서 참조도 함께 옮긴다 */
+  for (const lot of Object.values(db.lots || {})) {
+    if (!lot) continue;
+    if (lot.precursors) for (const k in lot.precursors) if (lot.precursors[k] === CE_OLD) lot.precursors[k] = CE_NEW;
+    if (Array.isArray(lot.solPrecs)) for (const r of lot.solPrecs) if (r && r.name === CE_OLD) r.name = CE_NEW;
+  }
+  /* 카드에서 직접 고쳤던 제목(cardEdits.title)을 정식 샘플명(lot.name)으로 승격 —
+     이제 샘플명은 계획창·카드·기록·ICP 어디서 보아도 같은 값이다. */
+  for (const lot of Object.values(db.lots || {})) {
+    if (!lot || lot.name) continue;
+    const t = lot.cardEdits && lot.cardEdits.title;
+    if (typeof t === "string" && t.trim()) { lot.name = t.trim(); delete lot.cardEdits.title; }
   }
   if (!s.ver || s.ver < 2) {
     if (s.oa && !s.oaPerMmol) s.oaPerMmol = 10;
@@ -1176,7 +1827,7 @@ function seedDb() {
   const lots = {}, icp = {};
   for (const l of APP_DATA.initial.lots) lots[l.serial] = { ...l, updatedAt: 0, deleted: false };
   for (const r of APP_DATA.initial.icp) icp[r.id] = { ...r, updatedAt: 0, deleted: false };
-  return { v: 1, lots, icp, settings: defaultSettings(), rev: 0, savedAt: null };
+  return { v: 1, lots, icp, recipes: {}, labRecipes: {}, settings: defaultSettings(), rev: 0, savedAt: null };
 }
 
 function storageAvailable() {
@@ -1299,6 +1950,41 @@ function saveSettings() {
   saveDb(); Sync.push();
 }
 
+/* =====================================================================
+ * 공유 파라미터 (settings ↔ 계획창 ↔ 프로토콜 ↔ 카드) 단일 출처 동기화
+ *   - setShared(): 어디서 고치든 settings에 즉시 반영하고 엔진 상수까지 갱신
+ *   - syncPlannerFromSettings(): settings가 바뀌면 열려 있는 계획 초안도 갱신
+ *   두 함수를 짝으로 쓰면 "같은 factor인데 화면마다 값이 다른" 상황이 생기지 않는다.
+ * ===================================================================== */
+function setShared(path, val) {
+  const seg = String(path).split(".");
+  let o = state.db.settings;
+  for (let i = 0; i < seg.length - 1; i++) {
+    if (!o[seg[i]] || typeof o[seg[i]] !== "object") o[seg[i]] = {};
+    o = o[seg[i]];
+  }
+  o[seg[seg.length - 1]] = val;
+  saveSettings(); syncConstants();
+  syncPlannerFromSettings();
+}
+function syncPlannerFromSettings() {
+  const ctx = state.plannerCtx, S = state.db.settings;
+  if (!ctx) return;
+  if (ctx.mode === "shell") {
+    ctx.volMl = S.shellSyn.aliquotMl;
+    ctx.oaMl = S.shellSyn.oaMl;
+    ctx.odeMl = S.shellSyn.odeMl;
+    ctx.inj = S.shellSyn.inj.slice();
+    ctx.solVolMl = S.shellSol.volMl;
+    ctx.solLnMmol = S.shellSol.lnConcM * S.shellSol.volMl;
+    ctx.solTfaMmol = S.shellSol.tfaConcM * S.shellSol.volMl;
+    /* solPrecs(전구체별 mmol)와 stockVol은 계획마다 다른 값이므로 여기서 건드리지 않는다 */
+  } else {
+    ctx.naExcess = S.naExcess;
+    ctx.fExcess = S.fExcess ?? 1;
+  }
+}
+
 /* keep engine constants in sync with editable settings */
 function syncConstants() {
   const s = state.db.settings, C = APP_DATA.constants;
@@ -1322,7 +2008,9 @@ function healNeutralSettings(s, ref) {
   const neutralSig = !(s.oaPerMmol > 0) && !(s.odeTotalSmall > 0) && !(s.mtohPerMgF > 0);
   const fixNum = (obj, k, rv) => { if (!(obj[k] > 0) && rv > 0) { obj[k] = rv; n++; } };
   for (const k of ["oaPerMmol", "odeTotalSmall", "odeTotalLarge", "mtohPerMgF",
-                   "oamEq", "oamMw", "oamDens", "fExcess"]) fixNum(s, k, ref[k]);
+                   "oamMw", "oamDens", "fExcess"]) fixNum(s, k, ref[k]);
+  /* oamEq는 0이 유효한 값(= Oleyl amine 미사용)이므로, 값이 아예 없을 때만 채운다 */
+  if (!(typeof s.oamEq === "number" && isFinite(s.oamEq) && s.oamEq >= 0) && ref.oamEq > 0) { s.oamEq = ref.oamEq; n++; }
   if (neutralSig && ref.naExcess > 0 && s.naExcess !== ref.naExcess) { s.naExcess = ref.naExcess; n++; }
   if (s.shellSol && ref.shellSol)
     for (const k of ["volMl", "lnConcM", "tfaConcM", "naTfaMw", "oaMl", "odeMl", "mtohMl"]) fixNum(s.shellSol, k, ref.shellSol[k]);
@@ -1418,6 +2106,10 @@ function restoreJson(file, mode) {           // mode: replace | merge
         for (const [id, r] of Object.entries(inc.icp || {})) {
           const cur = state.db.icp[id];
           if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0)) state.db.icp[id] = r;
+        }
+        for (const [id, r] of Object.entries(inc.recipes || (inc.settings || {}).recipes || {})) {
+          const cur = recipeStore()[id];
+          if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0)) recipeStore()[id] = Object.assign({}, r, { id });
         }
       }
       state.derived = null;
@@ -1583,6 +2275,13 @@ const MOD_KINDS = {
   note:   { label:"메모 / 설정",    badges:[],                          f:["note"] },
 };
 const MOD_KIND_ORDER = ["heat","vacuum","purge","add","inject","note"];
+/* 블록 클립보드 — 그룹(core/shell/sol)과 프로토콜을 넘나들며 붙여넣기 가능 */
+let _modClip = null;
+/* 절차 편집기의 UI 상태(현재 그룹·선택 블록). 계획창은 값이 바뀔 때마다 통째로
+   다시 그리므로, 이걸 지역 변수로 두면 블록을 고를 때마다 선택이 풀린다. */
+const _procUI = { group: "core", selId: null };
+function modClipCopy(m){ _modClip = JSON.parse(JSON.stringify(m)); }
+function modClipNewId(){ return "m" + Date.now().toString(36) + (_pmSeq++); }
 const MOD_COL = {heat:"#ef4444",vacuum:"#3b82f6",purge:"#8b5cf6",add:"#f59e0b",inject:"#10b981",note:"#94a3b8"};
 let _pmSeq = 0;
 function _sv(v){ return (v==null) ? "" : String(v); }
@@ -1657,7 +2356,7 @@ function coreCardHtml(lot, recipe) {
     const kind = (r.role === "anion") ? "cF" : (["Na","Li","K"].includes(r.el) ? "cNa" : "cLn");
     return `<tr><td class="nm"><span class="c2dot ${kind}"></span>${ced(ov, "prec"+i+".n", esc(r.prec || r.el), "cin")}</td><td class="r">${ced(ov, "prec"+i+".mmol", fmtFix(r.precMmol, 3), "cin")}</td><td class="r"><b>${ced(ov, "prec"+i+".mg", fmtFix(r.wprecMg, 2), "cin")}</b></td></tr>`;
   }).join("");
-  const rgRows = (proto.reagents || []).map(rg => {
+  const rgRows = (proto.reagents || []).filter(rg => rgVals[rg.id] !== 0).map(rg => {
     const v = rgVals[rg.id];
     const dg = (rg.round && rg.round.digits != null) ? rg.round.digits : 1;
     const vs = (v == null ? "-" : fmtN(v, dg)) + (rg.unit ? " " + rg.unit : "");
@@ -1734,11 +2433,18 @@ function shellCardHtml(lot, calc, shellComp) {
 function shellSolutionCardHtml(title, sol, ovStore) {
   const ov = ovStore || {};
   const S = state.db.settings;
-  const precRows = (sol.rows || []).map((r, i) => r ? `<tr><td class="nm"><span class="c2dot cLn"></span>${ced(ov, "p"+i+".n", esc(r.name), "cin")}</td><td class="r">${ced(ov, "p"+i+".mmol", fmtFix(r.mmol, 3), "cin")}</td><td class="r"><b>${ced(ov, "p"+i+".mg", fmtN(r.mg, 1), "cin")}</b></td></tr>` : "").join("")
-    + `<tr><td class="nm"><span class="c2dot cNa"></span>${ced(ov, "tfa.n", "Na-TFA", "cin")}</td><td class="r">${ced(ov, "tfa.mmol", fmtFix(sol.naTfaMmol, 3), "cin")}</td><td class="r"><b>${ced(ov, "tfa.mg", fmtN(sol.naTfaMg, 0), "cin")}</b></td></tr>`;
+  /* 용질·보조를 구분해 표시하되, 어느 쪽이든 실제 성분 목록 그대로 인쇄한다
+     (예전에는 Na-TFA 한 줄이 고정으로 박혀 있었다) */
+  const _allRows = (sol.all && sol.all.length) ? sol.all
+    : (sol.rows || []).concat([{ name: "Na-TFA", mmol: sol.naTfaMmol, mg: sol.naTfaMg, kind: "aux" }]);
+  const precRows = _allRows.map((r, i) => r ? `<tr><td class="nm"><span class="c2dot ${r.kind === "aux" ? "cNa" : "cLn"}"></span>${ced(ov, "p"+i+".n", esc(r.name), "cin")}</td><td class="r">${ced(ov, "p"+i+".mmol", fmtFix(r.mmol, 3), "cin")}</td><td class="r"><b>${ced(ov, "p"+i+".mg", fmtN(r.mg, 1), "cin")}</b></td></tr>` : "").join("");
   const rgRows = `<tr><td class="nm"><span class="c2dot cRg"></span>${ced(ov, "oa.n", "Oleic acid", "cin")}</td><td class="r" colspan="2"><b>${ced(ov, "oa.v", fmtN(S.shellSol.oaMl, 1) + " mL", "cin")}</b></td></tr><tr><td class="nm"><span class="c2dot cRg"></span>${ced(ov, "ode.n", "1-Octadecene", "cin")}</td><td class="r" colspan="2"><b>${ced(ov, "ode.v", fmtN(S.shellSol.odeMl, 1) + " mL", "cin")}</b></td></tr>`;
   const tfaNote = ced(ov, "tfa.note", String(cs("sol", "tfanote")).replace("{mtoh}", fmtN(S.shellSol.mtohMl, 1)), "cin");
-  const conc = ced(ov, "conc", `Ln-oleate ${fmtN(sol.lnConcM, 3)} M / Na-TFA ${fmtN(sol.tfaConcM, 3)} M · ${fmtN(sol.volMl, 0)} mL`, "cin");
+  /* 전구체 이름을 고정 문자열("Ln-oleate")로 찍으면 실제 투입물과 달라질 수 있어
+     실제 성분 기준으로 표기한다. */
+  const _lnNames = (sol.rows || []).map(r => r && r.elem).filter(Boolean);
+  const _lnTag = _lnNames.length ? [...new Set(_lnNames)].join("/") : "Ln";
+  const conc = ced(ov, "conc", `${esc(_lnTag)} ${fmtN(sol.lnConcM, 4)} M / Na-TFA ${fmtN(sol.tfaConcM, 3)} M · ${fmtN(sol.volMl, 1)} mL`, "cin");
   const steps = renderMods("sol", ov);
   return `<div class="synCard2"><div class="c2hd"><span class="c2ti">Shell-precursor solution</span><span class="c2lot">${ced(ov, "title", esc(title), "cin")}</span></div><div class="c2stir">교반 <b>${ced(ov, "stir", cs("sol", "stir").replace(/<br\s*\/?>/gi, " · "), "cin")}</b></div><div class="c2cols"><div class="c2col c2l"><div class="c2sec">전구체</div><table class="c2tb"><thead><tr><th class="lft">전구체</th><th>mmol</th><th>mg</th></tr></thead><tbody>${precRows}</tbody></table><div class="c2sec c2mt">시약</div><table class="c2tb"><tbody>${rgRows}</tbody></table><div class="c2note">${tfaNote}</div><div class="c2note">${conc}</div></div><div class="c2col"><div class="c2sec">절차</div>${steps}</div></div></div>`;
 }
@@ -1748,9 +2454,10 @@ function cardForLot(lot) {
   if (lot.type === "Core") {
     const rows = (lot.stoich || []).filter(s => s && s.el).map(s => {
       let ratio = s.coeff;
-      if ((s.role === "hostCation") && ["Na", "Li", "K"].includes(s.el))
+      if (isNum(s.excess)) ratio = (s.coeff ?? 1) * s.excess;          // 새 형식: 행마다 과량 보관
+      else if ((s.role === "hostCation") && ["Na", "Li", "K"].includes(s.el))
         ratio = (s.coeff ?? 1) * (lot.naExcessUsed ?? state.db.settings.naExcess);
-      if (s.role === "anion")
+      else if (s.role === "anion")
         ratio = (s.coeff ?? 4) * (lot.fExcessUsed ?? state.db.settings.fExcess ?? 1);
       const prec = (lot.precursors && lot.precursors[s.el]) || (Materials.defaultPrec(s.el) || {}).name;
       return { el: s.el, prec, ratio, role: s.role };
@@ -1764,9 +2471,19 @@ function cardForLot(lot) {
     calc.particleMmol = d.I;
     let solHtml = "";
     try {
-      const lnEls = (lot.stoich || []).filter(s => s && s.el && s.role !== "anion" && !["Na","Li","K"].includes(s.el));
-      const solPrecs = lnEls.map(s => ({ name: (lot.precursors && lot.precursors[s.el]) || ((Materials.defaultPrec(s.el)||{}).name), mmol: excelRound((lot.solLnMmol||0) * (s.coeff||0), 4) }));
-      const sol = shellSolutionCalc(solPrecs, { volMl: lot.solVolMl });
+      /* 저장된 전구체 행이 있으면 그대로 재현 — 없을 때만(구버전 lot) 조성비로 역산 */
+      let solPrecs;
+      if (Array.isArray(lot.solPrecs) && lot.solPrecs.length) {
+        solPrecs = lot.solPrecs.map(r => ({ name: r.name, mmol: r.mmol }));
+      } else {
+        const lnEls = (Array.isArray(lot.components) && lot.components.length)
+          ? lot.components.filter(c => c && c.el && c.role === "dopant")
+          : (lot.stoich || []).filter(s => s && s.el && s.role !== "anion" && !["Na", "Li", "K"].includes(s.el));
+        const cs = lnEls.reduce((a, s) => a + (s.coeff || 0), 0) || 1;
+        solPrecs = lnEls.map(s => ({ name: s.prec || (lot.precursors && lot.precursors[s.el]) || ((Materials.defaultPrec(s.el)||{}).name), mmol: excelRound((lot.solLnMmol||0) * (s.coeff||0) / cs, 4) }));
+      }
+      const sol = shellSolutionCalc(solPrecs, { volMl: lot.solVolMl,
+        tfaConcM: (isNum(lot.solTfaMmol) && lot.solVolMl > 0) ? lot.solTfaMmol / lot.solVolMl : undefined });
       solHtml = shellSolutionCardHtml(lotFormula(lot) + " solution", sol, lot.solCardEdits || {});
     } catch (e) { console.warn("sol card", e); }
     return solHtml + shellCardHtml(lot, calc, lotFormula(lot));
@@ -1858,48 +2575,114 @@ function paginateCardsA4(area) {
 function defaultPlannerCtx(mode) {
   const S = state.db.settings;
   if (mode === "shell") {
-    return { mode: "shell", editSerial: null,
+    return { mode: "shell", editSerial: null, name: "",
+      components: [
+        { id: newCompId(), role: "hostCation", el: "Na", coeff: 1, excess: 1 },
+        { id: newCompId(), role: "dopant", el: "Y", coeff: 1, excess: 1 },
+        { id: newCompId(), role: "anion", el: "F", coeff: 4, excess: 1 },
+      ],
       src: null, volMl: S.shellSyn.aliquotMl, radius: 4, thick: 2, oaMl: S.shellSyn.oaMl, odeMl: S.shellSyn.odeMl,
       stockVol: S.defaultStockVolShell, date: todayYYMMDD(), heat: null, memo: "",
       dopants: [{ el: "Y", coeff: 1 }],
       solPrecs: null, solLnMmol: S.shellSol.lnConcM * S.shellSol.volMl, solVolMl: S.shellSol.volMl,
+      solTfaMmol: S.shellSol.tfaConcM * S.shellSol.volMl,
       inj: S.shellSyn.inj.slice(), cardEdits: {} };
   }
-  return { mode: "core", editSerial: null,
+  return { mode: "core", editSerial: null, name: "",
     tgtMmol: 0.1, stockVol: S.defaultStockVolCore, date: todayYYMMDD(), heat: 60, memo: "",
-    host: { el: "Na", coeff: 1 }, anion: { el: "F", coeff: 4 },
-    dopants: [{ el: "Lu", coeff: 0.8 }, { el: "Tm", coeff: 0.2 }, null],
+    components: [
+      { id: newCompId(), role: "hostCation", el: "Na", coeff: 1, excess: S.naExcess },
+      { id: newCompId(), role: "dopant", el: "Lu", coeff: 0.8, excess: 1 },
+      { id: newCompId(), role: "dopant", el: "Tm", coeff: 0.2, excess: 1 },
+      { id: newCompId(), role: "anion", el: "F", coeff: 4, excess: S.fExcess ?? 1 },
+    ],
     precs: {}, naExcess: S.naExcess, fExcess: S.fExcess ?? 1, cardEdits: {} };
 }
 
-function plannerStoich(ctx) {
-  const st = [];
-  st.push({ el: ctx.host.el, coeff: ctx.host.coeff, role: "hostCation" });
-  const ds = ctx.dopants.filter(d => d && d.el);
-  for (let i = 0; i < 5; i++) st.push(ds[i] ? { el: ds[i].el, coeff: ds[i].coeff, role: "dopant" } : null);
-  st.push({ el: ctx.anion.el, coeff: ctx.anion.coeff, role: "anion" });
-  return st;
+/* ---------------------------------------------------------------------
+ * 성분표(ctx.components)가 Core 계획의 단일 출처.
+ * 역할·원소·계수·과량·전구체를 행 단위로 들고 있으며, 개수·순서 제한이 없다.
+ * 예전 ctx(host/dopants/anion)는 열릴 때 자동으로 성분표로 승격된다.
+ * ------------------------------------------------------------------- */
+let _compSeq = 0;
+function newCompId() { return "k" + (Date.now().toString(36)) + (_compSeq++); }
+function ensureComponents(ctx) {
+  if (Array.isArray(ctx.components) && ctx.components.length) return ctx.components;
+  const S = state.db.settings, out = [];
+  if (ctx.mode === "shell") {
+    /* 셸 조성도 Na·F가 고정이 아니라 지울 수 있는 행이 된다 */
+    out.push({ id: newCompId(), role: "hostCation", el: "Na", coeff: 1, excess: 1 });
+    for (const d of (ctx.dopants || [])) if (d && d.el)
+      out.push({ id: newCompId(), role: "dopant", el: d.el, coeff: d.coeff, excess: 1 });
+    out.push({ id: newCompId(), role: "anion", el: "F", coeff: 4, excess: 1 });
+    ctx.components = out;
+    return out;
+  }
+  if (ctx.host && ctx.host.el) out.push({ id: newCompId(), role: "hostCation", el: ctx.host.el,
+    coeff: ctx.host.coeff ?? 1, excess: isNum(ctx.naExcess) ? ctx.naExcess : (S.naExcess || 1) });
+  for (const d of (ctx.dopants || [])) if (d && d.el)
+    out.push({ id: newCompId(), role: "dopant", el: d.el, coeff: d.coeff, excess: 1 });
+  if (ctx.anion && ctx.anion.el) out.push({ id: newCompId(), role: "anion", el: ctx.anion.el,
+    coeff: ctx.anion.coeff ?? 4, excess: isNum(ctx.fExcess) ? ctx.fExcess : (S.fExcess ?? 1) });
+  ctx.components = out;
+  return out;
 }
-function shellStoich(ctx) {
-  const st = [];
-  st.push({ el: "Na", coeff: 1, role: "hostCation" });
-  const ds = ctx.dopants.filter(d => d && d.el);
-  for (let i = 0; i < 5; i++) st.push(ds[i] ? { el: ds[i].el, coeff: ds[i].coeff, role: "dopant" } : null);
-  st.push({ el: "F", coeff: 4, role: "anion" });
-  return st;
+/* 'additive'(첨가제)는 조성 기록(stoich)에서 제외된다 — 광화제·계면활성제처럼
+   최종 조성에는 들어가지 않지만 실제로는 투입하는 물질을 위한 자리. */
+const ROLE_OPTS = [["hostCation", "Host cation"], ["dopant", "Dopant"], ["anion", "Host anion"],
+                   ["additive", "첨가제"], ["other", "기타"]];
+const NON_STOICH_ROLES = ["additive"];
+/* 양 지정 방식 — 엔진이 지원하는 모드 중 Core 계획에서 쓸 수 있는 것 */
+const AMOUNT_MODES = [["ratio", "조성비 × 목표"], ["mmol", "전구체 mmol"], ["mass", "질량 mg"],
+                      ["multiple", "다른 성분의 배수"]];
+function amountModeOf(c) { return (c && c.mode) ? c.mode : "ratio"; }
+function roleLabelKo(r) { const f = ROLE_OPTS.find(o => o[0] === r); return f ? f[1] : (r || "기타"); }
+/* 계획 가능한 원소 = 전구체가 하나라도 있는 원소 ∪ 관례 역할 목록, 원자번호 순 */
+function plannableEls() {
+  const R2 = APP_DATA.roles, set = new Set([].concat(R2.hostCation, R2.anion, R2.dopant));
+  (APP_DATA.materials.precursors || []).forEach(p => { if (p && p.elem) set.add(p.elem); });
+  const Z = el => (APP_DATA.meta[el] && APP_DATA.meta[el][0]) || 999;
+  return [...set].filter(e => Materials.elMW(e) != null).sort((a, b) => Z(a) - Z(b));
 }
 
+function plannerStoich(ctx) {
+  /* 조성 소속을 정하는 것은 **역할**이지 입력 방식이 아니다.
+     'F를 Lu의 3배로' 처럼 방식이 달라도 F는 여전히 조성의 일부다 —
+     이럴 때는 실제 투입량에서 계수를 역산해 기록한다(목표 mmol 기준).
+     첨가제만 조성식에서 빠진다. */
+  const live = ensureComponents(ctx).filter(c => c && c.el);
+  const res = resolveComponents(plannerComponents(ctx), { tgtMmol: ctx.tgtMmol });
+  const tgt = isNum(ctx.tgtMmol) ? ctx.tgtMmol : 0;
+  const out = [];
+  live.forEach((c, i) => {
+    if (NON_STOICH_ROLES.indexOf(c.role) >= 0) return;
+    if (amountModeOf(c) === "ratio") {
+      out.push({ el: c.el, coeff: c.coeff, role: c.role, excess: isNum(c.excess) ? c.excess : 1 });
+    } else {
+      const r = res.rows[i];
+      const coeff = (r && isNum(r.elMmol) && tgt > 0) ? excelRound(r.elMmol / tgt, 6) : null;
+      out.push({ el: c.el, coeff, role: c.role, excess: 1 });
+    }
+  });
+  return out;
+}
+function shellStoich(ctx) {
+  /* Core와 같은 규칙 — 역할·원소·개수 제한 없음. 첨가제는 조성식에서 제외. */
+  return ensureComponents(ctx)
+    .filter(c => c && c.el && NON_STOICH_ROLES.indexOf(c.role) < 0)
+    .map(c => ({ el: c.el, coeff: c.coeff, role: c.role, excess: isNum(c.excess) ? c.excess : 1 }));
+}
+/* 셸 조성에서 '용액에 넣을 Ln 성분' 목록 — 용액 전구체 기본값의 출처 */
+function shellSoluteComps(ctx) {
+  return ensureComponents(ctx).filter(c => c && c.el && c.role === "dopant");
+}
+
+/* 구 경로 비교용 — '조성비' 방식일 때만 의미가 있다 */
 function plannerRecipeRows(ctx) {
-  const rows = [];
-  rows.push({ el: ctx.host.el, prec: ctx.precs[ctx.host.el] || (Materials.defaultPrec(ctx.host.el) || {}).name,
-    ratio: (ctx.host.coeff ?? 1) * ctx.naExcess, role: "hostCation", excess: true });
-  for (const d of ctx.dopants) {
-    if (!d || !d.el) continue;
-    rows.push({ el: d.el, prec: ctx.precs[d.el] || (Materials.defaultPrec(d.el) || {}).name, ratio: d.coeff, role: "dopant" });
-  }
-  rows.push({ el: ctx.anion.el, prec: ctx.precs[ctx.anion.el] || (Materials.defaultPrec(ctx.anion.el) || {}).name,
-    ratio: ctx.anion.coeff * (ctx.fExcess || 1), role: "anion", excess: (ctx.fExcess || 1) !== 1 });
-  return rows;
+  return ensureComponents(ctx).filter(c => c && c.el && amountModeOf(c) === "ratio").map(c => ({
+    el: c.el, prec: compPrec(ctx, c),
+    ratio: (isNum(c.coeff) ? c.coeff : 0) * (isNum(c.excess) ? c.excess : 1),
+    role: c.role, excess: (isNum(c.excess) ? c.excess : 1) !== 1 }));
 }
 
 function elSelect(cls, list, cur, allowEmpty) {
@@ -1930,27 +2713,62 @@ function precSelect(cls, el, cur) {
 /* ---------------- CORE view ---------------- */
 function renderPlannerCore(root, ctx) {
   const R = APP_DATA.roles;
-  const recipe = coreRecipe({ tgtMmol: ctx.tgtMmol, rows: plannerRecipeRows(ctx) });
-  const dSum = ctx.dopants.filter(d => d && d.el).reduce((a, d) => a + (d.coeff || 0), 0);
+  const comps = ensureComponents(ctx);
+  const recipe = coreRecipe({ tgtMmol: ctx.tgtMmol, components: plannerComponents(ctx) });
+  const live = comps.filter(c => c && c.el);
+  const dSum = live.filter(c => c.role === "dopant" && amountModeOf(c) === "ratio").reduce((a, c) => a + (c.coeff || 0), 0);
   const sumOk = Math.abs(dSum - 1) < 1e-9;
+  const overList = live.filter(c => (isNum(c.excess) ? c.excess : 1) !== 1)
+    .map(c => ({ el: c.el, coeff: c.coeff || 0, excess: c.excess }));
+  const _els = plannableEls();
+  /* 방식별 입력칸 — 무엇을 입력하는지가 방식에 따라 달라진다 */
+  const amtCell = (c, i, all) => {
+    const m = amountModeOf(c);
+    const sel = `<select class="slim cMode" data-ci="${i}" style="width:118px" title="이 성분의 양을 무엇으로 정할지">${AMOUNT_MODES.map(o =>
+      `<option value="${o[0]}" ${o[0] === m ? "selected" : ""}>${o[1]}</option>`).join("")}</select>`;
+    let inp;
+    if (m === "ratio") {
+      inp = `<span class="mrc"><input type="number" step="0.01" min="0" class="slim cCoeff" data-ci="${i}" value="${c.coeff ?? ""}" title="조성 계수">
+        <span class="mx">×</span><input type="number" step="0.1" min="0" class="slim cExc" data-ci="${i}" value="${isNum(c.excess) ? c.excess : 1}" title="과량 배수 — 무게에만 반영"></span>`;
+    } else if (m === "multiple") {
+      const others = all.filter(x => x && x.el && x.id !== c.id);
+      inp = `<span class="row" style="gap:3px"><input type="number" step="0.1" min="0" class="slim w60 cCoeff" data-ci="${i}" value="${c.coeff ?? ""}" title="배수">
+        <span class="mx">×</span><select class="slim cRef" data-ci="${i}" style="width:70px">${others.map(o =>
+          `<option value="${esc(o.id)}" ${o.id === c.ref ? "selected" : ""}>${esc(o.el)}</option>`).join("") || '<option value="">–</option>'}</select></span>`;
+    } else {
+      const unit = (m === "mass") ? "mg" : "mmol";
+      inp = `<span class="row" style="gap:3px"><input type="number" step="0.001" min="0" class="slim w80 cCoeff" data-ci="${i}" value="${c.coeff ?? ""}">
+        <span class="muted" style="font-size:11px">${unit}</span></span>`;
+    }
+    return `<div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start">${sel}${inp}</div>`;
+  };
+  const compRows = comps.map((c, i) => {
+    if (!c) return "";
+    const row = recipe.rows[live.indexOf(c)] || {};
+    const cur = compPrec(ctx, c);
+    const precs = c.el ? Materials.precsFor(c.el) : [];
+    return `<tr data-ci="${i}">
+      <td class="l"><select class="slim cRole" data-ci="${i}">${ROLE_OPTS.map(o =>
+        `<option value="${o[0]}" ${o[0] === c.role ? "selected" : ""}>${o[1]}</option>`).join("")}</select></td>
+      <td><select class="slim cEl" data-ci="${i}"><option value="">–</option>${_els.map(e =>
+        `<option ${e === c.el ? "selected" : ""}>${e}</option>`).join("")}</select></td>
+      <td class="l">${precs.length
+        ? `<select class="slim cPrec" data-ci="${i}">${precs.map(p =>
+            `<option ${p.name === cur ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select>`
+        : (c.el ? `<span class="badge warn">전구체 없음</span>` : `<span class="muted">–</span>`)}</td>
+      <td>${amtCell(c, i, comps)}</td>
+      <td class="num">${fmtN(row.precMmol, 4)}</td>
+      <td class="num">${fmtN(row.welMg)}</td>
+      <td class="num"><b>${fmtN(row.wprecMg, 2)}</b></td>
+      <td><span class="rowbtns">
+        <button class="btn sm cUp" data-ci="${i}" title="위로" ${i === 0 ? "disabled" : ""}>↑</button>
+        <button class="btn sm cDn" data-ci="${i}" title="아래로" ${i === comps.length - 1 ? "disabled" : ""}>↓</button>
+        <button class="btn sm cDel" data-ci="${i}" title="행 삭제">✕</button></span></td></tr>`;
+  }).join("");
   const preview = { serial: ctx.editSerial ?? nextSerial(), type: "Core", tgtMmol: ctx.tgtMmol,
-    stoich: plannerStoich(ctx), cardEdits: ctx.cardEdits };
+    stoich: plannerStoich(ctx), cardEdits: ctx.cardEdits, name: ctx.name || "" };
   const autoGroup = layerElems(preview);
 
-  const dopRows = ctx.dopants.map((d, i) => {
-    if (!d) d = ctx.dopants[i] = { el: "", coeff: null };
-    const row = recipe.rows.find(r => r && r.el === d.el && r.role === "dopant");
-    return `<tr>
-      <td class="l">Dopant ${i + 1}</td>
-      <td>${elSelect("dopEl", dopantEls(), d.el, true)}</td>
-      <td>${d.el ? precSelect("dopPrec", d.el, ctx.precs[d.el] || (row ? row.prec : "")) : "–"}</td>
-      <td><span class="mrc"><input type="number" step="0.01" min="0" class="slim dopCo" value="${d.coeff ?? ""}"></span></td>
-      <td class="num">${row ? fmtN(row.precMmol, 4) : "–"}</td>
-      <td class="num">${row ? fmtN(row.welMg) : "–"}</td>
-      <td class="num"><b>${row ? fmtN(row.wprecMg, 2) : "–"}</b></td>
-      <td><button class="btn sm dopDel" title="행 삭제">✕</button></td></tr>`;
-  }).join("");
-  const hostRow = recipe.rows[0], anionRow = recipe.rows[recipe.rows.length - 1];
 
   /* P5: 시퀀스 기반 용매 자동 입력 (바인딩 프로토콜) — 아니면 종전 6타일 */
   const _C = APP_DATA.constants, _proto = activeProtocol(_C), _bound = protoHasBind(_proto);
@@ -1981,7 +2799,7 @@ function renderPlannerCore(root, ctx) {
         const cap = (sv.key==="oam" && sv.ml!=null) ? ` <span class="muted" style="font-size:10.5px">≈ ${fmtN(solvActualMmol(sv, sv.ml),3)} mmol(70%)</span>` : "";
         return `<div class="row" style="gap:6px;align-items:center;margin:3px 0;flex-wrap:wrap"><span style="min-width:118px;font-weight:600;font-size:12px">${nm}</span>${ctrl}<span style="margin-left:auto;font-variant-numeric:tabular-nums"><b>${volTxt}</b></span>${cap}</div>`;
       }).join("");
-      return `<div style="border:1px solid #e2e8f0;border-radius:10px;padding:9px 11px;margin-bottom:8px;background:#fbfcfe"><div style="font-weight:700;font-size:12.5px;margin-bottom:4px">${gi+1}. ${precLine}</div>${svHtml||'<span class="muted" style="font-size:12px">용매 없음</span>'}</div>`;
+      return `<div style="border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin-bottom:8px;background:var(--card)"><div style="font-weight:700;font-size:12.5px;margin-bottom:4px">${gi+1}. ${precLine}</div>${svHtml||'<span class="muted" style="font-size:12px">용매 없음</span>'}</div>`;
     }).join("");
     solvSection = `<div id="pSeqSolv">${grpHtml||'<div class="note">합성 프로세스에서 <b>첨가/주입</b> 블록에 전구체·용매를 묶으면 여기에 입력칸이 자동으로 나타납니다.</div>'}</div>
       <div class="tiles" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr));margin-top:4px">
@@ -1989,11 +2807,40 @@ function renderPlannerCore(root, ctx) {
         <div class="tile"><div class="v">${fmtN(recipe.targetMg,2)}<span style="font-size:13px"> mg</span></div><div class="k">Target amount</div><div class="s">${ctx.tgtMmol} mmol</div></div>
       </div>`;
   } else {
-    solvSection = `<div class="tiles" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">
+    /* 시약 조건을 계획 화면에서 직접 입력 — 값을 고치면 아래 결과 타일이 즉시 갱신되고,
+       설정 탭의 같은 항목과 하나의 값으로 유지된다(setShared). */
+    const _S = state.db.settings;
+    const _odeKey = (ctx.tgtMmol <= 1) ? "odeTotalSmall" : "odeTotalLarge";
+    const _useOam = _S.oamEq > 0;
+    const _cg = (title, body, extra) => `<div style="border:1px solid var(--line2);border-radius:9px;padding:6px 9px 7px;background:var(--card);min-width:0">
+        <div style="font-size:11.5px;font-weight:700;color:var(--ink2);margin-bottom:4px;white-space:nowrap;display:flex;align-items:center;gap:5px">${title}</div>
+        <div class="row" style="gap:6px;align-items:center">${body}</div>${extra || ""}</div>`;
+    const _u = t => `<span class="muted" style="font-size:11px">${t}</span>`;
+    const condRow = `<div style="margin-bottom:11px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--chip)">
+        <div style="font-size:11.5px;font-weight:700;color:var(--sub);margin-bottom:7px">투입 조건 <span class="muted" style="font-weight:500">— 고치면 아래 결과와 출력 카드가 즉시 바뀌고, 설정 탭에도 같은 값으로 반영됩니다</span></div>
+        <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:flex-start">
+        ${_cg("Oleic acid",
+            `<input type="number" step="0.5" min="0" class="slim w80" id="rgOaPer" value="${_S.oaPerMmol}">${_u("mL/mmol × tgt")}`)}
+        ${_cg("1-Octadecene",
+            `<input type="number" step="1" min="0" class="slim w80" id="rgOdeTot" value="${_S[_odeKey]}"
+               title="target ${ctx.tgtMmol <= 1 ? "≤ 1" : "> 1"} mmol 기준 총 부피">${_u(`mL 총량 − OA　(tgt ${ctx.tgtMmol <= 1 ? "≤ 1" : "> 1"} mmol)`)}`)}
+        ${_cg(`<label class="row" style="gap:5px;margin:0;font-weight:700;cursor:pointer"
+                 title="해제하면 당량 0으로 저장되고 결과·출력 카드에서 Oleyl amine 항목이 사라집니다">
+                 <input type="checkbox" id="rgOamUse" ${_useOam ? "checked" : ""}>Oleyl amine</label>`,
+            _useOam
+              ? `<input type="number" step="0.1" min="0" class="slim w60" id="rgOamEq" value="${_S.oamEq}">${_u("eq/tgt")}
+                 <input type="number" step="0.01" min="0" class="slim w80" id="rgOamMw" value="${_S.oamMw}">${_u("g/mol")}
+                 <input type="number" step="0.001" min="0" class="slim w80" id="rgOamDens" value="${_S.oamDens}">${_u("g/mL")}`
+              : `<span class="badge warn">미사용 — 결과에서 제외</span>`)}
+        ${_cg("Methanol",
+            `<input type="number" step="0.005" min="0" class="slim w80" id="rgMtoh" value="${_S.mtohPerMgF}">${_u("mL/mg NH₄F")}`)}
+        </div>
+      </div>`;
+    solvSection = condRow + `<div class="tiles" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">
         <div class="tile"><div class="v">${fmtN(recipe.oaMl, 1)}<span style="font-size:13px"> mL</span></div><div class="k">Oleic acid</div><div class="s">= ROUND(tgt × ${state.db.settings.oaPerMmol}, 1)</div></div>
-        <div class="tile"><div class="v">${fmtN(recipe.odeMl, 1)}<span style="font-size:13px"> mL</span></div><div class="k">1-Octadecene</div><div class="s">= ${ctx.tgtMmol <= 1 ? 10 : 20} − Oleic acid</div></div>
-        <div class="tile"><div class="v">${fmtN(recipe.oamMl, 2)}<span style="font-size:13px"> mL</span></div><div class="k">Oleyl amine</div><div class="s">= tgt×${state.db.settings.oamEq} eq → 순액 부피</div></div>
-        <div class="tile"><div class="v">${recipe.mtohMl === null ? "–" : fmtN(recipe.mtohMl, 0)}<span style="font-size:13px"> mL</span></div><div class="k">Methanol (NH₄F 분산)</div><div class="s">= ROUNDUP(W<sub>NH4F</sub>×0.05)</div></div>
+        <div class="tile"><div class="v">${fmtN(recipe.odeMl, 1)}<span style="font-size:13px"> mL</span></div><div class="k">1-Octadecene</div><div class="s">= ${_S[_odeKey]} − Oleic acid</div></div>
+        ${recipe.oamMl === 0 ? "" : `<div class="tile"><div class="v">${fmtN(recipe.oamMl, 2)}<span style="font-size:13px"> mL</span></div><div class="k">Oleyl amine</div><div class="s">= tgt×${state.db.settings.oamEq} eq → 순액 부피</div></div>`}
+        <div class="tile"><div class="v">${recipe.mtohMl === null ? "–" : fmtN(recipe.mtohMl, 0)}<span style="font-size:13px"> mL</span></div><div class="k">Methanol (NH₄F 분산)</div><div class="s">= ROUNDUP(W<sub>NH4F</sub>×${_S.mtohPerMgF})</div></div>
         <div class="tile"><div class="v">${fmtN(recipe.mw, 2)}</div><div class="k">M.W. [g/mol]</div><div class="s">투입비 기준</div></div>
         <div class="tile"><div class="v">${fmtN(recipe.targetMg, 2)}<span style="font-size:13px"> mg</span></div><div class="k">Target amount</div><div class="s">${ctx.tgtMmol} mmol</div></div>
       </div>`;
@@ -2005,46 +2852,38 @@ function renderPlannerCore(root, ctx) {
     <div class="card">
       <h3>Core 합성 계획</h3>
       <div class="row" style="margin-bottom:10px">
+        <label class="f"><span>Lot 접두사</span><input type="text" class="w80" id="pLotPre" value="${esc(state.db.settings.lotPrefix ?? "WJ")}"
+          title="설정 탭과 같은 값입니다 — 여기서 고치면 설정·기록·ICP 라벨에 모두 반영됩니다"></label>
+        <label class="f" style="min-width:190px"><span>샘플명 <span class="muted" style="font-weight:500">(비우면 자동 ${esc(autoLotLabel(preview))})</span></span>
+          <input type="text" class="w160" id="pName" value="${esc(ctx.name || "")}" placeholder="${esc(autoLotLabel(preview))}"
+            title="출력 카드 제목과 같은 값입니다 — 카드에서 고쳐도 여기에 반영됩니다"></label>
         <label class="f">합성일 (YYMMDD)<input type="text" class="w100" id="pDate" value="${esc(ctx.date)}"></label>
         <label class="f"><span>Stock volume (<b><i>V</i></b>) [mL]</span><input type="number" step="0.5" class="w100" id="pStock" value="${ctx.stockVol}"></label>
         <label class="f">Target [mmol]<input type="number" step="0.01" min="0" class="w100" id="pTgt" value="${ctx.tgtMmol}"></label>
         <label class="f">열처리 [min]<input type="number" step="5" min="0" class="w80" id="pHeat" value="${ctx.heat ?? ""}"></label>
         <label class="f">Group (자동)<span class="badge info" style="align-self:flex-start;margin-top:6px">${esc(autoGroup) || "–"}</span></label>
       </div>
-      <div class="tblwrap" style="max-height:none"><table class="tbl">
-        <thead><tr><th class="l">역할</th><th>Element</th><th class="l">Precursor</th><th>Molar ratio</th>
-        <th>Prec. [mmol]</th><th>W<sub>elem</sub> [mg]</th><th>W<sub>prec</sub> [mg]</th><th></th></tr></thead>
-        <tbody>
-          <tr><td class="l">Host Cation</td>
-            <td>${elSelect("hostEl", R.hostCation, ctx.host.el)}</td>
-            <td>${precSelect("hostPrec", ctx.host.el, ctx.precs[ctx.host.el] || hostRow.prec)}</td>
-            <td><span class="mrc"><span class="mc">${ctx.host.coeff}</span><span class="mx">×</span><input type="number" step="0.1" class="slim" id="pNaX" value="${ctx.naExcess}" title="과량 계수"></span></td>
-            <td class="num">${fmtN(hostRow.precMmol, 4)}</td><td class="num">${fmtN(hostRow.welMg)}</td>
-            <td class="num"><b>${fmtN(hostRow.wprecMg, 2)}</b></td><td></td></tr>
-          ${dopRows}
-          <tr><td class="l">Host Anion</td>
-            <td>${elSelect("anEl", R.anion, ctx.anion.el)}</td>
-            <td>${precSelect("anPrec", ctx.anion.el, ctx.precs[ctx.anion.el] || anionRow.prec)}</td>
-            <td><span class="mrc"><input type="number" step="0.5" class="slim" id="pAnCo" value="${ctx.anion.coeff}"><span class="mx">×</span><input type="number" step="0.05" class="slim" id="pFX" value="${ctx.fExcess}" title="F 과량 계수 — 질량·Methanol에 반영, 조성 기록 계수는 유지"></span></td>
-            <td class="num">${fmtN(anionRow.precMmol, 4)}</td><td class="num">${fmtN(anionRow.welMg)}</td>
-            <td class="num"><b>${fmtN(anionRow.wprecMg, 2)}</b></td><td></td></tr>
-        </tbody></table></div>
+      <div class="tblwrap" style="max-height:none"><table class="tbl comptbl">
+        <thead><tr><th class="l">역할</th><th>원소</th><th class="l">Precursor</th><th>투입량</th>
+        <th>mmol</th><th>W<sub>el</sub></th><th>W<sub>prec</sub></th><th></th></tr></thead>
+        <tbody>${compRows}</tbody></table></div>
       <div class="row" style="margin-top:8px">
-        <button class="btn sm" id="pAddDop" ${ctx.dopants.filter(Boolean).length >= 5 ? "disabled" : ""}>+ Add Dopant</button>
+        <button class="btn sm" id="pAddComp">+ 성분 추가</button>
         <span class="badge ${sumOk ? "ok" : "risk"}">Dopant 계수 합 = ${fmtN(dSum, 4)} ${sumOk ? "✓" : "≠ 1"}</span>
-        <span class="badge gray">Na 과량: ${ctx.host.coeff}×${ctx.naExcess} = ${fmtN(ctx.host.coeff * ctx.naExcess, 3)} (정량 대비)</span>
-        ${(ctx.fExcess || 1) !== 1 ? `<span class="badge gray">F 과량: ${ctx.anion.coeff}×${ctx.fExcess} = ${fmtN(ctx.anion.coeff * ctx.fExcess, 3)} (정량 대비)</span>` : ""}
+        ${overList.map(o => `<span class="badge gray">${esc(o.el)} 과량 ${fmtN(o.coeff, 3)}×${fmtN(o.excess, 3)} = ${fmtN(o.coeff * o.excess, 3)}</span>`).join("")}
       </div>
-      <div class="note" style="margin-top:8px">★ ${esc(ctx.host.el)} source는 과량으로 정량의 ${ctx.naExcess}배 투입${(ctx.fExcess || 1) !== 1 ? ` · ${esc(ctx.anion.el)} source는 정량의 ${ctx.fExcess}배 투입` : ""} — 몰비·무게 계산에 반영됨 (조성 기록에는 계수 그대로 저장)</div>
+      <div class="note" style="margin-top:8px">역할·원소·개수에 제한이 없습니다 — 행을 추가·삭제·이동해 원하는 조성을 그대로 표현하세요.
+        <b>과량</b>은 몰비·무게에만 반영되고 <b>조성 기록에는 계수 그대로</b> 저장됩니다.</div>
     </div>
+    <div id="procInline"></div>
     <div class="card">
-      <h3>용매 / 시약 및 조건 <span class="hint">${_bound ? "시퀀스 기반 · 자동 계산" : "자동 계산"}</span></h3>
+      <h3>용매 / 시약 및 조건 <span class="hint">${_bound ? "시퀀스 기반 · 자동 계산" : "조건을 여기서 직접 입력 — 설정 탭과 같은 값"}</span></h3>
       ${solvSection}
       <div class="row">
         <label class="f" style="flex:1">Memo<input type="text" id="pMemo" value="${esc(ctx.memo)}"></label>
       </div>
       <div class="row right" style="margin-top:10px">
-        <button class="btn" id="pEditProto">합성 프로세스 편집</button>
+        <button class="btn" id="pEditProto">전체 프로세스 편집…</button>
         <button class="btn" id="pReset">Reset</button>
         <button class="btn" id="pPrint">Print</button>
         <button class="btn primary" id="pSave">${ctx.editSerial !== null ? `Save Changes (Lot ${ctx.editSerial})` : `Save as Lot ${preview.serial}`}</button>
@@ -2052,6 +2891,16 @@ function renderPlannerCore(root, ctx) {
     </div>
    </div>
    <div>
+    ${validationPanel({ rows: recipe.rows, dopantSum: dSum,
+        ratioEls: live.filter(c => amountModeOf(c) === "ratio" && NON_STOICH_ROLES.indexOf(c.role) < 0).map(c => c.el),
+        additives: live.filter(c => NON_STOICH_ROLES.indexOf(c.role) >= 0)
+                       .map(c => `${c.el} · ${(AMOUNT_MODES.find(m => m[0] === amountModeOf(c)) || [])[1] || ""}`),
+        altModes: live.filter(c => NON_STOICH_ROLES.indexOf(c.role) < 0 && amountModeOf(c) !== "ratio")
+                      .map(c => {
+                        const st = plannerStoich(ctx).find(s => s.el === c.el);
+                        return `${c.el} · ${(AMOUNT_MODES.find(m => m[0] === amountModeOf(c)) || [])[1] || ""}` +
+                               (st && isNum(st.coeff) ? ` → 계수 ${fmtN(st.coeff, 4)}` : "");
+                      }) })}
     <div class="card">
       <h3>Print Preview <span class="hint">${esc(lotFormula(preview))} · 클릭하여 수정 가능</span>
         <button class="btn sm" id="pCardReset" style="margin-left:auto">Reset Edits</button></h3>
@@ -2059,8 +2908,17 @@ function renderPlannerCore(root, ctx) {
     </div>
    </div>
   </div>`;
-  bindCardEditing($("#cardPrev"), (k, v) => { ctx.cardEdits[k] = v; });
-  $("#pCardReset").onclick = () => { ctx.cardEdits = {}; renderPlannerCore(root, ctx); };
+  /* 카드 제목(샘플명)은 cardEdits가 아니라 ctx.name으로 — 계획창 입력칸과 같은 값 */
+  /* 절차 편집기를 계획 화면 안에서 — 성분을 보면서 절차를 고칠 수 있다 */
+  try {
+    renderProcedurePanel($("#procInline"), { inline: true, groups: ["core"],
+      onChange: () => { const pv = $("#cardPrev"); if (pv) pv.innerHTML = coreCardHtml(preview, recipe); } });
+  } catch (e) { console.warn("proc inline", e); }
+  bindCardEditing($("#cardPrev"), (k, v) => {
+    if (k === "title") { ctx.name = (v === autoLotLabel(preview)) ? "" : v; const f = $("#pName"); if (f) f.value = ctx.name; return; }
+    ctx.cardEdits[k] = v;
+  });
+  $("#pCardReset").onclick = () => { ctx.cardEdits = {}; ctx.name = ""; renderPlannerCore(root, ctx); };
 
   /* events */
   const rr = () => renderPlannerCore(root, ctx);
@@ -2068,30 +2926,73 @@ function renderPlannerCore(root, ctx) {
     const handler = () => { try { const step = ((_proto.steps && _proto.steps.core) || [])[w.bi]; if (!step || !step.bind || !step.bind.solv || !step.bind.solv[w.si]) return; let v = el.value; if (w.num) v = parseFloat(v); step.bind.solv[w.si][w.field] = v; persistProto(); rr(); } catch (e) {} };
     if (el.tagName === "SELECT") el.onchange = handler; else el.onchange = handler; });
   $("#pTgt").onchange = e => { ctx.tgtMmol = parseFloat(e.target.value) || 0; rr(); };
+  $("#pName").onchange = e => { ctx.name = e.target.value.trim(); rr(); };
+  /* 시약 조건 — 계획창에서 고치면 설정 탭의 같은 항목도 함께 바뀐다 */
+  const bindCond = (sel, path, positive) => {
+    const el = $(sel); if (!el) return;
+    el.onchange = () => {
+      const v = parseFloat(el.value);
+      if (!isFinite(v) || v < 0 || (positive && v <= 0)) return rr();
+      setShared(path, v); rr();
+    };
+  };
+  bindCond("#rgOaPer", "oaPerMmol");
+  bindCond("#rgOdeTot", (ctx.tgtMmol <= 1) ? "odeTotalSmall" : "odeTotalLarge", true);
+  bindCond("#rgOamEq", "oamEq");
+  bindCond("#rgOamMw", "oamMw");
+  bindCond("#rgOamDens", "oamDens", true);
+  bindCond("#rgMtoh", "mtohPerMgF");
+  const _oamUse = $("#rgOamUse");
+  if (_oamUse) _oamUse.onchange = () => {
+    const S2 = state.db.settings;
+    if (_oamUse.checked) setShared("oamEq", (S2.oamEqLast > 0) ? S2.oamEqLast : 1.5);
+    else { if (S2.oamEq > 0) setShared("oamEqLast", S2.oamEq); setShared("oamEq", 0); }
+    rr();
+  };
+  $("#pLotPre").onchange = e => { const p = e.target.value.trim(); setLotPrefix(p); setShared("lotPrefix", p); rr(); };
   $("#pDate").onchange = e => ctx.date = e.target.value.trim();
   $("#pStock").onchange = e => ctx.stockVol = parseFloat(e.target.value) || null;
   $("#pHeat").onchange = e => { const v = parseFloat(e.target.value); ctx.heat = isFinite(v) ? v : null; };
   $("#pMemo").onchange = e => ctx.memo = e.target.value;
-  $("#pNaX").onchange = e => { ctx.naExcess = parseFloat(e.target.value) || 1; rr(); };
-  $("#pFX").onchange = e => { ctx.fExcess = parseFloat(e.target.value) || 1; rr(); };
-  $("#pAnCo").onchange = e => { ctx.anion.coeff = parseFloat(e.target.value) || 0; rr(); };
-  root.querySelector(".hostEl").onchange = e => { ctx.host.el = e.target.value; rr(); };
-  const hostPrec = root.querySelector(".hostPrec"); if (hostPrec) hostPrec.onchange = e => { ctx.precs[ctx.host.el] = e.target.value; rr(); };
-  root.querySelector(".anEl").onchange = e => { ctx.anion.el = e.target.value; rr(); };
-  const anPrec = root.querySelector(".anPrec"); if (anPrec) anPrec.onchange = e => { ctx.precs[ctx.anion.el] = e.target.value; rr(); };
-  root.querySelectorAll(".dopEl").forEach((el, i) => el.onchange = e => { ctx.dopants[i] = { el: e.target.value, coeff: ctx.dopants[i]?.coeff ?? 0 }; rr(); });
-  root.querySelectorAll(".dopPrec").forEach((el, i) => el.onchange = e => {
-    const d = ctx.dopants.filter(x => x !== null)[0]; /* map by row order */
+  /* Na·F 과량은 랩 공통 상수 — 계획창에서 고쳐도 설정 탭과 같은 값이 되도록 함께 저장 */
+  /* 성분표 — 역할/원소/전구체/계수/과량 · 행 추가·삭제·이동 */
+  const CI = el => Number(el.dataset.ci);
+  root.querySelectorAll(".cRole").forEach(el => el.onchange = () => { comps[CI(el)].role = el.value; rr(); });
+  root.querySelectorAll(".cEl").forEach(el => el.onchange = () => {
+    const c = comps[CI(el)];
+    c.el = el.value; c.prec = "";              // 원소가 바뀌면 전구체는 기본값으로
+    if (el.value) { const d = Materials.defaultPrec(el.value); if (d) c.prec = d.name; }
+    rr();
   });
-  // precursor selects per dopant need element mapping — rebuild with index attr:
-  root.querySelectorAll("tbody tr").forEach(tr => {
-    const sel = tr.querySelector(".dopPrec");
-    const elSel = tr.querySelector(".dopEl");
-    if (sel && elSel) sel.onchange = e => { ctx.precs[elSel.value] = e.target.value; rr(); };
+  root.querySelectorAll(".cPrec").forEach(el => el.onchange = () => {
+    const c = comps[CI(el)]; c.prec = el.value;
+    if (c.el) ctx.precs[c.el] = el.value;      // 하위호환(원소별 맵도 갱신)
+    rr();
   });
-  root.querySelectorAll(".dopCo").forEach((el, i) => el.onchange = e => { if (ctx.dopants[i]) ctx.dopants[i].coeff = parseFloat(e.target.value) || 0; rr(); });
-  root.querySelectorAll(".dopDel").forEach((el, i) => el.onclick = () => { ctx.dopants.splice(i, 1); if (!ctx.dopants.length) ctx.dopants.push({ el: "", coeff: null }); rr(); });
-  $("#pAddDop").onclick = () => { ctx.dopants.push({ el: "", coeff: 0 }); rr(); };
+  root.querySelectorAll(".cCoeff").forEach(el => el.onchange = () => { comps[CI(el)].coeff = parseFloat(el.value) || 0; rr(); });
+  root.querySelectorAll(".cMode").forEach(el => el.onchange = () => {
+    const c = comps[CI(el)];
+    c.mode = el.value;
+    if (c.mode === "multiple" && !c.ref) { const o = comps.find(x => x && x.el && x.id !== c.id); if (o) c.ref = o.id; }
+    rr();
+  });
+  root.querySelectorAll(".cRef").forEach(el => el.onchange = () => { comps[CI(el)].ref = el.value; rr(); });
+  root.querySelectorAll(".cExc").forEach(el => el.onchange = () => {
+    const c = comps[CI(el)], v = parseFloat(el.value);
+    c.excess = (isFinite(v) && v >= 0) ? v : 1;
+    /* 설정 탭과 이어져 있는 두 값은 함께 갱신 (표시 일관성 유지) */
+    if (c.role === "hostCation") { ctx.naExcess = c.excess; setShared("naExcess", c.excess); }
+    else if (c.role === "anion") { ctx.fExcess = c.excess; setShared("fExcess", c.excess); }
+    rr();
+  });
+  root.querySelectorAll(".cDel").forEach(el => el.onclick = () => {
+    comps.splice(CI(el), 1);
+    if (!comps.length) comps.push({ id: newCompId(), role: "dopant", el: "", coeff: 0, excess: 1 });
+    rr();
+  });
+  root.querySelectorAll(".cUp").forEach(el => el.onclick = () => { const i = CI(el); if (i > 0) { const t = comps[i - 1]; comps[i - 1] = comps[i]; comps[i] = t; rr(); } });
+  root.querySelectorAll(".cDn").forEach(el => el.onclick = () => { const i = CI(el); if (i < comps.length - 1) { const t = comps[i + 1]; comps[i + 1] = comps[i]; comps[i] = t; rr(); } });
+  $("#pAddComp").onclick = () => { comps.push({ id: newCompId(), role: "dopant", el: "", coeff: 0, excess: 1 }); rr(); };
   $("#pReset").onclick = () => { state.plannerCtx = defaultPlannerCtx("core"); renderView(); };
   $("#pEditProto").onclick = openProtocolEditor;
   $("#pPrint").onclick = () => printCards([coreCardHtml(preview, recipe)]);
@@ -2101,7 +3002,11 @@ function renderPlannerCore(root, ctx) {
     const precs = {};
     for (const r of plannerRecipeRows(ctx)) if (r.el && r.prec) precs[r.el] = r.prec;
     upsertLot({ serial, type: "Core", date: ctx.date, stockVol: ctx.stockVol, tgtMmol: ctx.tgtMmol,
-      src: null, radius: null, thick: null, stoich: plannerStoich(ctx),
+      src: null, radius: null, thick: null, stoich: plannerStoich(ctx), name: (ctx.name || "").trim(),
+      components: ensureComponents(ctx).filter(c => c && c.el).map(c =>
+        ({ role: c.role, el: c.el, coeff: c.coeff, excess: c.excess, mode: amountModeOf(c), ref: c.ref || null,
+           prec: compPrec(ctx, c) }))
+        .map((c, i, arr) => { if (c.mode === "multiple" && c.ref) { const t = ensureComponents(ctx).find(x => x.id === c.ref); c.ref = t ? t.el : null; } return c; }),
       heat: ctx.heat, memo: ctx.memo, precursors: precs,
       naExcessUsed: ctx.naExcess, fExcessUsed: ctx.fExcess, cardEdits: ctx.cardEdits, deleted: false });
     toast(`Lot ${serial} 저장 완료`, "ok");
@@ -2120,23 +3025,35 @@ function renderPlannerShell(root, ctx) {
   const E = srcLot ? srcLot.stockVol : null;
   const I = (srcD && isNum(srcD.D) && isNum(E) && E > 0 && isNum(ctx.volMl)) ? srcD.D * ctx.volMl / E : null;
 
+  if (!isNum(ctx.solTfaMmol)) ctx.solTfaMmol = S.shellSol.tfaConcM * (ctx.solVolMl || S.shellSol.volMl);
   const preview = { serial: ctx.editSerial ?? nextSerial(), type: "Shell", date: ctx.date, stockVol: ctx.stockVol,
     src: { serial: ctx.src, volMl: ctx.volMl }, radius: ctx.radius, thick: ctx.thick, oaMl: ctx.oaMl, odeMl: ctx.odeMl,
-    stoich: shellStoich(ctx), cardEdits: ctx.cardEdits };
+    stoich: shellStoich(ctx), cardEdits: ctx.cardEdits, name: ctx.name || "" };
   // derived preview (uses live DB + this preview lot)
   const tmpMap = Object.assign({}, activeLots()); tmpMap[preview.serial] = preview;
   const tmpD = deriveLots(tmpMap).derived[preview.serial] || {};
   const autoGroup = lotGroup(preview.serial, tmpMap);
-  const calc = shellCalc({ particleMmol: tmpD.I, radius: ctx.radius, thick: ctx.thick,
-    solLnMmol: ctx.solLnMmol, solVolMl: ctx.solVolMl, inj: ctx.inj });
-  calc.particleMmol = tmpD.I;
-
   // shell precursor solution rows default from composition
   if (!ctx.solPrecs) {
-    ctx.solPrecs = ctx.dopants.filter(d => d && d.el).map(d =>
-      ({ name: (Materials.defaultPrec(d.el) || {}).name || "", mmol: excelRound(ctx.solLnMmol * (d.coeff || 0), 4) }));
+    const sc = shellSoluteComps(ctx);
+    const csum = sc.reduce((a, c) => a + (c.coeff || 0), 0) || 1;
+    const keepAux = (ctx.solPrecsPrev || []).filter(r => r && r.kind === "aux");
+    ctx.solPrecs = sc.map(c =>
+      ({ name: c.prec || (Materials.defaultPrec(c.el) || {}).name || "", kind: "solute",
+         mmol: excelRound(ctx.solLnMmol * (c.coeff || 0) / csum, 4) }))
+      .concat(keepAux.length ? keepAux : [{ name: SHELL_NA_SOURCE, kind: "aux", mmol: excelRound(ctx.solTfaMmol, 4) }]);
   }
+  ctx.solPrecsPrev = ctx.solPrecs;
   const sol = shellSolutionCalc(ctx.solPrecs, { volMl: ctx.solVolMl });
+  /* 주입량은 '실제로 만든 용액'의 농도로 계산해야 한다.
+     이전에는 명목값(ctx.solLnMmol)을 썼기 때문에, 전구체 행의 mmol을 고치면
+     카드에 인쇄되는 농도와 주입량의 기준이 서로 달라졌다(= 주입량 오차). */
+  const solLnActual = sol.lnTotalMmol;
+  const calc = shellCalc({ particleMmol: tmpD.I, radius: ctx.radius, thick: ctx.thick,
+    solLnMmol: solLnActual, solVolMl: ctx.solVolMl, inj: ctx.inj });
+  calc.particleMmol = tmpD.I;
+  const budget = solElementBudget(sol.rows.concat(
+    (isNum(ctx.solTfaMmol) && ctx.solTfaMmol > 0) ? [{ name: "Sodium trifluoroacetate", mmol: ctx.solTfaMmol }] : []));
   const remain = srcLot ? (srcLot.stockVol || 0) - usedVolume(srcLot.serial) : null;
 
   const srcOpts = lots.map(l => {
@@ -2144,14 +3061,31 @@ function renderPlannerShell(root, ctx) {
     return `<option value="${l.serial}" ${Number(ctx.src) === l.serial ? "selected" : ""}>` +
       `${lotLabel(l)} · ${esc(lotFormula(l))} · D=${fmtN(d.D, 3)}mmol/${fmtN(l.stockVol, 0)}mL</option>`;
   }).join("");
-  const dopRows = ctx.dopants.map((d, i) => `<div class="row">
-      <span class="muted" style="width:64px">셸 조성 ${i + 1}</span>
-      ${elSelect("shDopEl", dopantEls(), d ? d.el : "", true)}
-      <input type="number" step="0.05" class="slim w80 shDopCo" value="${d ? d.coeff ?? "" : ""}" placeholder="coeff">
-      <button class="btn sm shDopDel">✕</button></div>`).join("");
-  const solRows = sol.rows.map((r, i) => `<tr>
-      <td class="l"><select class="slim solPrec" data-i="${i}" style="max-width:220px">${APP_DATA.materials.precursors
-        .filter(p => dopantEls().includes(p.elem)).map(p => `<option ${p.name === r.name ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select></td>
+  const scomps = ensureComponents(ctx);
+  const _sels = plannableEls();
+  const dopRows = `<table class="tbl comptbl" style="margin-top:4px;max-width:560px"><thead><tr>
+      <th class="l">역할</th><th>원소</th><th>계수</th><th></th></tr></thead><tbody>
+      ${scomps.map((c, i) => `<tr data-si="${i}">
+        <td class="l"><select class="slim sRole" data-si="${i}">${ROLE_OPTS.map(o =>
+          `<option value="${o[0]}" ${o[0] === c.role ? "selected" : ""}>${o[1]}</option>`).join("")}</select></td>
+        <td><select class="slim sEl" data-si="${i}"><option value="">–</option>${_sels.map(e =>
+          `<option ${e === c.el ? "selected" : ""}>${e}</option>`).join("")}</select></td>
+        <td><input type="number" step="0.05" min="0" class="slim w80 sCoeff" data-si="${i}" value="${c.coeff ?? ""}"></td>
+        <td><span class="rowbtns">
+          <button class="btn sm sUp" data-si="${i}" ${i === 0 ? "disabled" : ""}>↑</button>
+          <button class="btn sm sDn" data-si="${i}" ${i === scomps.length - 1 ? "disabled" : ""}>↓</button>
+          <button class="btn sm sDel" data-si="${i}">✕</button></span></td></tr>`).join("")}
+      </tbody></table>`;
+  const solRows = sol.all.map((r, i) => `<tr>
+      <td class="l"><select class="slim solPrec" data-i="${i}" style="max-width:220px">${(() => {
+        const want = (r.kind !== "aux") ? (shellSoluteComps(ctx)[i] || {}).el : null;
+        const cand = want ? Materials.precsFor(want) : APP_DATA.materials.precursors;
+        const list = cand.length ? cand : APP_DATA.materials.precursors;
+        return list.map(p => `<option ${p.name === r.name ? "selected" : ""}>${esc(p.name)}</option>`).join("");
+      })()}</select></td>
+      <td><select class="slim solKind" data-i="${i}" style="width:86px">
+        <option value="solute" ${r.kind !== "aux" ? "selected" : ""}>용질(농도)</option>
+        <option value="aux" ${r.kind === "aux" ? "selected" : ""}>보조·첨가</option></select></td>
       <td><input type="number" step="0.005" class="slim w80 solMmol" data-i="${i}" value="${r.mmol ?? ""}"></td>
       <td class="num"><b>${fmtN(r.mg, 1)} mg</b></td>
       <td><button class="btn sm solDel" data-i="${i}">✕</button></td></tr>`).join("");
@@ -2173,6 +3107,11 @@ function renderPlannerShell(root, ctx) {
         <span class="muted" style="align-self:flex-end;font-size:11px;padding-bottom:6px">Core aliquot과 함께 넣는 <b>초기 배스</b> — mmol 환산 없이 직접 입력</span>
       </div>
       <div class="row" style="margin-top:10px">
+        <label class="f"><span>Lot 접두사</span><input type="text" class="w80" id="sLotPre" value="${esc(S.lotPrefix ?? "WJ")}"
+          title="설정 탭과 같은 값입니다 — 여기서 고치면 설정·기록·ICP 라벨에 모두 반영됩니다"></label>
+        <label class="f" style="min-width:180px"><span>샘플명 <span class="muted" style="font-weight:500">(비우면 자동)</span></span>
+          <input type="text" class="w160" id="sName" value="${esc(ctx.name || "")}" placeholder="${esc(autoLotLabel(preview))}"
+            title="출력 카드 제목과 같은 값입니다 — 카드에서 고쳐도 여기에 반영됩니다"></label>
         <label class="f">합성일 (YYMMDD)<input type="text" class="w100" id="sDate" value="${esc(ctx.date)}"></label>
         <label class="f"><span>Stock volume (<b><i>V</i></b>) [mL]</span><input type="number" step="0.5" class="w80" id="sStock" value="${ctx.stockVol}"></label>
         <label class="f"><span>Source radius (<b><i>R</i></b>) [nm]</span><input type="number" step="0.1" class="w80" id="sRad" value="${ctx.radius}"></label>
@@ -2180,15 +3119,40 @@ function renderPlannerShell(root, ctx) {
         <label class="f">Group (자동)<span class="badge info" style="align-self:flex-start;margin-top:6px">${esc(autoGroup) || "–"}</span></label>
       </div>
       <div class="sep"></div>
+      <div style="font-size:12px;font-weight:700;color:var(--sub);margin-top:4px">셸 조성</div>
       ${dopRows}
-      <div class="row" style="margin-top:6px"><button class="btn sm" id="sAddDop">+ Add Element</button>
-        <span class="muted">셸 조성 기록: Na + (선택 원소) + F₄ — 계수 합 ${fmtN(ctx.dopants.filter(Boolean).reduce((a, d) => a + (d.coeff || 0), 0), 3)}</span></div>
+      <div class="row" style="margin-top:6px"><button class="btn sm" id="sAddDop">+ 성분 추가</button>
+        <span class="badge ${Math.abs(shellSoluteComps(ctx).reduce((a, c) => a + (c.coeff || 0), 0) - 1) < 1e-9 ? "ok" : "gray"}">Dopant 계수 합 = ${fmtN(shellSoluteComps(ctx).reduce((a, c) => a + (c.coeff || 0), 0), 4)}</span>
+        <span class="muted">역할·원소·개수 제한 없음 — 조성식 ${esc(lotFormula(preview))}</span></div>
       <div class="tiles" style="margin-top:12px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">
         <div class="tile"><div class="v">${fmtN(calc.volNm3, 1)}</div><div class="k">Shell volume [nm³]</div><div class="s">4/3π((R+T)³−R³)</div></div>
         <div class="tile accent"><div class="v">${fmtN(calc.precMmol, 4)}</div><div class="k">Precursor 필요량 [mmol]</div><div class="s">${srcLot && srcLot.type === "Shell" ? "shell-source 연쇄식" : "I×((R+T)³−R³)/R³"}</div></div>
-        <div class="tile accent"><div class="v">${fmtN(calc.totalInjUl, 0)}<span style="font-size:13px"> μL</span></div><div class="k">Total injection</div><div class="s">${fmtN(ctx.solLnMmol, 3)}mmol/${fmtN(ctx.solVolMl, 0)}mL 용액 기준</div></div>
+        <div class="tile accent"><div class="v">${fmtN(calc.totalInjUl, 0)}<span style="font-size:13px"> μL</span></div><div class="k">Total injection</div><div class="s">실제 용액 ${fmtN(solLnActual, 3)} mmol / ${fmtN(ctx.solVolMl, 0)} mL (${fmtN(sol.lnConcM, 4)} M) 기준</div></div>
         <div class="tile"><div class="v">${fmtN(tmpD.AB, 4)}</div><div class="k">물질량 총합 AB [mmol]</div><div class="s">몰농도 ${fmtN(tmpD.AC, 5)} mmol/mL</div></div>
       </div>
+      ${(() => {
+        const bal = shellBalance(ctx, calc, sol);
+        if (!bal || !bal.rows.length) return "";
+        /* 부족(<1.00×)만 경고다. 과량은 셸 성장에서 표준이라 정보로만 표시한다. */
+        const short = bal.rows.filter(r => r.x < 0.98);
+        return `<div class="note ${bal.ok ? (short.length ? "warn" : "okay") : ""}" style="margin-top:10px">
+          <b>셸 원소 수지</b> — 이번 성장에 필요한 양 대비 주입으로 실제 들어가는 양
+          ${bal.ok ? `<table class="tbl" style="margin-top:6px;max-width:520px"><thead><tr>
+              <th class="l">원소</th><th>필요 [mmol]</th><th>주입 [mmol]</th><th>비율</th></tr></thead><tbody>
+              ${bal.rows.map(r => `<tr><td class="l"><b>${esc(r.el)}</b></td>
+                <td class="num">${fmtN(r.need, 4)}</td><td class="num">${fmtN(r.got, 4)}</td>
+                <td class="num">${Math.abs(r.x - 1) <= 0.02
+                  ? `<span class="muted">${fmtN(r.x, 2)}× 화학량론</span>`
+                  : (r.x < 1 ? `<span class="badge warn">${fmtN(r.x, 2)}× 부족</span>`
+                             : `<span class="badge">${fmtN(r.x, 2)}× 과량</span>`)}</td></tr>`).join("")}
+              </tbody></table>
+              <div class="muted" style="margin-top:4px">${short.length
+                ? "<b>부족한 원소가 있습니다</b> — 주입량·용액 농도·조성 계수 중 하나가 어긋났을 수 있습니다."
+                : "셸 성장에서 Na·F 등의 과량은 정상입니다(용액 조성이 정한 값). 부족한 원소가 없으면 조성대로 자랍니다."}
+                ${bal.extra && bal.extra.length ? ` 리간드·용매 유래 원소(${esc(bal.extra.join(", "))})는 수지 대상이 아니라 제외했습니다.` : ""}</div>`
+            : `<br><span class="muted">계산 불가 — ${esc((bal.bad || []).join(" / "))}</span>`}
+        </div>`;
+      })()}
       <div class="row">
         <span class="muted">Injection 단계(μL):</span>
         <input type="text" class="w160 mono" id="sInj" value="${ctx.inj.join(", ")}" title="고정 주입량 목록, 마지막은 자동(나머지)">
@@ -2198,19 +3162,35 @@ function renderPlannerShell(root, ctx) {
         <label class="f" style="flex:1">Memo<input type="text" id="sMemo" value="${esc(ctx.memo)}"></label>
       </div>
       <div class="row right" style="margin-top:8px">
-        <button class="btn" id="sEditProto">합성 프로세스 편집</button>
+        <button class="btn" id="sEditProto">전체 프로세스 편집…</button>
         <button class="btn" id="sReset">Reset</button>
         <button class="btn" id="sPrint">Print</button>
         <button class="btn primary" id="sSave" ${srcLot ? "" : "disabled"}>${ctx.editSerial !== null ? `Save Changes (Lot ${ctx.editSerial})` : `Save as Lot ${preview.serial}`}</button>
       </div>
     </div>
+    <div id="procInlineS"></div>
     <div class="card">
-      <h3>Shell-precursor solution <span class="hint">${fmtN(ctx.solLnMmol, 3)} mmol Ln / ${fmtN(ctx.solVolMl, 0)} mL (${fmtN(sol.lnConcM, 3)} M) · Na-TFA ${fmtN(sol.tfaConcM, 2)} M</span></h3>
-      <table class="tbl"><thead><tr><th class="l">Precursor</th><th>mmol</th><th>무게</th><th></th></tr></thead>
+      <h3>Shell-precursor solution <span class="hint">설정 탭의 Shell Solution과 같은 값 — 여기서 고쳐도 함께 반영됩니다</span></h3>
+      <div class="row" style="gap:8px;margin-bottom:8px;align-items:flex-end">
+        <label class="f"><span>용액 부피 [mL]</span><input type="number" step="1" min="0" class="w80" id="sSolVol" value="${ctx.solVolMl}"></label>
+        <label class="f"><span>Ln 총 몰수 일괄 입력 <span class="muted" style="font-weight:500">(조성비로 배분)</span></span>
+          <span class="row" style="gap:4px"><input type="number" step="0.005" min="0" class="w80" id="sSolLn" value="${excelRound(solLnActual, 4)}">
+          <button class="btn sm" id="sSolLnApply">배분</button></span></label>
+      </div>
+      <div class="note ${budget.ok ? "" : "warn"}" style="margin-bottom:8px">
+        실제 용액 = <b>Ln ${fmtN(solLnActual, 4)} mmol</b> (${fmtN(sol.lnConcM, 4)} M) ·
+        <b>Na-TFA ${fmtN(sol.naTfaMmol, 3)} mmol</b> (${fmtN(sol.tfaConcM, 3)} M) / ${fmtN(sol.volMl, 1)} mL
+        — 주입량은 이 값으로 계산됩니다.
+        ${budget.ok ? `<br>원소 수지: ${["Na","F"].map(e => `<b>${e}/Ln = ${(solLnActual > 0 && isNum(budget.el[e])) ? fmtN(budget.el[e] / solLnActual, 2) : "–"}</b>`).join(" · ")}
+          <span class="muted">— NaLnF₄ 화학량론은 Na/Ln = 1, F/Ln = 4. 초과분은 과량 투입입니다.</span>`
+        : `<br><span class="muted">원소 수지 계산 불가 — ${esc(budget.bad.join(" / "))}</span>`}
+      </div>
+      <table class="tbl"><thead><tr><th class="l">Precursor</th><th>구분</th><th>mmol</th><th>무게</th><th></th></tr></thead>
       <tbody>${solRows}</tbody></table>
       <div class="row" style="margin-top:6px">
-        <button class="btn sm" id="solAdd">+ Add Precursor</button>
-        <span class="badge gray">Na-TFA ${fmtN(sol.naTfaMmol, 2)} mmol = ${fmtN(sol.naTfaMg, 0)} mg (Methanol ${fmtN(S.shellSol.mtohMl, 1)} mL 분산)</span>
+        <button class="btn sm" id="solAdd">+ 용질 추가</button>
+        <button class="btn sm" id="solAddAux">+ 보조·첨가 추가</button>
+        <span class="badge gray">보조 ${fmtN(sol.naTfaMmol, 3)} mmol = ${fmtN(sol.naTfaMg, 0)} mg (Methanol ${fmtN(S.shellSol.mtohMl, 1)} mL 분산)</span>
         <button class="btn sm" id="solPrint">Print</button>
       </div>
     </div>
@@ -2225,9 +3205,19 @@ function renderPlannerShell(root, ctx) {
     </div>
    </div>
   </div>`;
-  bindCardEditing($("#cardPrevS"), (k, v) => { ctx.cardEdits[k] = v; });
+  try {
+    renderProcedurePanel($("#procInlineS"), { inline: true, groups: ["shell", "sol"],
+      onChange: () => {
+        const a = $("#cardPrevS"); if (a) a.innerHTML = shellCardHtml(preview, calc, lotFormula(preview));
+        const b2 = $("#cardPrevSol"); if (b2) b2.innerHTML = shellSolutionCardHtml(lotFormula(preview) + " solution", sol, ctx.solCardEdits);
+      } });
+  } catch (e) { console.warn("proc inline shell", e); }
+  bindCardEditing($("#cardPrevS"), (k, v) => {
+    if (k === "title") { ctx.name = (v === autoLotLabel(preview)) ? "" : v; const f = $("#sName"); if (f) f.value = ctx.name; return; }
+    ctx.cardEdits[k] = v;
+  });
   bindCardEditing($("#cardPrevSol"), (k, v) => { (ctx.solCardEdits = ctx.solCardEdits || {})[k] = v; });
-  $("#sCardReset").onclick = () => { ctx.cardEdits = {}; ctx.solCardEdits = {}; renderPlannerShell(root, ctx); };
+  $("#sCardReset").onclick = () => { ctx.cardEdits = {}; ctx.solCardEdits = {}; ctx.name = ""; renderPlannerShell(root, ctx); };
 
   const rr = () => renderPlannerShell(root, ctx);
   $("#sSrc").onchange = e => {
@@ -2236,28 +3226,84 @@ function renderPlannerShell(root, ctx) {
     if (sl && isFinite(sl.temRadius) && sl.temRadius > 0) ctx.radius = sl.temRadius;
     rr();
   };
-  $("#sVol").onchange = e => { ctx.volMl = parseFloat(e.target.value) || 0; rr(); };
-  $("#sOa").onchange = e => { ctx.oaMl = parseFloat(e.target.value) || 0; rr(); };
-  $("#sOde").onchange = e => { ctx.odeMl = parseFloat(e.target.value) || 0; rr(); };
+  /* aliquot·OA·ODE·주입단계·용액 조성은 설정 탭의 같은 항목과 하나의 값으로 유지 */
+  $("#sVol").onchange = e => { const v = parseFloat(e.target.value) || 0; ctx.volMl = v; setShared("shellSyn.aliquotMl", v); rr(); };
+  $("#sOa").onchange = e => { const v = parseFloat(e.target.value) || 0; ctx.oaMl = v; setShared("shellSyn.oaMl", v); rr(); };
+  $("#sOde").onchange = e => { const v = parseFloat(e.target.value) || 0; ctx.odeMl = v; setShared("shellSyn.odeMl", v); rr(); };
+  $("#sName").onchange = e => { ctx.name = e.target.value.trim(); rr(); };
+  $("#sLotPre").onchange = e => { const p = e.target.value.trim(); setLotPrefix(p); setShared("lotPrefix", p); rr(); };
+  /* '배분' 버튼: 입력한 총 몰수를 조성비대로 각 행에 나눠 넣는 도우미.
+     실제 값은 언제나 행의 합이며, 주입량·농도·카드 모두 그 값을 쓴다. */
+  const applyLnTotal = () => {
+    const v = parseFloat($("#sSolLn").value);
+    if (!(isFinite(v) && v >= 0)) return rr();
+    const ds = shellSoluteComps(ctx);
+    const sum = ds.reduce((a, d) => a + (d.coeff || 0), 0);
+    if (ds.length && sum > 0) {
+      /* 용질만 다시 배분하고 보조·첨가 행은 그대로 둔다 */
+      const prevSolute = (ctx.solPrecs || []).filter(r => r && r.kind !== "aux");
+      const keepAux = (ctx.solPrecs || []).filter(r => r && r.kind === "aux");
+      ctx.solPrecs = ds.map((d, i) => ({
+        name: (prevSolute[i] && prevSolute[i].name) || d.prec || (Materials.defaultPrec(d.el) || {}).name || "",
+        kind: "solute",
+        mmol: excelRound(v * (d.coeff || 0) / sum, 4) })).concat(keepAux);
+    } else if (ctx.solPrecs && ctx.solPrecs.length === 1) {
+      ctx.solPrecs[0].mmol = excelRound(v, 4);
+    }
+    ctx.solLnMmol = v;
+    if (ctx.solVolMl > 0) setShared("shellSol.lnConcM", v / ctx.solVolMl);
+    rr();
+  };
+  $("#sSolLnApply").onclick = applyLnTotal;
+  root.querySelectorAll(".solKind").forEach(el => el.onchange = e => {
+    ctx.solPrecs[Number(el.dataset.i)].kind = e.target.value;
+    ctx.solLnMmol = ctx.solPrecs.filter(r => r.kind !== "aux").reduce((a, r) => a + (isNum(r.mmol) ? r.mmol : 0), 0);
+    rr();
+  });
+  $("#sSolVol").onchange = e => {
+    const v = parseFloat(e.target.value); if (!(isFinite(v) && v > 0)) return rr();
+    ctx.solVolMl = v;
+    setShared("shellSol.volMl", v);
+    /* 몰수는 유지하고 농도를 다시 계산 — 사용자가 입력한 mmol이 기준 */
+    setShared("shellSol.lnConcM", (ctx.solLnMmol || 0) / v);
+    setShared("shellSol.tfaConcM", (ctx.solTfaMmol || 0) / v);
+    rr();
+  };
   $("#sRad").onchange = e => { ctx.radius = parseFloat(e.target.value) || 0; rr(); };
   $("#sThk").onchange = e => { ctx.thick = parseFloat(e.target.value) || 0; rr(); };
   $("#sStock").onchange = e => { ctx.stockVol = parseFloat(e.target.value) || null; rr(); };
   $("#sDate").onchange = e => ctx.date = e.target.value.trim();
   $("#sMemo").onchange = e => ctx.memo = e.target.value;
   $("#sInj").onchange = e => {
-    ctx.inj = e.target.value.split(/[,\s]+/).map(Number).filter(v => isFinite(v) && v > 0); rr();
+    ctx.inj = e.target.value.split(/[,\s]+/).map(Number).filter(v => isFinite(v) && v > 0);
+    setShared("shellSyn.inj", ctx.inj.slice()); rr();
   };
-  root.querySelectorAll(".shDopEl").forEach((el, i) => el.onchange = e => {
-    ctx.dopants[i] = { el: e.target.value, coeff: ctx.dopants[i]?.coeff ?? 1 }; ctx.solPrecs = null; rr(); });
-  root.querySelectorAll(".shDopCo").forEach((el, i) => el.onchange = e => {
-    if (ctx.dopants[i]) ctx.dopants[i].coeff = parseFloat(e.target.value) || 0; ctx.solPrecs = null; rr(); });
-  root.querySelectorAll(".shDopDel").forEach((el, i) => el.onclick = () => {
-    ctx.dopants.splice(i, 1); if (!ctx.dopants.length) ctx.dopants.push({ el: "Y", coeff: 1 }); ctx.solPrecs = null; rr(); });
-  $("#sAddDop").onclick = () => { ctx.dopants.push({ el: "", coeff: 0 }); rr(); };
-  root.querySelectorAll(".solPrec").forEach(el => el.onchange = e => { ctx.solPrecs[Number(el.dataset.i)].name = e.target.value; rr(); });
-  root.querySelectorAll(".solMmol").forEach(el => el.onchange = e => { ctx.solPrecs[Number(el.dataset.i)].mmol = parseFloat(e.target.value) || 0; rr(); });
+  const SI = el => Number(el.dataset.si);
+  root.querySelectorAll(".sRole").forEach(el => el.onchange = () => { scomps[SI(el)].role = el.value; ctx.solPrecs = null; rr(); });
+  root.querySelectorAll(".sEl").forEach(el => el.onchange = () => { scomps[SI(el)].el = el.value; ctx.solPrecs = null; rr(); });
+  root.querySelectorAll(".sCoeff").forEach(el => el.onchange = () => { scomps[SI(el)].coeff = parseFloat(el.value) || 0; ctx.solPrecs = null; rr(); });
+  root.querySelectorAll(".sDel").forEach(el => el.onclick = () => {
+    scomps.splice(SI(el), 1);
+    if (!scomps.length) scomps.push({ id: newCompId(), role: "dopant", el: "", coeff: 0, excess: 1 });
+    ctx.solPrecs = null; rr(); });
+  root.querySelectorAll(".sUp").forEach(el => el.onclick = () => { const i = SI(el); if (i > 0) { const t = scomps[i - 1]; scomps[i - 1] = scomps[i]; scomps[i] = t; rr(); } });
+  root.querySelectorAll(".sDn").forEach(el => el.onclick = () => { const i = SI(el); if (i < scomps.length - 1) { const t = scomps[i + 1]; scomps[i + 1] = scomps[i]; scomps[i] = t; rr(); } });
+  $("#sAddDop").onclick = () => { scomps.push({ id: newCompId(), role: "dopant", el: "", coeff: 0, excess: 1 }); ctx.solPrecs = null; rr(); };
+  root.querySelectorAll(".solPrec").forEach(el => el.onchange = e => {
+    const i = Number(el.dataset.i);
+    ctx.solPrecs[i].name = e.target.value;
+    const sc = shellSoluteComps(ctx); if (sc[i]) sc[i].prec = e.target.value;   // 성분표에도 기억
+    rr(); });
+  root.querySelectorAll(".solMmol").forEach(el => el.onchange = e => {
+    const r0 = ctx.solPrecs[Number(el.dataset.i)];
+    r0.mmol = parseFloat(e.target.value) || 0;
+    ctx.solLnMmol = ctx.solPrecs.filter(r => r.kind !== "aux").reduce((a, r) => a + (isNum(r.mmol) ? r.mmol : 0), 0);
+    ctx.solTfaMmol = ctx.solPrecs.filter(r => r.kind === "aux").reduce((a, r) => a + (isNum(r.mmol) ? r.mmol : 0), 0);
+    rr();
+  });
   root.querySelectorAll(".solDel").forEach(el => el.onclick = () => { ctx.solPrecs.splice(Number(el.dataset.i), 1); rr(); });
-  $("#solAdd").onclick = () => { ctx.solPrecs.push({ name: (APP_DATA.materials.precursors.find(p => dopantEls().includes(p.elem)) || {}).name, mmol: 0 }); rr(); };
+  $("#solAdd").onclick = () => { ctx.solPrecs.push({ name: (APP_DATA.materials.precursors.find(p => dopantEls().includes(p.elem)) || {}).name, kind: "solute", mmol: 0 }); rr(); };
+  $("#solAddAux").onclick = () => { ctx.solPrecs.push({ name: SHELL_NA_SOURCE, kind: "aux", mmol: 0 }); rr(); };
   $("#solPrint").onclick = () => printCards([shellSolutionCardHtml(lotFormula(preview) + " solution", sol, ctx.solCardEdits)]);
   $("#sReset").onclick = () => { state.plannerCtx = defaultPlannerCtx("shell"); renderView(); };
   $("#sEditProto").onclick = openProtocolEditor;
@@ -2266,13 +3312,463 @@ function renderPlannerShell(root, ctx) {
     const serial = ctx.editSerial !== null ? ctx.editSerial : nextSerial();
     upsertLot({ serial, type: "Shell", date: ctx.date, stockVol: ctx.stockVol, tgtMmol: null,
       src: { serial: Number(ctx.src), volMl: ctx.volMl }, radius: ctx.radius, thick: ctx.thick, oaMl: ctx.oaMl, odeMl: ctx.odeMl,
-      stoich: shellStoich(ctx), heat: ctx.heat ?? null, memo: ctx.memo,
-      solLnMmol: ctx.solLnMmol, solVolMl: ctx.solVolMl, inj: ctx.inj.slice(),
+      stoich: shellStoich(ctx), heat: ctx.heat ?? null, memo: ctx.memo, name: (ctx.name || "").trim(),
+      components: ensureComponents(ctx).filter(c => c && c.el).map(c =>
+        ({ role: c.role, el: c.el, coeff: c.coeff, excess: isNum(c.excess) ? c.excess : 1, prec: c.prec || "" })),
+      solLnMmol: solLnActual, solVolMl: ctx.solVolMl, solTfaMmol: ctx.solTfaMmol, inj: ctx.inj.slice(),
+      solPrecs: (ctx.solPrecs || []).map(r => ({ name: r.name, mmol: r.mmol, kind: r.kind || "solute" })),
       cardEdits: ctx.cardEdits, solCardEdits: ctx.solCardEdits || {}, deleted: false });
     toast(`Lot ${serial} 저장 완료`, "ok");
     state.plannerCtx = defaultPlannerCtx("shell");
     go("log");
   };
+}
+
+/* =====================================================================
+ * 새 합성 프로세스 가이드 — 순차 질문으로 계획 초안을 만들어 준다.
+ * 어디까지나 '원하는 경우'의 도구이며, 어느 단계에서나 빠져나와 직접
+ * 편집할 수 있다. 1단계의 조성식 하나로 성분표 골격·역할·검증 기준이
+ * 모두 파생되는 것이 이 마법사의 핵심 지렛대다.
+ * ===================================================================== */
+/* =====================================================================
+ * 레시피 — 한 멤버의 "이 합성을 이렇게 한다"를 통째로 담는 단위.
+ *   성분(전구체·역할·투입방식) + 시약 조건 + 절차 프로토콜 + 목표량
+ * 같은 조성이라도 멤버마다 다른 것들이 전부 여기에 들어간다.
+ * JSON으로 주고받을 수 있어 랩 안에서 공유·인수인계가 된다.
+ * ===================================================================== */
+const RECIPE_FMT = "innolab.recipe.v1";
+/* 저장 위치: state.db.recipes — lots·icp와 같은 문서 단위 병합.
+   (예전엔 settings.recipes였고, 설정 blob이 통째로 덮어써지면서 레시피가 사라졌다) */
+function recipeStore() {
+  if (!state.db.recipes || typeof state.db.recipes !== "object") state.db.recipes = {};
+  return state.db.recipes;
+}
+function activeRecipes() {
+  const out = {};
+  for (const [id, r] of Object.entries(recipeStore())) if (r && !r.deleted) out[id] = r;
+  return out;
+}
+function saveRecipe(rec) {
+  if (!rec || !rec.id) return null;
+  rec.updatedAt = Date.now(); rec.deleted = false;
+  recipeStore()[rec.id] = rec;
+  state.dirty.recipes.add(rec.id);
+  saveDb(); if (typeof Sync !== "undefined" && Sync.push) Sync.push();
+  return rec;
+}
+function deleteRecipe(id) {
+  const r = recipeStore()[id]; if (!r) return;
+  r.deleted = true; r.updatedAt = Date.now();      // 묘비 — 다른 기기에서도 지워지도록
+  state.dirty.recipes.add(id);
+  saveDb(); if (typeof Sync !== "undefined" && Sync.push) Sync.push();
+}
+/* 랩 공용 레시피 캐시 — labs/{labId}/recipes 구독 결과를 담아 오프라인에서도 보이게 한다 */
+function labRecipeStore() {
+  if (!state.db.labRecipes || typeof state.db.labRecipes !== "object") state.db.labRecipes = {};
+  return state.db.labRecipes;
+}
+function activeLabRecipes() {
+  const out = {};
+  for (const [id, r] of Object.entries(labRecipeStore())) if (r && !r.deleted) out[id] = r;
+  return out;
+}
+function recipeFromPlanner(ctx, name) {
+  const S = state.db.settings;
+  if (ctx.mode === "shell") {
+    return {
+      fmt: RECIPE_FMT, id: "r" + Date.now().toString(36) + Math.floor(Math.random() * 1e4),
+      name: name || "새 레시피", kind: "shell", updatedAt: Date.now(),
+      components: ensureComponents(ctx).filter(c => c && c.el).map(c =>
+        ({ role: c.role, el: c.el, coeff: c.coeff, excess: isNum(c.excess) ? c.excess : 1, prec: c.prec || "" })),
+      shell: { volMl: ctx.volMl, oaMl: ctx.oaMl, odeMl: ctx.odeMl, radius: ctx.radius, thick: ctx.thick,
+               inj: (ctx.inj || []).slice(), solVolMl: ctx.solVolMl,
+               solPrecs: (ctx.solPrecs || []).map(r => ({ name: r.name, mmol: r.mmol, kind: r.kind || "solute" })) },
+      protocolId: S.activeProtocolId || null,
+    };
+  }
+  return {
+    fmt: RECIPE_FMT, id: "r" + Date.now().toString(36) + Math.floor(Math.random() * 1e4),
+    name: name || "새 레시피", kind: "core", updatedAt: Date.now(),
+    tgtMmol: ctx.tgtMmol,
+    components: ensureComponents(ctx).filter(c => c && c.el).map(c => ({
+      role: c.role, el: c.el, coeff: c.coeff, excess: isNum(c.excess) ? c.excess : 1,
+      mode: amountModeOf(c), prec: compPrec(ctx, c),
+      ref: (c.ref && (ensureComponents(ctx).find(x => x.id === c.ref) || {}).el) || null })),
+    reagents: { oaPerMmol: S.oaPerMmol, odeTotalSmall: S.odeTotalSmall, odeTotalLarge: S.odeTotalLarge,
+                oamEq: S.oamEq, oamMw: S.oamMw, oamDens: S.oamDens, mtohPerMgF: S.mtohPerMgF },
+    protocolId: S.activeProtocolId || null,
+  };
+}
+function applyRecipe(rec) {
+  if (!rec || !Array.isArray(rec.components)) return toast("레시피 형식이 올바르지 않습니다", "err");
+  if (rec.kind === "shell") {
+    const c2 = defaultPlannerCtx("shell");
+    c2.components = rec.components.map(c => ({ id: newCompId(), role: c.role || "dopant", el: c.el,
+      coeff: c.coeff, excess: isNum(c.excess) ? c.excess : 1, prec: c.prec || "" }));
+    const sh = rec.shell || {};
+    for (const k of ["volMl", "oaMl", "odeMl", "radius", "thick", "solVolMl"]) if (isNum(sh[k])) c2[k] = sh[k];
+    if (Array.isArray(sh.inj) && sh.inj.length) c2.inj = sh.inj.slice();
+    if (Array.isArray(sh.solPrecs) && sh.solPrecs.length) {
+      c2.solPrecs = sh.solPrecs.map(r => ({ name: r.name, mmol: r.mmol, kind: r.kind || "solute" }));
+      c2.solLnMmol = c2.solPrecs.filter(r => r.kind !== "aux").reduce((a, r) => a + (isNum(r.mmol) ? r.mmol : 0), 0);
+      c2.solTfaMmol = c2.solPrecs.filter(r => r.kind === "aux").reduce((a, r) => a + (isNum(r.mmol) ? r.mmol : 0), 0);
+    }
+    state.plannerCtx = c2;
+    const S2 = state.db.settings;
+    if (rec.protocolId && S2.protocols && S2.protocols[rec.protocolId]) { S2.activeProtocolId = rec.protocolId; }
+    S2.activeRecipeId = rec.id; saveSettings();
+    return;
+  }
+  const ctx = defaultPlannerCtx("core");
+  ctx.tgtMmol = isNum(rec.tgtMmol) ? rec.tgtMmol : ctx.tgtMmol;
+  ctx.components = rec.components.map(c => ({ id: newCompId(), role: c.role || "dopant", el: c.el,
+    coeff: c.coeff, excess: isNum(c.excess) ? c.excess : 1, mode: c.mode || "ratio",
+    prec: c.prec || "", ref: null }));
+  rec.components.forEach((c, i) => {            // ref는 원소 기호로 저장되어 있다
+    if (c && c.mode === "multiple" && c.ref) {
+      const t = ctx.components.find(x => x.el === c.ref);
+      if (t && ctx.components[i]) ctx.components[i].ref = t.id;
+    }
+  });
+  ctx.precs = {};
+  ctx.components.forEach(c => { if (c.el && c.prec) ctx.precs[c.el] = c.prec; });
+  state.plannerCtx = ctx;
+  const rg = rec.reagents || {};
+  for (const k of ["oaPerMmol", "odeTotalSmall", "odeTotalLarge", "oamEq", "oamMw", "oamDens", "mtohPerMgF"])
+    if (isNum(rg[k])) setShared(k, rg[k]);
+  const S = state.db.settings;
+  if (rec.protocolId && S.protocols && S.protocols[rec.protocolId]) { S.activeProtocolId = rec.protocolId; saveSettings(); }
+  S.activeRecipeId = rec.id;
+  saveSettings();
+}
+function recipeBarHtml(kind) {
+  const S = state.db.settings, K = kind || "core";
+  const byTime = (a, b) => (b.updatedAt || 0) - (a.updatedAt || 0);
+  const mine = Object.values(activeRecipes()).filter(r => (r.kind || "core") === K).sort(byTime);
+  const lab  = Object.values(activeLabRecipes()).filter(r => (r.kind || "core") === K).sort(byTime);
+  const sel = S.activeRecipeId || "";
+  const isLab = /^lab:/.test(sel);
+  const labOn = !!(S.firebase && S.firebase.labId);
+  const online = typeof Sync !== "undefined" && Sync.labReady && Sync.labReady();
+  const myUid = (typeof Sync !== "undefined" && Sync.uid) ? Sync.uid() : null;
+  const selLab = isLab ? activeLabRecipes()[sel.slice(4)] : null;
+  const opt = (v, nm, extra) => `<option value="${esc(v)}" ${v === sel ? "selected" : ""}>${esc(nm)}${extra || ""}</option>`;
+  return `<div class="row" style="gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--chip)">
+    <span style="font-weight:700;font-size:12px;color:var(--sub)">레시피</span>
+    <select id="rcSel" class="slim" style="min-width:190px;max-width:300px">
+      <option value="">— 선택 안 함 —</option>
+      ${mine.length ? `<optgroup label="내 레시피">${mine.map(r => opt(r.id, r.name)).join("")}</optgroup>` : ""}
+      ${lab.length ? `<optgroup label="랩 공용">${lab.map(r => opt("lab:" + r.id, r.name,
+          r.ownerName ? ` — ${esc(r.ownerName)}` : "")).join("")}</optgroup>` : ""}
+    </select>
+    <button class="btn sm" id="rcSave" ${isLab ? "disabled" : ""} title="${isLab ? "랩 공용 레시피는 직접 못 고칩니다 — [내 것으로 복사] 후 편집하세요" : "현재 계획을 선택된 레시피에 덮어씁니다"}">저장</button>
+    <button class="btn sm" id="rcSaveAs" title="현재 계획을 새 이름으로 내 레시피에 저장">새 이름으로</button>
+    <button class="btn sm" id="rcDel" ${isLab ? "disabled" : ""} title="선택된 레시피 삭제">삭제</button>
+    ${isLab ? `<button class="btn sm primary" id="rcFork" title="랩 공용 레시피를 내 레시피로 복사해 자유롭게 고칩니다">내 것으로 복사</button>` : ""}
+    ${labOn && !isLab ? `<button class="btn sm" id="rcPub" ${(sel && online) ? "" : "disabled"} title="${online ? "선택된 내 레시피를 랩 공용 라이브러리에 올립니다" : "동기화가 켜져 있어야 합니다"}">랩에 올리기</button>` : ""}
+    ${isLab && selLab && myUid && selLab.owner === myUid ? `<button class="btn sm" id="rcUnpub" title="내가 올린 공용 레시피를 내립니다">랩에서 내리기</button>` : ""}
+    <span style="flex:1"></span>
+    <button class="btn sm" id="rcExport" title="선택된 레시피를 JSON 파일로 내려받아 다른 멤버에게 전달">내보내기</button>
+    <button class="btn sm" id="rcImport" title="다른 멤버에게 받은 레시피 JSON 불러오기">가져오기</button>
+    <input type="file" id="rcFile" accept=".json" style="display:none">
+    <span class="muted" style="width:100%;font-size:11px">성분·전구체·투입방식 · 시약 조건 · 절차 프로토콜을 통째로 저장합니다 — 같은 조성이라도 멤버마다 다른 부분이 그대로 재현됩니다.${
+      labOn ? (online ? " 랩 공용 라이브러리와 실시간으로 이어져 있습니다."
+                      : ` <span class="badge warn">랩 공용 연결 안 됨</span> ${esc((state.sync && state.sync.labErr) || "동기화를 켜세요")}`) : ""}</span>
+  </div>`;
+}
+function bindRecipeBar(rerender) {
+  const S = state.db.settings;
+  const store = recipeStore();
+  const isLab = () => /^lab:/.test(S.activeRecipeId || "");
+  const cur = () => isLab() ? activeLabRecipes()[String(S.activeRecipeId).slice(4)] : store[S.activeRecipeId];
+  const uniqName = nm => { const names = Object.values(activeRecipes()).map(x => x.name);
+    let n = nm; while (names.includes(n)) n += " (2)"; return n; };
+  $("#rcSel").onchange = e => {
+    const id = e.target.value;
+    if (!id) { S.activeRecipeId = null; saveSettings(); return rerender(); }
+    const r = /^lab:/.test(id) ? activeLabRecipes()[id.slice(4)] : store[id];
+    if (!r) return;
+    applyRecipe(JSON.parse(JSON.stringify(r)));
+    S.activeRecipeId = id; saveSettings();          // applyRecipe가 rec.id로 덮으므로 뒤에서 다시 지정
+    toast(`레시피 '${r.name}' 적용`, "ok");
+    renderView();
+  };
+  $("#rcSave").onclick = () => {
+    const ctx = state.plannerCtx; if (!ctx) return;
+    if (isLab()) return toast("랩 공용 레시피는 직접 고칠 수 없습니다 — [내 것으로 복사] 후 편집하세요", "warn");
+    const c = cur();
+    if (!c) return toast("먼저 '새 이름으로'로 레시피를 만드세요", "warn");
+    const n = recipeFromPlanner(ctx, c.name); n.id = c.id;
+    saveRecipe(n);
+    toast(`'${c.name}' 저장 완료`, "ok"); rerender();
+  };
+  $("#rcSaveAs").onclick = () => {
+    const ctx = state.plannerCtx; if (!ctx) return;
+    const name = prompt("레시피 이름", (cur() && cur().name + " 복사") || "내 레시피");
+    if (!name) return;
+    const n = recipeFromPlanner(ctx, uniqName(name.trim()));
+    saveRecipe(n); S.activeRecipeId = n.id; saveSettings();
+    toast(`'${n.name}' 저장 완료`, "ok"); rerender();
+  };
+  $("#rcDel").onclick = () => {
+    if (isLab()) return toast("랩 공용 레시피는 [랩에서 내리기]로 처리하세요", "warn");
+    const c = cur(); if (!c) return toast("선택된 레시피가 없습니다", "warn");
+    if (!confirm(`레시피 '${c.name}'을(를) 삭제할까요?`)) return;
+    deleteRecipe(c.id); S.activeRecipeId = null; saveSettings();
+    toast("삭제했습니다", "ok"); rerender();
+  };
+  const fork = $("#rcFork");
+  if (fork) fork.onclick = () => {
+    const c = cur(); if (!c) return;
+    const n = JSON.parse(JSON.stringify(c));
+    n.id = "r" + Date.now().toString(36) + Math.floor(Math.random() * 1e4);
+    n.name = uniqName(c.name);
+    delete n.owner; delete n.ownerName; delete n.srcId;
+    saveRecipe(n); S.activeRecipeId = n.id; saveSettings();
+    toast(`'${n.name}'을(를) 내 레시피로 복사했습니다 — 이제 자유롭게 고칠 수 있습니다`, "ok");
+    rerender();
+  };
+  const pub = $("#rcPub");
+  if (pub) pub.onclick = async () => {
+    const c = cur(); if (!c) return toast("올릴 레시피를 먼저 고르세요", "warn");
+    if (!confirm(`'${c.name}'을(를) 랩 공용 라이브러리에 올릴까요?\n랩 멤버 전원이 보고 가져갈 수 있게 됩니다.`)) return;
+    try { await Sync.labPublish(c); toast(`'${c.name}'을(를) 랩에 올렸습니다`, "ok"); rerender(); }
+    catch (e) { toast("올리기 실패: " + (e && e.message || e), "err"); }
+  };
+  const unpub = $("#rcUnpub");
+  if (unpub) unpub.onclick = async () => {
+    const c = cur(); if (!c) return;
+    if (!confirm(`'${c.name}'을(를) 랩 공용에서 내릴까요?\n(내 레시피 사본은 그대로 남습니다)`)) return;
+    try { await Sync.labUnpublish(c.id); S.activeRecipeId = null; saveSettings();
+      toast("랩 공용에서 내렸습니다", "ok"); rerender(); }
+    catch (e) { toast("내리기 실패: " + (e && e.message || e), "err"); }
+  };
+  $("#rcExport").onclick = () => {
+    const c = cur();
+    const payload = c ? c : recipeFromPlanner(state.plannerCtx, "현재 계획");
+    downloadFile(`NanoLab_recipe_${(payload.name || "recipe").replace(/[^\w가-힣.-]+/g, "_")}.json`,
+      JSON.stringify(payload, null, 1), "application/json");
+    toast("레시피 파일을 내려받았습니다", "ok");
+  };
+  $("#rcImport").onclick = () => $("#rcFile").click();
+  $("#rcFile").onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      try {
+        const inc = JSON.parse(rd.result);
+        const list = Array.isArray(inc) ? inc : [inc];
+        let n = 0, missing = new Set();
+        for (const r of list) {
+          if (!r || !Array.isArray(r.components)) continue;
+          const id = "r" + Date.now().toString(36) + Math.floor(Math.random() * 1e4) + n;
+          const rec = Object.assign({}, r, { id, name: uniqName(r.name || "가져온 레시피") });
+          delete rec.owner; delete rec.ownerName; delete rec.srcId; delete rec.deleted;
+          recipeMissingPrecs(rec).forEach(x => missing.add(x));
+          saveRecipe(rec); S.activeRecipeId = id; n++;
+        }
+        saveSettings();
+        toast(n ? `레시피 ${n}개를 가져왔습니다` : "레시피를 찾지 못했습니다", n ? "ok" : "warn");
+        if (missing.size) toast(`이 레시피가 쓰는 물질이 내 DB에 없습니다: ${[...missing].join(", ")} — 설정 탭 물질 DB에 먼저 등록하세요`, "warn");
+        rerender();
+      } catch (err) { toast("가져오기 실패: " + err.message, "err"); }
+      e.target.value = "";
+    };
+    rd.readAsText(f);
+  };
+}
+/* 레시피가 참조하는 전구체 중 내 물질 DB에 없는 것 — 가져오기·복사할 때 알려 준다 */
+function recipeMissingPrecs(rec) {
+  const out = [];
+  const chk = nm => { if (nm && !Materials.prec(nm) && out.indexOf(nm) < 0) out.push(nm); };
+  (rec.components || []).forEach(c => chk(c && c.prec));
+  ((rec.shell || {}).solPrecs || []).forEach(r => chk(r && r.name));
+  return out;
+}
+
+let _wiz = null;
+function openSynthWizard() {
+  const S = state.db.settings;
+  _wiz = { step: 1, formula: "", parsed: null, precs: {}, excess: {},
+           rg: { oaPerMmol: S.oaPerMmol, odeTot: S.odeTotalSmall, useOam: S.oamEq > 0,
+                 oamEq: S.oamEq > 0 ? S.oamEq : 1.5, mtoh: S.mtohPerMgF },
+           procFrom: "" , tgtMmol: 0.1 };
+  const ov = h(`<div class="overlay center"><div class="modal" style="max-width:720px;width:96vw">
+    <button class="closex">✕</button>
+    <h2>새 합성 프로세스 만들기 <span class="hint" style="font-weight:500;font-size:12px;color:var(--muted)">몇 가지만 답하면 계획 초안을 만들어 드립니다 — 이후 자유롭게 수정 가능</span></h2>
+    <div id="wizBody"></div>
+    <div class="row right" style="margin-top:14px;gap:6px">
+      <span id="wizStepLbl" class="muted" style="margin-right:auto"></span>
+      <button class="btn" id="wizSkip">직접 입력할게요</button>
+      <button class="btn" id="wizPrev">이전</button>
+      <button class="btn primary" id="wizNext">다음</button>
+    </div>
+  </div></div>`);
+  document.body.appendChild(ov);
+  ov.querySelector(".closex").onclick = () => { _wiz = null; ov.remove(); };
+  $("#wizSkip").onclick = () => { _wiz = null; ov.remove(); };
+  const body = ov.querySelector("#wizBody");
+  const STEPS = 5;
+
+  function draw() {
+    const W = _wiz;
+    $("#wizStepLbl").textContent = `${W.step} / ${STEPS} 단계`;
+    $("#wizPrev").disabled = W.step === 1;
+    $("#wizNext").textContent = W.step === STEPS ? "계획 만들기" : "다음";
+    if (W.step === 1) {
+      body.innerHTML = `<div class="note">만들려는 물질의 <b>목표 조성식</b>을 적어주세요. 이 한 줄에서 성분표·역할·검증 기준이 자동으로 만들어집니다.</div>
+        <div class="row" style="margin-top:10px">
+          <label class="f" style="flex:1">목표 조성식
+            <input type="text" id="wzF" class="mono" value="${esc(W.formula)}" placeholder="예: NaLu0.8Tm0.2F4 · NaYF4 · Y1.98Er0.02O3"></label>
+          <label class="f">목표량 [mmol]<input type="number" step="0.01" min="0" class="w100" id="wzT" value="${W.tgtMmol}"></label>
+        </div>
+        <div id="wzPrev" style="margin-top:8px"></div>`;
+      const upd = () => {
+        W.formula = $("#wzF").value.trim();
+        const r = parseCompositionOrdered(W.formula);
+        W.parsed = r.ok ? r : null;
+        $("#wzPrev").innerHTML = !W.formula ? "" : (r.ok
+          ? `<div class="note okay">인식된 성분 ${r.list.length}종 —
+              ${r.list.map(x => `<span class="badge info" style="margin-right:4px">${esc(x.el)} ${fmtN(x.coeff, 4)}</span>`).join("")}
+              ${r.note ? `<br><span class="muted">${esc(r.note)}</span>` : ""}</div>`
+          : `<div class="note warn">${esc(r.err)}</div>`);
+      };
+      $("#wzF").oninput = upd; $("#wzT").onchange = e => { W.tgtMmol = parseFloat(e.target.value) || 0.1; };
+      upd();
+    } else if (W.step === 2) {
+      const list = W.parsed.list;
+      body.innerHTML = `<div class="note">각 원소를 어떤 <b>전구체</b>로 넣으시나요? 물질 DB의 기본값을 미리 골라 두었습니다.</div>
+        <table class="tbl" style="margin-top:10px"><thead><tr><th>원소</th><th>추정 역할</th><th class="l">전구체</th></tr></thead><tbody>
+        ${list.map((x, i) => {
+          const cands = Materials.precsFor(x.el);
+          const cur = W.precs[x.el] || (Materials.defaultPrec(x.el) || {}).name || "";
+          return `<tr><td><b>${esc(x.el)}</b> <span class="muted">${fmtN(x.coeff, 4)}</span></td>
+            <td><span class="badge gray">${ROLE_KO(guessRole(x.el, i, list))}</span></td>
+            <td class="l">${cands.length
+              ? `<select class="slim wzP" data-el="${esc(x.el)}" style="max-width:250px">${cands.map(p => `<option ${p.name === cur ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select>`
+              : `<span class="badge warn">전구체 없음 — 설정 탭에서 추가하세요</span>`}</td></tr>`;
+        }).join("")}</tbody></table>`;
+      body.querySelectorAll(".wzP").forEach(el => {
+        W.precs[el.dataset.el] = el.value;
+        el.onchange = () => { W.precs[el.dataset.el] = el.value; };
+      });
+    } else if (W.step === 3) {
+      const list = W.parsed.list;
+      body.innerHTML = `<div class="note">과량으로 넣는 성분이 있나요? 배수를 적으면 <b>무게 계산에만</b> 반영되고, 조성 기록에는 계수 그대로 남습니다.</div>
+        <table class="tbl" style="margin-top:10px"><thead><tr><th>원소</th><th>조성계수</th><th>과량 배수</th><th>투입계수</th></tr></thead><tbody>
+        ${list.map(x => {
+          const ex = W.excess[x.el] ?? (ALKALI_HOST.indexOf(x.el) >= 0 ? (state.db.settings.naExcess || 1) : 1);
+          W.excess[x.el] = ex;
+          return `<tr><td><b>${esc(x.el)}</b></td><td class="num">${fmtN(x.coeff, 4)}</td>
+            <td><input type="number" step="0.1" min="0" class="slim w80 wzE" data-el="${esc(x.el)}" value="${ex}"></td>
+            <td class="num" data-r="${esc(x.el)}">${fmtN(x.coeff * ex, 4)}</td></tr>`;
+        }).join("")}</tbody></table>`;
+      body.querySelectorAll(".wzE").forEach(el => el.oninput = () => {
+        const v = parseFloat(el.value); if (!isFinite(v) || v < 0) return;
+        W.excess[el.dataset.el] = v;
+        const x = W.parsed.list.find(z => z.el === el.dataset.el);
+        const cell = body.querySelector(`[data-r="${el.dataset.el}"]`);
+        if (cell && x) cell.textContent = fmtN(x.coeff * v, 4);
+      });
+    } else if (W.step === 4) {
+      body.innerHTML = `<div class="note">용매·시약 조건입니다. 지금 설정값을 미리 넣어 두었고, 나중에 계획 화면에서도 고칠 수 있습니다.</div>
+        <div class="row" style="gap:10px;margin-top:10px;flex-wrap:wrap">
+          <label class="f">Oleic acid [mL/mmol]<input type="number" step="0.5" min="0" class="w100" id="wzOa" value="${_wiz.rg.oaPerMmol}"></label>
+          <label class="f">1-Octadecene 총량 [mL]<input type="number" step="1" min="0" class="w100" id="wzOde" value="${_wiz.rg.odeTot}"></label>
+          <label class="f">Methanol [mL/mg NH₄F]<input type="number" step="0.005" min="0" class="w100" id="wzMt" value="${_wiz.rg.mtoh}"></label>
+        </div>
+        <div class="row" style="gap:8px;margin-top:8px;align-items:center">
+          <label class="row" style="gap:5px;font-size:12px;font-weight:700"><input type="checkbox" id="wzOamU" ${_wiz.rg.useOam ? "checked" : ""}>Oleyl amine 사용</label>
+          <label class="f">당량 [eq/tgt]<input type="number" step="0.1" min="0" class="w80" id="wzOamE" value="${_wiz.rg.oamEq}" ${_wiz.rg.useOam ? "" : "disabled"}></label>
+        </div>`;
+      $("#wzOa").onchange = e => _wiz.rg.oaPerMmol = parseFloat(e.target.value) || 0;
+      $("#wzOde").onchange = e => _wiz.rg.odeTot = parseFloat(e.target.value) || 0;
+      $("#wzMt").onchange = e => _wiz.rg.mtoh = parseFloat(e.target.value) || 0;
+      $("#wzOamE").onchange = e => _wiz.rg.oamEq = parseFloat(e.target.value) || 0;
+      $("#wzOamU").onchange = e => { _wiz.rg.useOam = e.target.checked; $("#wzOamE").disabled = !e.target.checked; };
+    } else {
+      const protos = Object.entries((state.db.settings.protocols) || {});
+      const list = _wiz.parsed.list;
+      const map = mapCompositionToPlan(list);
+      body.innerHTML = `<div class="note">마지막입니다. <b>합성 절차</b>는 어디서 가져올까요?</div>
+        <label class="f" style="margin-top:10px">절차 원본
+          <select id="wzProc" style="max-width:340px">
+            <option value="">현재 절차를 그대로 사용</option>
+            ${protos.map(([id, p]) => `<option value="${esc(id)}">${esc(p.name || id)} 복사</option>`).join("")}
+          </select></label>
+        <label class="row" style="gap:6px;margin-top:10px;font-size:12px;font-weight:700">
+          <input type="checkbox" id="wzSaveRc" ${_wiz.saveRecipe ? "checked" : ""}>레시피로 저장
+          <input type="text" id="wzRcName" class="slim" style="width:200px" placeholder="레시피 이름"
+            value="${esc(_wiz.rcName || _wiz.formula || "")}"></label>
+        <div class="sep"></div>
+        <div class="note ${map.ok ? "okay" : "warn"}">
+          <b>요약</b><br>
+          조성 <b>${esc(_wiz.formula)}</b> · 목표 <b>${_wiz.tgtMmol} mmol</b><br>
+          ${list.map(x => `${esc(x.el)} ${fmtN(x.coeff, 4)}${(_wiz.excess[x.el] || 1) !== 1 ? ` <span class="badge info">${fmtN(_wiz.excess[x.el], 2)}×</span>` : ""} — ${esc(_wiz.precs[x.el] || "전구체 미지정")}`).join("<br>")}
+          ${map.ok ? "" : `<br><br><span class="muted">참고: ${esc(map.why)} 성분표는 개수 제한이 없으므로 <b>그대로 옮겨집니다</b> — 역할만 확인해 주세요.</span>`}
+        </div>`;
+      $("#wzProc").onchange = e => _wiz.procFrom = e.target.value;
+      $("#wzSaveRc").onchange = e => _wiz.saveRecipe = e.target.checked;
+      $("#wzRcName").oninput = e => _wiz.rcName = e.target.value;
+    }
+  }
+  $("#wizPrev").onclick = () => { if (_wiz.step > 1) { _wiz.step--; draw(); } };
+  $("#wizNext").onclick = () => {
+    const W = _wiz;
+    if (W.step === 1) {
+      if (!W.parsed) return toast("조성식을 먼저 올바르게 입력하세요", "warn");
+    }
+    if (W.step < STEPS) { W.step++; draw(); return; }
+    finishWizard(ov);
+  };
+  draw();
+}
+function ROLE_KO(r) { return r === "hostCation" ? "Host cation" : r === "anion" ? "Host anion" : "Dopant"; }
+/* 조성 목록 → 현재 계획 화면 구조(host 1 / dopant ≤5 / anion 1)로 매핑 */
+function mapCompositionToPlan(list) {
+  const hosts = list.filter((x, i) => guessRole(x.el, i, list) === "hostCation");
+  const anions = list.filter((x, i) => guessRole(x.el, i, list) === "anion");
+  const dops = list.filter((x, i) => guessRole(x.el, i, list) === "dopant");
+  const why = [];
+  if (hosts.length > 1) why.push(`host cation이 ${hosts.length}종입니다.`);
+  if (anions.length > 1) why.push(`anion이 ${anions.length}종입니다.`);
+  if (dops.length > 5) why.push(`dopant가 ${dops.length}종입니다(최대 5).`);
+  return { ok: why.length === 0, why: why.join(" "), hosts, anions, dops };
+}
+function finishWizard(ov) {
+  const W = _wiz, list = W.parsed.list, map = mapCompositionToPlan(list);
+  const ctx = defaultPlannerCtx("core");
+  ctx.tgtMmol = W.tgtMmol;
+  /* 성분표에 그대로 옮긴다 — 개수·역할 제한이 없으므로 조성을 있는 그대로 표현 */
+  ctx.components = list.map((x, i) => ({ id: newCompId(), role: guessRole(x.el, i, list),
+    el: x.el, coeff: x.coeff, excess: isNum(W.excess[x.el]) ? W.excess[x.el] : 1 }));
+  const host = map.hosts[0], anion = map.anions[0];
+  if (host) ctx.naExcess = W.excess[host.el] || 1;
+  if (anion) ctx.fExcess = W.excess[anion.el] || 1;
+  ctx.precs = {};
+  for (const el in W.precs) if (W.precs[el]) ctx.precs[el] = W.precs[el];
+  state.plannerCtx = ctx;
+  /* 시약 조건은 공유 파라미터로 반영 */
+  setShared("oaPerMmol", W.rg.oaPerMmol);
+  setShared(W.tgtMmol <= 1 ? "odeTotalSmall" : "odeTotalLarge", W.rg.odeTot);
+  setShared("mtohPerMgF", W.rg.mtoh);
+  setShared("oamEq", W.rg.useOam ? W.rg.oamEq : 0);
+  if (host) setShared("naExcess", ctx.naExcess);
+  if (anion) setShared("fExcess", ctx.fExcess);
+  /* 절차 복사 */
+  if (W.procFrom && state.db.settings.protocols && state.db.settings.protocols[W.procFrom]) {
+    state.db.settings.activeProtocolId = W.procFrom;
+    saveSettings();
+  }
+  if (W.saveRecipe) {
+    const nm = (W.rcName || W.formula || "새 레시피").trim();
+    const r = recipeFromPlanner(ctx, nm);
+    recipeStore()[r.id] = r; state.db.settings.activeRecipeId = r.id; saveSettings();
+  }
+  _wiz = null; ov.remove();
+  go("plan");
+  toast(map.ok ? "계획 초안을 만들었습니다 — 이제 자유롭게 수정하세요"
+                : "일부만 옮겼습니다 — 요약의 안내를 확인하고 조정해 주세요", map.ok ? "ok" : "warn");
 }
 
 function renderPlanner(root) {
@@ -2281,10 +3777,14 @@ function renderPlanner(root) {
   root.innerHTML = `<div class="row" style="margin-bottom:12px">
     <div class="seg"><button id="segCore" class="${ctx.mode === "core" ? "active" : ""}">Core 합성</button><button id="segShell" class="${ctx.mode === "shell" ? "active" : ""}">Shell 성장</button></div>
     ${ctx.editSerial !== null ? `<span class="badge warn">Lot ${ctx.editSerial} 수정 중</span><button class="btn sm" id="segCancelEdit">수정 취소</button>` : ""}
-  </div><div id="plannerBody"></div>`;
+    <span style="flex:1"></span>
+    <button class="btn sm" id="segWizard" title="조성식만 적으면 성분표·역할·검증 기준까지 만들어 드립니다">✨ 새 합성 프로세스 만들기</button>
+  </div>${recipeBarHtml(ctx.mode)}<div id="plannerBody"></div>`;
   $("#segCore").onclick = () => { if (ctx.mode !== "core") { state.plannerCtx = defaultPlannerCtx("core"); renderView(); } };
   $("#segShell").onclick = () => { if (ctx.mode !== "shell") { state.plannerCtx = defaultPlannerCtx("shell"); renderView(); } };
   const cancel = $("#segCancelEdit"); if (cancel) cancel.onclick = () => { state.plannerCtx = defaultPlannerCtx(ctx.mode); renderView(); };
+  $("#segWizard").onclick = openSynthWizard;
+  bindRecipeBar(() => renderView());
   const body = $("#plannerBody");
   if (ctx.mode === "core") renderPlannerCore(body, ctx); else renderPlannerShell(body, ctx);
 }
@@ -2297,17 +3797,30 @@ function editLotInPlanner(serial) {
   if (lot.type === "Core") {
     const ctx = defaultPlannerCtx("core");
     ctx.editSerial = lot.serial; ctx.tgtMmol = lot.tgtMmol ?? 0.1; ctx.stockVol = lot.stockVol;
+    ctx.name = lot.name || "";
     ctx.date = lot.date; ctx.heat = (typeof lot.heat === "number") ? lot.heat : null; ctx.memo = lot.memo || "";
     ctx.naExcess = lot.naExcessUsed ?? S.naExcess;
     ctx.fExcess = lot.fExcessUsed ?? S.fExcess ?? 1;
     ctx.cardEdits = Object.assign({}, lot.cardEdits || {});
-    const st = lot.stoich || [];
-    if (st[0]) ctx.host = { el: st[0].el, coeff: st[0].coeff ?? 1 };
-    ctx.dopants = st.slice(1, 6).filter(Boolean).map(s => ({ el: s.el, coeff: s.coeff }));
-    if (!ctx.dopants.length) ctx.dopants = [{ el: "", coeff: null }];
-    const an = st[6] || st.find(s => s && s.role === "anion");
-    if (an) ctx.anion = { el: an.el, coeff: an.coeff ?? 4 };
+    /* 위치가 아니라 역할로 읽는다 — 성분 개수 제한이 사라졌다 */
+    const st = (lot.stoich || []).filter(Boolean);
+    ctx.components = (Array.isArray(lot.components) && lot.components.length)
+      ? lot.components.map(c => ({ id: newCompId(), role: c.role || "dopant", el: c.el, coeff: c.coeff,
+          excess: isNum(c.excess) ? c.excess : 1, mode: c.mode || "ratio", ref: c.ref || null, prec: c.prec || "" }))
+      : st.map(s => ({ id: newCompId(), role: s.role || "dopant", el: s.el, coeff: s.coeff,
+          excess: isNum(s.excess) ? s.excess
+                : (s.role === "hostCation" && ["Na", "Li", "K"].includes(s.el)) ? (lot.naExcessUsed ?? S.naExcess)
+                : (s.role === "anion") ? (lot.fExcessUsed ?? S.fExcess ?? 1) : 1 }));
+    if (!ctx.components.length) ctx.components = [{ id: newCompId(), role: "dopant", el: "", coeff: 0, excess: 1 }];
+    /* '다른 성분의 배수' 참조는 저장 때 원소 기호로 남기고 여기서 새 id로 되살린다 */
+    if (Array.isArray(lot.components)) lot.components.forEach((c, i) => {
+      if (c && c.mode === "multiple" && c.ref) {
+        const t = ctx.components.find(x => x.el === c.ref);
+        if (t && ctx.components[i]) ctx.components[i].ref = t.id;
+      }
+    });
     ctx.precs = Object.assign({}, lot.precursors || {});
+    if (Array.isArray(lot.components)) for (const c of lot.components) if (c && c.el && c.prec) ctx.precs[c.el] = c.prec;
     state.plannerCtx = ctx;
   } else {
     const ctx = defaultPlannerCtx("shell");
@@ -2317,10 +3830,20 @@ function editLotInPlanner(serial) {
     ctx.heat = (typeof lot.heat === "number") ? lot.heat : null;
     ctx.cardEdits = Object.assign({}, lot.cardEdits || {});
     ctx.solCardEdits = Object.assign({}, lot.solCardEdits || {});
-    ctx.dopants = (lot.stoich || []).slice(1, 6).filter(Boolean).map(s => ({ el: s.el, coeff: s.coeff }));
-    if (!ctx.dopants.length) ctx.dopants = [{ el: "Y", coeff: 1 }];
+    /* 위치가 아니라 역할로 — Na·F도 하나의 행일 뿐이다 */
+    const sst = (lot.stoich || []).filter(Boolean);
+    ctx.components = (Array.isArray(lot.components) && lot.components.length)
+      ? lot.components.map(c => ({ id: newCompId(), role: c.role || "dopant", el: c.el, coeff: c.coeff,
+          excess: isNum(c.excess) ? c.excess : 1, prec: c.prec || "" }))
+      : sst.map(s => ({ id: newCompId(), role: s.role || "dopant", el: s.el, coeff: s.coeff,
+          excess: isNum(s.excess) ? s.excess : 1 }));
+    if (!ctx.components.length) ctx.components = [{ id: newCompId(), role: "dopant", el: "Y", coeff: 1, excess: 1 }];
+    ctx.dopants = ctx.components.filter(c => c.role === "dopant").map(c => ({ el: c.el, coeff: c.coeff }));
+    ctx.name = lot.name || "";
     if (lot.solLnMmol) ctx.solLnMmol = lot.solLnMmol;
     if (lot.solVolMl) ctx.solVolMl = lot.solVolMl;
+    if (isNum(lot.solTfaMmol)) ctx.solTfaMmol = lot.solTfaMmol;
+    if (Array.isArray(lot.solPrecs) && lot.solPrecs.length) ctx.solPrecs = lot.solPrecs.map(r => ({ name: r.name, mmol: r.mmol, kind: r.kind || "solute" }));
     if (lot.inj) ctx.inj = lot.inj.slice();
     state.plannerCtx = ctx;
   }
@@ -2477,6 +4000,10 @@ function renderReco(root) {
 const prepCtx = { sel: [] };
 function renderPrep(root) {
   const P = state.db.settings.icpPrep;
+  /* 희석배수는 저장값이 아니라 입력 부피에서 계산 — 부피와 배수가 어긋날 수 없다 */
+  const baseF = (P.aliquotUl > 0) ? (P.finalMl / (P.aliquotUl / 1000)) : 0;
+  const extraF = (P.extraBaseMl > 0) ? ((P.extraBaseMl + P.extraDiMl) / P.extraBaseMl) : 1;
+  const volMismatch = Math.abs((P.hno3Ml + P.diMl + P.aliquotUl / 1000) - P.finalMl) > 0.02;
   const lots = Object.values(activeLots()).sort((a, b) => b.serial - a.serial);
   const opts = lots.map(l => `<option value="${l.serial}">${lotLabel(l)} · ${esc(lotFormula(l))}</option>`).join("");
   const selRows = prepCtx.sel.map(s => {
@@ -2510,23 +4037,46 @@ function renderPrep(root) {
   </div>
   </div>
   <div class="grid2">
-  <div class="card"><h3>샘플 용액 (기본 ×1/1000)</h3>
+  <div class="card"><h3>샘플 용액 (기본) <span class="hint">부피를 고치면 희석배수가 자동으로 다시 계산됩니다</span></h3>
     <table class="tbl"><tbody>
-      <tr><td class="l">Sample</td><td class="num">${P.aliquotUl} μL (Drying)</td></tr>
-      <tr><td class="l">70% HNO₃</td><td class="num">${P.hno3Ml} mL</td></tr>
-      <tr><td class="l">DI water</td><td class="num">${P.diMl} mL</td></tr>
-      <tr><td class="l"><b>= ×1/1000 diluted solution (2% HNO₃)</b></td><td class="num">${P.finalMl} mL</td></tr>
+      <tr><td class="l">Sample aliquot</td><td class="num"><input type="number" step="1" min="0" class="slim w100" id="ipAli" value="${P.aliquotUl}"> μL (Drying)</td></tr>
+      <tr><td class="l">70% HNO₃</td><td class="num"><input type="number" step="0.005" min="0" class="slim w100" id="ipHno3" value="${P.hno3Ml}"> mL</td></tr>
+      <tr><td class="l">DI water</td><td class="num"><input type="number" step="0.005" min="0" class="slim w100" id="ipDi" value="${P.diMl}"> mL</td></tr>
+      <tr><td class="l"><b>= ×1/${fmtN(baseF, 0)} diluted solution (2% HNO₃)</b></td>
+          <td class="num"><input type="number" step="0.1" min="0" class="slim w100" id="ipFinal" value="${P.finalMl}"> mL</td></tr>
     </tbody></table>
+    <div class="note ${volMismatch ? "warn" : ""}" style="margin-top:8px">
+      희석배수 = 최종부피 ÷ aliquot = ${fmtN(P.finalMl, 3)} mL ÷ ${fmtN(P.aliquotUl / 1000, 4)} mL = <b>×1/${fmtN(baseF, 1)}</b>
+      ${volMismatch ? `<br><b>주의</b>: HNO₃ + DI = ${fmtN(P.hno3Ml + P.diMl, 3)} mL 이므로 aliquot 포함 합(${fmtN(P.hno3Ml + P.diMl + P.aliquotUl / 1000, 3)} mL)이 최종부피(${fmtN(P.finalMl, 3)} mL)와 다릅니다.` : ""}
+    </div>
   </div>
-  <div class="card"><h3>샘플 용액 (추가 ×1/${P.extraFactor} → 총 1/${1000 * P.extraFactor})</h3>
+  <div class="card"><h3>샘플 용액 (추가 희석 → 총 ×1/${fmtN(baseF * extraF, 0)})</h3>
     <table class="tbl"><tbody>
-      <tr><td class="l">기본 solution</td><td class="num">${P.extraBaseMl} mL</td></tr>
-      <tr><td class="l">DI water</td><td class="num">${P.extraDiMl} mL</td></tr>
-      <tr><td class="l"><b>= ×1/${1000 * P.extraFactor} diluted solution (2% HNO₃)</b></td><td class="num">${P.extraBaseMl + P.extraDiMl} mL</td></tr>
+      <tr><td class="l">기본 solution</td><td class="num"><input type="number" step="0.1" min="0" class="slim w100" id="ipXBase" value="${P.extraBaseMl}"> mL</td></tr>
+      <tr><td class="l">DI water</td><td class="num"><input type="number" step="0.1" min="0" class="slim w100" id="ipXDi" value="${P.extraDiMl}"> mL</td></tr>
+      <tr><td class="l"><b>= ×1/${fmtN(baseF * extraF, 0)} diluted solution (2% HNO₃)</b></td><td class="num">${fmtN(P.extraBaseMl + P.extraDiMl, 2)} mL</td></tr>
     </tbody></table>
-    <div class="note" style="margin-top:8px">저농도 도핑 원소는 기본(×1/1000)에서, 고농도(host급) 원소는 추가 희석본에서 검정범위(0.1–5 ppm) 안에 들어오는 경우가 많습니다. 두 희석 모두 의뢰하는 것을 권장.</div>
+    <div class="note" style="margin-top:8px">추가 희석배수 ×1/${fmtN(extraF, 2)} — 결과 가져오기에서 라벨 끝의 <b>d</b> 표시를 이 배수로 해석합니다.<br>
+      저농도 도핑 원소는 기본에서, 고농도(host급) 원소는 추가 희석본에서 검정범위(0.1–5 ppm) 안에 들어오는 경우가 많습니다. 두 희석 모두 의뢰하는 것을 권장.</div>
   </div>
   </div>`;
+  const ipSet = (sel, key, positive) => {
+    const el = $(sel); if (!el) return;
+    el.onchange = () => {
+      const v = parseFloat(el.value);
+      if (!isFinite(v) || v < 0 || (positive && v <= 0)) { renderPrep(root); return; }
+      P[key] = v;
+      P.extraFactor = (P.extraBaseMl > 0) ? (P.extraBaseMl + P.extraDiMl) / P.extraBaseMl : P.extraFactor;
+      saveSettings(); syncConstants();
+      renderPrep(root);
+    };
+  };
+  ipSet("#ipAli", "aliquotUl", true);
+  ipSet("#ipHno3", "hno3Ml");
+  ipSet("#ipDi", "diMl");
+  ipSet("#ipFinal", "finalMl", true);
+  ipSet("#ipXBase", "extraBaseMl", true);
+  ipSet("#ipXDi", "extraDiMl");
   $("#prepAddBtn").onclick = () => {
     const v = $("#prepAdd").value;
     if (v && !prepCtx.sel.includes(Number(v))) prepCtx.sel.push(Number(v));
@@ -2821,7 +4371,7 @@ function renderImportWizard(root, ctx) {
   </div>
   <div class="card"><h3>3) 결과 — 실제 조성 · 수율
       <span class="hint">조성 = 선택 파장 ppm ÷ 원자량 → at% (정량 원소 기준) · 수율 = stock 내 mmol ÷ (AB×계수)</span></h3>
-    <div class="legend"><span><i style="background:#2563EB"></i>측정 조성</span><span><i class="tick" style="background:#334155"></i>목표 조성 (눈금)</span></div>
+    <div class="legend"><span><i style="background:var(--primary)"></i>측정 조성</span><span><i class="tick" style="background:var(--ink2)"></i>목표 조성 (눈금)</span></div>
     <div class="tblwrap" style="max-height:480px"><table class="tbl"><thead><tr>
       <th class="l">Label</th><th>Lot</th><th>총 희석</th><th class="l">실제 조성 (정량 원소 선택)</th><th class="l">목표 vs 측정</th><th>수율</th><th>Range</th></tr></thead>
       <tbody>${resRows}</tbody></table></div>
@@ -3174,8 +4724,8 @@ const Sync = (() => {
 
   async function fullSync() {
     // pull
-    const [lotSnap, icpSnap, setSnap] = await Promise.all([
-      col("lots").get(), col("icp").get(),
+    const [lotSnap, icpSnap, recSnap, setSnap] = await Promise.all([
+      col("lots").get(), col("icp").get(), col("recipes").get(),
       fb.db.collection("users").doc(fb.user.uid).collection("meta").doc("settings").get()]);
     let pulled = 0;
     lotSnap.forEach(doc => {
@@ -3185,6 +4735,10 @@ const Sync = (() => {
     icpSnap.forEach(doc => {
       const r = fsDecode(doc.data()); const cur = state.db.icp[r.id];
       if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0)) { state.db.icp[r.id] = r; pulled++; }
+    });
+    recSnap.forEach(doc => {                         // 레시피도 문서 단위 병합(Phase 4a)
+      const r = fsDecode(doc.data()); const cur = recipeStore()[r.id];
+      if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0)) { recipeStore()[r.id] = r; pulled++; }
     });
     if (setSnap.exists) {
       const r = fsDecode(setSnap.data());
@@ -3213,6 +4767,7 @@ const Sync = (() => {
     };
     await batchPush("lots", state.db.lots, "serial");
     await batchPush("icp", state.db.icp, "id");
+    await batchPush("recipes", recipeStore(), "id");
     /* 설정 push 규칙: 배포 빌드의 '중립 기본값'이 실제 설정을 덮어쓰지 않도록
        - 원격 없음: 기준 DB 내장 빌드이거나 사용자가 수정한 설정만 업로드(타임스탬프 부여)
        - 원격 있음: 내 설정이 더 최신일 때, 또는 원격이 타임스탬프 없는 구버전 잔재이고
@@ -3229,7 +4784,7 @@ const Sync = (() => {
         saveDb();
       }
     }
-    state.dirty.lots.clear(); state.dirty.icp.clear(); state.dirty.settings = false;
+    state.dirty.lots.clear(); state.dirty.icp.clear(); state.dirty.recipes.clear(); state.dirty.settings = false;
   }
   /* strip undefined + Firestore가 금지하는 중첩 배열을 안전 구조로 인코딩 */
   function sanitize(o) { return fsEncode(JSON.parse(JSON.stringify(o))); }
@@ -3251,6 +4806,71 @@ const Sync = (() => {
       });
       if (changed) { saveDb(); render(); }
     }, e => setStatus("err", friendly(e))));
+    unsubs.push(col("recipes").onSnapshot(snap => {
+      let changed = 0;
+      snap.docChanges().forEach(ch => {
+        const r = fsDecode(ch.doc.data()); const cur = recipeStore()[r.id];
+        if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0)) { recipeStore()[r.id] = r; changed++; }
+      });
+      if (changed) { saveDb(); render(); }
+    }, e => setStatus("err", friendly(e))));
+    subscribeLab();
+  }
+
+  /* -------------------------------------------------------------------
+   * 랩 공용 레시피 — labs/{labId}/recipes
+   * 개인 계정(users/{uid})은 그대로 두고 레시피 라이브러리만 함께 쓴다.
+   * 규칙상 labs/{labId}/members/{내UID} 문서가 있어야 읽고 쓸 수 있으므로,
+   * 멤버가 아니면 조용히 실패하고 안내만 띄운다(전체 동기화는 계속 동작).
+   * ----------------------------------------------------------------- */
+  function labId() { const v = state.db.settings.firebase.labId; return v ? String(v).trim() : ""; }
+  function labCol() {
+    const id = labId();
+    if (!fb || !id) return null;
+    return fb.db.collection("labs").doc(id).collection("recipes");
+  }
+  function labReady() { return !!(fb && labId() && !state.sync.labErr); }
+  function subscribeLab() {
+    const c = labCol();
+    state.sync.labErr = "";
+    if (!c) return;
+    unsubs.push(c.onSnapshot(snap => {
+      let changed = 0;
+      state.sync.labErr = "";
+      snap.docChanges().forEach(ch => {
+        const r = fsDecode(ch.doc.data()); const cur = labRecipeStore()[r.id];
+        if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0)) { labRecipeStore()[r.id] = r; changed++; }
+      });
+      if (changed) { saveDb(); render(); }
+    }, e => {
+      state.sync.labErr = (String(e && e.code || "").includes("permission"))
+        ? `랩 '${labId()}'의 멤버로 등록되어 있지 않습니다 (Firebase 콘솔에서 UID 등록 필요)`
+        : friendly(e);
+      render();
+    }));
+  }
+  function resubscribeLab() {                 // 랩 ID를 바꿨을 때
+    if (!fb) { render(); return; }
+    labRecipeStore(); state.db.labRecipes = {};
+    saveDb(); subscribeLab(); render();
+  }
+  async function labPublish(rec) {
+    const c = labCol();
+    if (!c) throw new Error("랩 ID가 설정되어 있지 않거나 동기화가 꺼져 있습니다");
+    const id = rec.srcId || rec.id;
+    const doc = Object.assign({}, JSON.parse(JSON.stringify(rec)), {
+      id, srcId: rec.id, owner: fb.user.uid,
+      ownerName: state.db.settings.firebase.email || fb.user.email || "",
+      updatedAt: Date.now(), deleted: false });
+    await c.doc(id).set(sanitize(doc));
+    labRecipeStore()[id] = doc; saveDb();
+  }
+  async function labUnpublish(id) {
+    const c = labCol();
+    if (!c) throw new Error("랩 ID가 설정되어 있지 않거나 동기화가 꺼져 있습니다");
+    await c.doc(id).set({ id, deleted: true, updatedAt: Date.now() }, { merge: true });
+    const r = labRecipeStore()[id]; if (r) { r.deleted = true; r.updatedAt = Date.now(); }
+    saveDb();
   }
 
   function push() {                      // debounce push of dirty records
@@ -3262,6 +4882,7 @@ const Sync = (() => {
         let n = 0;
         for (const s of state.dirty.lots) { const it = state.db.lots[s]; if (it) { batch.set(col("lots").doc(String(s)), sanitize(it)); n++; } }
         for (const id of state.dirty.icp) { const it = state.db.icp[id]; if (it) { batch.set(col("icp").doc(id), sanitize(it)); n++; } }
+        for (const id of state.dirty.recipes) { const it = recipeStore()[id]; if (it) { batch.set(col("recipes").doc(id), sanitize(it)); n++; } }
         if (state.dirty.settings) { batch.set(metaDoc("settings"), sanitize(state.db.settings)); n++; }
         if (n) await batch.commit();
         if (state.dirty.refData) {          // 물질 DB·파라미터 수정 → 클라우드 기준 DB 갱신
@@ -3276,7 +4897,7 @@ const Sync = (() => {
           state.dirty.refData = false;
           saveDb();
         }
-        state.dirty.lots.clear(); state.dirty.icp.clear(); state.dirty.settings = false;
+        state.dirty.lots.clear(); state.dirty.icp.clear(); state.dirty.recipes.clear(); state.dirty.settings = false;
         setStatus("on", state.db.settings.firebase.email);
       } catch (e) { setStatus("err", friendly(e)); }
     }, 800);
@@ -3285,8 +4906,20 @@ const Sync = (() => {
   const RULES = `rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // 개인 데이터 — 본인만
     match /users/{uid}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // 랩 공용 레시피 — 멤버로 등록된 사람만 (멤버 추가는 콘솔에서만)
+    match /labs/{labId}/members/{memberUid} {
+      allow read:  if request.auth != null;
+      allow write: if false;
+    }
+    match /labs/{labId}/recipes/{doc} {
+      allow read, write: if request.auth != null
+        && exists(/databases/$(database)/documents/labs/$(labId)/members/$(request.auth.uid));
     }
   }
 }`;
@@ -3303,9 +4936,26 @@ service cloud.firestore {
         <button class="btn sm" id="fbGuide">설정 가이드</button>
       </div>
       ${S.firebase.email ? `<div class="muted" style="margin-top:6px">마지막 연결 계정: ${esc(S.firebase.email)}</div>` : ""}
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">
+        <label class="f">랩 공용 레시피 — 랩 ID <span class="hint">비워 두면 개인 레시피만 사용합니다</span>
+          <input type="text" id="fbLab" class="mono" placeholder="예: nanolab" value="${esc(S.firebase.labId || "")}"></label>
+        <div class="row" style="margin-top:6px;align-items:center;gap:6px">
+          <span class="muted" style="font-size:11px">내 UID:</span>
+          <span class="mono" id="fbUid" style="font-size:11px">${esc(uid() || "(로그인 후 표시)")}</span>
+          ${uid() ? `<button class="btn sm" id="fbUidCopy">복사</button>` : ""}
+        </div>
+        <div class="muted" style="font-size:11px;margin-top:4px">같은 랩 ID를 쓰는 멤버끼리 레시피 라이브러리를 공유합니다.
+          쓰려면 Firebase 콘솔에서 <span class="mono">labs/{랩ID}/members/{위 UID}</span> 문서를 만들어 멤버로 등록해야 합니다 — [설정 가이드] 8번 참고.</div>
+        ${state.sync.labErr ? `<div class="note warn" style="margin-top:6px">${esc(state.sync.labErr)}</div>` : ""}
+      </div>
       ${location.protocol === "file:" ? `<div class="note warn" style="margin-top:8px">현재 파일(file://)로 열려 있습니다. Google 로그인 팝업은 웹 주소(GitHub Pages 등)로 열었을 때만 동작합니다 — 로컬 사용에는 영향 없음.</div>` : ""}`;
     const saveCfg = () => { S.firebase.config = root.querySelector("#fbCfg").value; saveSettings(); };
     root.querySelector("#fbCfg").onchange = saveCfg;
+    root.querySelector("#fbLab").onchange = e => {
+      S.firebase.labId = e.target.value.trim(); saveSettings(); resubscribeLab(); renderBox(root);
+    };
+    { const cp = root.querySelector("#fbUidCopy");
+      if (cp) cp.onclick = () => navigator.clipboard.writeText(uid() || "").then(() => toast("UID를 복사했습니다 — 랩 관리자에게 전달하세요", "ok")); }
     root.querySelector("#fbLogin").onclick = () => { saveCfg(); connect(); };
     root.querySelector("#fbOff").onclick = () => { disconnect(); renderBox(root); };
     root.querySelector("#fbGuide").onclick = showGuide;
@@ -3318,13 +4968,22 @@ service cloud.firestore {
       <b>2. Authentication</b> — 빌드 → Authentication → Sign-in method → <b>Google</b> 사용 설정(지원 이메일 선택 후 저장).<br>
       <b>3. Firestore</b> — 빌드 → Firestore Database → 만들기 → 위치 asia-northeast3(서울) → 프로덕션 모드.<br>
       <b>4. 보안규칙</b> — Firestore → 규칙 탭 → 아래 내용으로 교체 → 게시:<br>
-      <pre class="mono" style="background:#F1F5F9;padding:8px;border-radius:8px;font-size:11px;overflow:auto">${esc(RULES)}</pre>
+      <pre class="mono" style="background:var(--chip);padding:8px;border-radius:8px;font-size:11px;overflow:auto">${esc(RULES)}</pre>
       <button class="btn sm" id="copyRules">규칙 복사</button><br><br>
       <b>5. 웹앱 등록</b> — ⚙프로젝트 설정 → 내 앱 → 웹(&lt;/&gt;) → 등록 → 표시되는 <span class="mono">firebaseConfig</span>를 이 앱의 설정칸에 붙여넣기.<br>
       <b>6. 배포 + 승인 도메인</b> — 이 HTML을 GitHub Pages 등에 올리고, Authentication → Settings → 승인된 도메인에 그 도메인(예: 아이디.github.io) 추가.
       <b>Google 로그인 팝업은 file://로 연 파일에서는 동작하지 않으므로</b>, 동기화는 배포 주소(또는 localhost)에서 사용하세요. 배포 없이 로컬로만 쓰는 경우엔 동기화 없이 그대로 사용하면 됩니다.<br>
       <b>7. 연결</b> — [Google 계정으로 로그인] 클릭 → 계정 선택하면 끝. 다른 PC에서도 같은 config + 같은 Google 계정으로 로그인하면 전체 DB가 자동 동기화됩니다.<br><br>
-      <span class="muted">데이터는 본인 계정 경로(users/내UID)에만 저장되고 위 규칙으로 본인만 읽고 쓸 수 있습니다. 개인 사용량은 무료 한도의 극히 일부입니다.</span>
+      <b>8. (선택) 랩 공용 레시피</b> — 각자 자기 계정을 쓰면서 <b>레시피 라이브러리만</b> 함께 쓰고 싶을 때:<br>
+      &nbsp;&nbsp;① 위 4번 규칙에 <span class="mono">labs/</span> 블록이 포함되어 있는지 확인(이 앱이 주는 규칙에는 이미 들어 있습니다).<br>
+      &nbsp;&nbsp;② 멤버가 각자 이 앱에 로그인한 뒤 설정 화면의 <b>내 UID</b>를 복사해 관리자에게 전달.<br>
+      &nbsp;&nbsp;③ 관리자가 콘솔 → Firestore → 데이터에서 컬렉션 <span class="mono">labs</span> → 문서 ID = 랩 이름(예: <span class="mono">nanolab</span>)
+      → 하위 컬렉션 <span class="mono">members</span> → 문서 ID = 그 사람의 UID로 문서 생성(내용은 <span class="mono">name: "이름"</span> 정도면 충분).<br>
+      &nbsp;&nbsp;④ 멤버 전원이 설정 화면의 <b>랩 ID</b>에 같은 값을 입력.<br>
+      &nbsp;&nbsp;→ 이제 계획 화면 레시피 목록에 <b>랩 공용</b> 묶음이 생깁니다. [랩에 올리기]로 공유하고, [내 것으로 복사]로 가져가 고칩니다.
+      공용 레시피는 직접 수정되지 않으므로 남의 레시피를 실수로 덮어쓸 일이 없습니다.<br><br>
+      <span class="muted">개인 데이터는 본인 계정 경로(users/내UID)에만 저장되고 위 규칙으로 본인만 읽고 쓸 수 있습니다.
+      랩 공용 경로(labs/랩ID)에는 레시피만 올라가며, 멤버로 등록된 사람만 읽고 쓸 수 있습니다. 개인 사용량은 무료 한도의 극히 일부입니다.</span>
       </div></div></div>`);
     document.body.appendChild(ov);
     ov.onclick = e => { if (e.target === ov) ov.remove(); };
@@ -3364,7 +5023,9 @@ service cloud.firestore {
     return true;
   }
   function rulesText() { return RULES; }
-  return { push, renderBox, tryAutoConnect, hasConfig, quickConnect, setConfig, rulesText };
+  function uid() { return (fb && fb.user) ? fb.user.uid : null; }
+  return { push, renderBox, tryAutoConnect, hasConfig, quickConnect, setConfig, rulesText,
+           uid, labReady, labPublish, labUnpublish, resubscribeLab };
 })();
 
 </script>
@@ -3483,7 +5144,7 @@ function renderDash(root) {
 
   const showLoginBanner = state.sync.status !== "on" && location.protocol.startsWith("http") && Sync.hasConfig();
   root.innerHTML = `
-  ${showLoginBanner ? `<div class="card" style="border-color:#93C5FD;background:var(--primary-soft)">
+  ${showLoginBanner ? `<div class="card" style="border-color:var(--primary);background:var(--primary-soft)">
     <div class="row" style="justify-content:space-between">
       <div><b>클라우드 동기화 준비됨</b> — Google 계정으로 로그인하면 이 기기에서도 전체 기록이 자동 동기화됩니다.</div>
       <button class="btn primary" id="dashLogin">Google 계정으로 로그인</button>
@@ -3849,7 +5510,7 @@ function renderProtocolPanel(root){
     const c={ id:"p_"+Date.now().toString(36), name:nm, basis:"solvothermal", reagents:[], steps:{core:seedCore,shell:JSON.parse(JSON.stringify(globalMods("shell"))),sol:JSON.parse(JSON.stringify(globalMods("sol")))} }; store[c.id]=c; S.activeProtocolId=c.id; persistProto(); render(); };
   ctrl.append(document.createTextNode("활성: "), sel, addNew);
   if(!isDefault){
-    const nmI=document.createElement("input"); nmI.type="text"; nmI.value=proto.name||""; nmI.placeholder="프로토콜 이름"; nmI.title="프로토콜 이름"; nmI.style.cssText="padding:4px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;min-width:150px";
+    const nmI=document.createElement("input"); nmI.type="text"; nmI.value=proto.name||""; nmI.placeholder="프로토콜 이름"; nmI.title="프로토콜 이름"; nmI.style.cssText="padding:4px 8px;border:1px solid var(--line2);border-radius:6px;font-size:12px;min-width:150px";
     nmI.onchange=()=>{ const v=nmI.value.trim(); if(v){ proto.name=v; persistProto(); render(); } };
     ctrl.append(document.createTextNode("이름:"), nmI);
     if(activeId===defId){
@@ -3878,12 +5539,12 @@ function renderProtocolPanel(root){
   function numInput(val,cb,w){ const inp=document.createElement("input"); inp.type="number"; inp.value=val; inp.step="any"; inp.style.width=(w||"70px"); inp.oninput=()=>{cb(parseFloat(inp.value)); persistProto(); drawPrev();}; return inp; }
   function drawEditor(){ edit.innerHTML=""; if(isDefault) return;
     if(isBound){ const seq=coreSequence(proto,{tgt:1,rows:[]}); const RL=ROLE_LABEL;
-      const box=document.createElement("div"); box.style.cssText="border:1px solid #e4e7eb;border-radius:8px;padding:10px;margin:6px 0;font-size:12px";
+      const box=document.createElement("div"); box.style.cssText="border:1px solid var(--line);border-radius:8px;padding:10px;margin:6px 0;font-size:12px";
       let html='<div style="font-weight:650;margin-bottom:6px">시퀀스 요약 (Core)</div>';
-      if(seq.length){ html+=seq.map((s,i)=>{ const pr=s.prec?('<b>'+(RL[s.prec]||s.prec)+'</b>'):'<span class="muted">전구체 없음</span>'; const sv=s.solv.length? s.solv.map(x=>{const nm=solvName(x); return nm+(x.mode==="directMl"?(x.auto?"(자동)":" 직접"):" "+(x.val!=null?x.val:"?")+" mL/mmol·"+(ROLE_LABEL[x.ref||"Ln"]||x.ref||"Ln"));}).join(", "):'<span class="muted">용매 없음</span>'; return '<div style="padding:4px 0;border-bottom:1px solid #f1f5f9">'+(i+1)+'. '+pr+' + '+sv+'</div>'; }).join(""); }
+      if(seq.length){ html+=seq.map((s,i)=>{ const pr=s.prec?('<b>'+(RL[s.prec]||s.prec)+'</b>'):'<span class="muted">전구체 없음</span>'; const sv=s.solv.length? s.solv.map(x=>{const nm=solvName(x); return nm+(x.mode==="directMl"?(x.auto?"(자동)":" 직접"):" "+(x.val!=null?x.val:"?")+" mL/mmol·"+(ROLE_LABEL[x.ref||"Ln"]||x.ref||"Ln"));}).join(", "):'<span class="muted">용매 없음</span>'; return '<div style="padding:4px 0;border-bottom:1px solid var(--line)">'+(i+1)+'. '+pr+' + '+sv+'</div>'; }).join(""); }
       else { html+='<div class="muted">아직 묶인 단계가 없습니다. 아래 <b>합성 프로세스</b>에서 첨가/주입 블록에 전구체·용매를 추가하세요.</div>'; }
       box.innerHTML=html; edit.appendChild(box); return; }
-    proto.reagents.forEach(rg=>{ const box=document.createElement("div"); box.style.cssText="border:1px solid #e4e7eb;border-radius:8px;padding:8px;margin:6px 0";
+    proto.reagents.forEach(rg=>{ const box=document.createElement("div"); box.style.cssText="border:1px solid var(--line);border-radius:8px;padding:8px;margin:6px 0";
       const t=document.createElement("div"); t.style.cssText="font-weight:650;margin-bottom:5px"; t.textContent=(rg.name||rg.id)+" · "+(rg.unit||""); box.append(t);
       const p=document.createElement("div"); p.className="row"; p.style.cssText="gap:8px;flex-wrap:wrap;align-items:center;font-size:12px"; const c=rg.calc;
       if(c.type==="perTarget"){ p.append("mmol당 ",numInput(c.perMmol,v=>c.perMmol=v)); }
@@ -3923,21 +5584,33 @@ function openProtocolEditor(){
   /* 팝업은 X 버튼으로만 닫힘 (바깥 클릭 무시) */
   ov.querySelector(".closex").onclick = close;
 }
-function renderProcedurePanel(root){
+function renderProcedurePanel(root, opts){
+  opts = opts || {};
   const S = state.db.settings;
   if(!S.cardSteps || !S.cardSteps.core) return;
   try{ migrateProcedures(); }catch(e){}
-  const COL={heat:"#ef4444",vacuum:"#3b82f6",purge:"#8b5cf6",inject:"#10b981",add:"#f59e0b",note:"#6b7280"};
-  const BG ={heat:"#fef2f2",vacuum:"#eff6ff",purge:"#f5f3ff",inject:"#ecfdf5",add:"#fffbeb",note:"#f9fafb"};
+  const COL={heat:"#ef4444",vacuum:"#3b82f6",purge:"#8b5cf6",inject:"#10b981",add:"#f59e0b",
+             note:(document.documentElement.getAttribute("data-theme")==="dark"?"#9AA7B8":"#6b7280")};
+  const _dkTh = (document.documentElement.getAttribute("data-theme")==="dark");
+  const BG = _dkTh ? {heat:"#2A1414",vacuum:"#111E36",purge:"#1E1533",inject:"#0E2A1E",add:"#2E2410",note:"#1B2436"}
+                   : {heat:"#fef2f2",vacuum:"#eff6ff",purge:"#f5f3ff",inject:"#ecfdf5",add:"#fffbeb",note:"#f9fafb"};
   const SHORT={heat:"열처리",vacuum:"진공",purge:"퍼지",inject:"시료 주입",add:"시약 첨가",note:"메모"};
-  const GROUPS=[["core","Core 합성"],["shell","Shell 합성"],["sol","용액 조제"]];
-  let group="core", selId=null, dragFrom=-1, dragId=null, _draggingId=null;
-  const card=document.createElement("div"); card.className="card"; card.style.marginTop="14px";
-  const hh=document.createElement("h3"); hh.textContent="합성 프로세스"; card.appendChild(hh);
+  const ALLG=[["core","Core 합성"],["shell","Shell 합성"],["sol","용액 조제"]];
+  const GROUPS = opts.groups ? ALLG.filter(g => opts.groups.indexOf(g[0]) >= 0) : ALLG;
+  if (opts.groups && GROUPS.length && GROUPS.map(g=>g[0]).indexOf(_procUI.group) < 0) _procUI.group = GROUPS[0][0];
+  let group=_procUI.group, selId=_procUI.selId, dragFrom=-1, dragId=null, _draggingId=null;
+  const card=document.createElement("div"); card.className="card"; card.style.marginTop=opts.inline?"0":"14px";
+  const hh=document.createElement("h3");
+  hh.innerHTML = '합성 프로세스' + (opts.inline
+    ? ' <span class="hint">여기서 바로 편집 — 오른쪽 미리보기에 즉시 반영됩니다</span>'
+    : '');
+  card.appendChild(hh);
   const nt=document.createElement("div"); nt.className="note"; nt.style.margin="4px 0 8px";
-  nt.innerHTML="오른쪽 <b>카드(출력 영역)</b>에서 블록을 <b>드래그</b>해 원하는 칸에 자유 배치(<b>빈칸 허용</b>)하고 <b>모서리 손잡이</b>를 끌어 가로 1~3칸·세로 1~6칸를 조절합니다. 블록을 <b>클릭</b>하면 왼쪽에 상세 입력칸이 나타나고, <b>카드 밖으로</b> 드래그하면 삭제됩니다. 기본은 전체폭(현재와 동일).";
+  nt.innerHTML = opts.inline
+    ? "블록을 <b>클릭</b>하면 왼쪽에서 상세값을 고치고, <b>드래그</b>로 배치·<b>모서리 손잡이</b>로 크기를 바꿉니다. <b>Ctrl+C / Ctrl+D / Ctrl+V</b>로 복사·복제·붙여넣기 (그룹 간 이동 가능)."
+    : "오른쪽 <b>카드(출력 영역)</b>에서 블록을 <b>드래그</b>해 원하는 칸에 자유 배치(<b>빈칸 허용</b>)하고 <b>모서리 손잡이</b>를 끌어 가로 1~3칸·세로 1~6칸를 조절합니다. 블록을 <b>클릭</b>하면 왼쪽에 상세 입력칸이 나타나고, <b>카드 밖으로</b> 드래그하면 삭제됩니다.<br>블록 <b>복사·복제·붙여넣기</b>는 왼쪽 상세창의 버튼 또는 <b>Ctrl+C / Ctrl+D / Ctrl+V</b> — 복사한 블록은 Core·Shell·용액 조제 사이에서도 붙여넣을 수 있습니다.";
   card.appendChild(nt);
-  { const apid=S.activeProtocolId; const apName=(apid&&apid!=="lab_naln"&&S.protocols&&S.protocols[apid])?S.protocols[apid].name:"기본값"; const apLine=document.createElement("div"); apLine.style.cssText="font-size:12px;margin:2px 0 9px;padding:6px 10px;background:#f1f5f9;border-radius:6px;color:#334155"; apLine.innerHTML="편집 대상 프로토콜: <b>"+esc(apName)+"</b>"+((apid&&apid!=="lab_naln")?" <span style=\"color:#64748b\">— 이 프로토콜 전용 절차</span>":" <span style=\"color:#94a3b8\">— 전역. 상단 \u2018화학물질 개요\u2019에서 + 새 프로토콜을 만들면 전용 절차가 됩니다.</span>"); card.appendChild(apLine); }
+  if(!opts.inline){ const apid=S.activeProtocolId; const apName=(apid&&apid!=="lab_naln"&&S.protocols&&S.protocols[apid])?S.protocols[apid].name:"기본값"; const apLine=document.createElement("div"); apLine.style.cssText="font-size:12px;margin:2px 0 9px;padding:6px 10px;background:var(--chip);border-radius:6px;color:var(--ink2)"; apLine.innerHTML="편집 대상 프로토콜: <b>"+esc(apName)+"</b>"+((apid&&apid!=="lab_naln")?" <span style=\"color:var(--muted)\">— 이 프로토콜 전용 절차</span>":" <span style=\"color:#94a3b8\">— 전역. 상단 \u2018화학물질 개요\u2019에서 + 새 프로토콜을 만들면 전용 절차가 됩니다.</span>"); card.appendChild(apLine); }
   const tabs=document.createElement("div"); tabs.className="row"; tabs.style.cssText="gap:6px;flex-wrap:wrap;margin-bottom:8px"; card.appendChild(tabs);
   const split=document.createElement("div"); split.style.cssText="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap"; card.appendChild(split);
   const leftP=document.createElement("div"); leftP.style.cssText="flex:0 0 236px;max-width:236px;min-width:206px"; split.appendChild(leftP);
@@ -3945,48 +5618,71 @@ function renderProcedurePanel(root){
   const pal=document.createElement("div"); pal.className="row"; pal.style.cssText="gap:5px;flex-wrap:wrap;margin:0 0 9px;align-items:center"; rightP.appendChild(pal);
   const canvasWrap=document.createElement("div"); rightP.appendChild(canvasWrap);
   function mods(){ const s=protoSteps(group,true); if(s) return s; return globalMods(group); }
-  function persist(){ try{ state.dirty.settings=true; saveDb(); if(typeof Sync!=="undefined"&&Sync.push) Sync.push(); }catch(e){} }
+  function persist(){
+    try{ state.dirty.settings=true; saveDb(); if(typeof Sync!=="undefined"&&Sync.push) Sync.push(); }catch(e){}
+    if(opts.onChange){ try{ opts.onChange(); }catch(e){} }
+  }
   function selMod(){ return mods().filter(m=>m.id===selId)[0]||null; }
-  function drawTabs(){ tabs.innerHTML=""; GROUPS.forEach(g=>{ const b=document.createElement("button"); b.className="btn sm"+(g[0]===group?" primary":""); b.textContent=g[1]; b.onclick=()=>{ group=g[0]; selId=null; redraw(); }; tabs.appendChild(b); }); }
+  function setSel(id){ selId=id; _procUI.selId=id; }
+  function drawTabs(){
+    tabs.innerHTML="";
+    if(GROUPS.length<2) return;                       // 그룹이 하나뿐이면 탭을 숨긴다
+    GROUPS.forEach(g=>{ const b=document.createElement("button"); b.className="btn sm"+(g[0]===group?" primary":"");
+      b.textContent=g[1]; b.onclick=()=>{ group=g[0]; _procUI.group=g[0]; setSel(null); redraw(); }; tabs.appendChild(b); });
+  }
   function drawPal(){
     pal.innerHTML=""; const lab=document.createElement("span"); lab.className="muted"; lab.style.cssText="font-size:11px;align-self:center;margin-right:2px"; lab.textContent="블록 추가"; pal.appendChild(lab);
     MOD_KIND_ORDER.forEach(k=>{ const b=document.createElement("button"); b.type="button"; b.textContent="＋ "+SHORT[k];
       b.style.cssText="border:1px solid "+COL[k]+";color:"+COL[k]+";background:"+BG[k]+";border-radius:14px;padding:3px 11px;font-size:11px;font-weight:600;cursor:pointer";
-      b.onclick=()=>{ const a=mods(); ensurePositions(a); let bottom=1; a.forEach(z=>{ bottom=Math.max(bottom,(z.gy||1)+posH(z.gh)); }); const nm={id:"m"+Date.now().toString(36)+(_pmSeq++),k:k,temp:"",time:"",note:"",gw:3,gh:1,gx:1,gy:bottom}; a.push(nm); selId=nm.id; persist(); redraw(); }; pal.appendChild(b); });
+      b.onclick=()=>{ const a=mods(); ensurePositions(a); const nm={id:modClipNewId(),k:k,temp:"",time:"",note:"",gw:3,gh:1,gx:1,gy:bottomRow(a)}; a.push(nm); setSel(nm.id); persist(); redraw(); }; pal.appendChild(b); });
+    if(_modClip){
+      const pb=document.createElement("button"); pb.type="button"; pb.textContent="📋 붙여넣기";
+      pb.title="복사해 둔 블록(" + (SHORT[_modClip.k]||_modClip.k) + ")을 이 절차에 추가 — Ctrl+V";
+      pb.style.cssText="border:1px dashed var(--line2);color:var(--ink2);background:var(--chip);border-radius:14px;padding:3px 11px;font-size:11px;font-weight:600;cursor:pointer;margin-left:4px";
+      pb.onclick=()=>pasteMod(); pal.appendChild(pb);
+    }
   }
   function insField(labelTxt,val,oninput){
     const wrap=document.createElement("label"); wrap.style.cssText="display:block;margin-top:7px";
-    const sp=document.createElement("div"); sp.style.cssText="font-size:11px;color:#64748b;margin-bottom:2px"; sp.textContent=labelTxt;
-    const inp=document.createElement("input"); inp.type="text"; inp.value=val; inp.style.cssText="width:100%;padding:5px 7px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;box-sizing:border-box";
+    const sp=document.createElement("div"); sp.style.cssText="font-size:11px;color:var(--muted);margin-bottom:2px"; sp.textContent=labelTxt;
+    const inp=document.createElement("input"); inp.type="text"; inp.value=val; inp.style.cssText="width:100%;padding:5px 7px;border:1px solid var(--line2);border-radius:6px;font-size:12px;box-sizing:border-box";
     inp.oninput=()=>oninput(inp.value); wrap.append(sp,inp); return wrap;
   }
   function drawInspector(){
     leftP.innerHTML="";
     const box=document.createElement("div"); box.className="card"; box.style.cssText="margin:0;padding:12px";
     const m=selMod();
-    if(!m){ box.innerHTML='<div style="font-size:12px;color:#64748b;line-height:1.5">오른쪽 카드에서 블록을 <b>클릭</b>하면<br>여기서 상세값을 편집합니다.</div>'; leftP.appendChild(box); return; }
+    if(!m){
+      box.innerHTML='<div style="font-size:12px;color:var(--muted);line-height:1.5">오른쪽 카드에서 블록을 <b>클릭</b>하면<br>여기서 상세값을 편집합니다.</div>';
+      if(_modClip){
+        const pb=document.createElement("button"); pb.className="btn sm"; pb.style.marginTop="9px";
+        pb.textContent="붙여넣기 ("+(SHORT[_modClip.k]||_modClip.k)+")"; pb.title="복사해 둔 블록을 이 절차에 추가 (Ctrl+V)";
+        pb.onclick=()=>pasteMod(); box.appendChild(pb);
+      }
+      leftP.appendChild(box); return;
+    }
     const K=MOD_KINDS[m.k]||MOD_KINDS.heat, col=COL[m.k]||"#6b7280";
     const hd=document.createElement("div"); hd.style.cssText="display:flex;align-items:center;gap:6px;margin-bottom:2px";
     const dot=document.createElement("span"); dot.style.cssText="width:10px;height:10px;border-radius:3px;flex:none;background:"+col;
     const ttl=document.createElement("div"); ttl.style.cssText="font-weight:700;font-size:13px"; ttl.textContent="블록 상세";
     hd.append(dot,ttl); box.appendChild(hd);
-    const kl=document.createElement("div"); kl.style.cssText="font-size:11px;color:#64748b;margin-top:6px"; kl.textContent="종류"; box.appendChild(kl);
-    const ksel=document.createElement("select"); ksel.style.cssText="width:100%;padding:5px 7px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;margin-top:2px";
+    const kl=document.createElement("div"); kl.style.cssText="font-size:11px;color:var(--muted);margin-top:6px"; kl.textContent="종류"; box.appendChild(kl);
+    const ksel=document.createElement("select"); ksel.style.cssText="width:100%;padding:5px 7px;border:1px solid var(--line2);border-radius:6px;font-size:12px;margin-top:2px";
     MOD_KIND_ORDER.forEach(k=>{ const o=document.createElement("option"); o.value=k; o.textContent=SHORT[k]; if(k===m.k)o.selected=true; ksel.appendChild(o); });
     ksel.onchange=()=>{ m.k=ksel.value; delete m.badges; persist(); redraw(); }; box.appendChild(ksel);
     K.f.forEach(f=>{ const lab=(f==="temp")?"온도":(f==="time")?"시간/조건":"비고"; box.appendChild(insField(lab,_sv(m[f]),v=>{ m[f]=v; persist(); drawCanvas(); })); });
     if(m.k==="add" || m.k==="inject"){
       m.bind = m.bind || {prec:"", solv:[]};
       const bwrap=document.createElement("div"); bwrap.style.cssText="margin-top:12px;border-top:1px dashed #e2e8f0;padding-top:9px";
-      const bt=document.createElement("div"); bt.style.cssText="font-weight:700;font-size:12px;color:#0f172a;margin-bottom:2px"; bt.textContent="이 단계 투입물 (묶음)"; bwrap.appendChild(bt);
+      const bt=document.createElement("div"); bt.style.cssText="font-weight:700;font-size:12px;color:var(--ink);margin-bottom:2px"; bt.textContent="이 단계 투입물 (묶음)"; bwrap.appendChild(bt);
       const bh=document.createElement("div"); bh.style.cssText="font-size:10.5px;color:#94a3b8;line-height:1.4;margin-bottom:6px"; bh.textContent="이 시퀀스에 함께 넣는 전구체와 유기용매를 지정하면 계획창·카드에 자동 반영됩니다."; bwrap.appendChild(bh);
-      const pl=document.createElement("div"); pl.style.cssText="font-size:11px;color:#64748b"; pl.textContent="전구체"; bwrap.appendChild(pl);
-      const psel=document.createElement("select"); psel.style.cssText="width:100%;padding:5px 7px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;margin-top:2px";
+      const pl=document.createElement("div"); pl.style.cssText="font-size:11px;color:var(--muted)"; pl.textContent="전구체"; bwrap.appendChild(pl);
+      const psel=document.createElement("select"); psel.style.cssText="width:100%;padding:5px 7px;border:1px solid var(--line2);border-radius:6px;font-size:12px;margin-top:2px";
       [["","(없음)"],["Ln","Dopant"],["Na","Host Cation"],["F","Host Anion"]].forEach(o=>{ const op=document.createElement("option"); op.value=o[0]; op.textContent=o[1]; if(o[0]===(m.bind.prec||""))op.selected=true; psel.appendChild(op); });
       psel.onchange=()=>{ m.bind.prec=psel.value; persist(); drawCanvas(); }; bwrap.appendChild(psel);
-      const sl=document.createElement("div"); sl.style.cssText="font-size:11px;color:#64748b;margin-top:9px"; sl.textContent="유기용매"; bwrap.appendChild(sl);
+      const sl=document.createElement("div"); sl.style.cssText="font-size:11px;color:var(--muted);margin-top:9px"; sl.textContent="유기용매"; bwrap.appendChild(sl);
       (m.bind.solv||[]).forEach((sv,si)=>{
-        const sb=document.createElement("div"); sb.style.cssText="border:1px solid #e4e7eb;border-radius:7px;padding:6px 7px;margin-top:5px;background:#fafbfc";
+        const sb=document.createElement("div"); sb.style.cssText="border:1px solid var(--line);border-radius:7px;padding:6px 7px;margin-top:5px;background:var(--chip)";
         const sh=document.createElement("div"); sh.style.cssText="display:flex;justify-content:space-between;align-items:center;gap:4px";
         const snm=document.createElement("b"); snm.style.fontSize="11.5px"; snm.textContent=solvName(sv);
         const sx=document.createElement("button"); sx.className="btn sm"; sx.textContent="✕"; sx.style.cssText="padding:0 7px;font-size:11px"; sx.onclick=()=>{ m.bind.solv.splice(si,1); persist(); redraw(); };
@@ -3996,10 +5692,10 @@ function renderProcedurePanel(root){
           const autoLab=document.createElement("label"); autoLab.style.cssText="display:flex;gap:3px;align-items:center;font-size:11px";
           const acb=document.createElement("input"); acb.type="checkbox"; acb.checked=!!sv.auto; acb.onchange=()=>{ sv.auto=acb.checked; persist(); redraw(); };
           autoLab.append(acb,document.createTextNode("자동(총량−OA)")); mrow.appendChild(autoLab);
-          if(!sv.auto){ const vin=document.createElement("input"); vin.type="number"; vin.step="any"; vin.value=(sv.val!=null?sv.val:""); vin.placeholder="mL"; vin.style.cssText="width:60px;padding:3px 5px;border:1px solid #cbd5e1;border-radius:5px;font-size:11px"; vin.oninput=()=>{ sv.val=parseFloat(vin.value); persist(); drawCanvas(); }; mrow.append(document.createTextNode("부피"),vin,document.createTextNode("mL")); }
+          if(!sv.auto){ const vin=document.createElement("input"); vin.type="number"; vin.step="any"; vin.value=(sv.val!=null?sv.val:""); vin.placeholder="mL"; vin.style.cssText="width:60px;padding:3px 5px;border:1px solid var(--line2);border-radius:5px;font-size:11px"; vin.oninput=()=>{ sv.val=parseFloat(vin.value); persist(); drawCanvas(); }; mrow.append(document.createTextNode("부피"),vin,document.createTextNode("mL")); }
         } else {
-          const vin=document.createElement("input"); vin.type="number"; vin.step="any"; vin.value=(sv.val!=null?sv.val:""); vin.style.cssText="width:56px;padding:3px 5px;border:1px solid #cbd5e1;border-radius:5px;font-size:11px"; vin.oninput=()=>{ sv.val=parseFloat(vin.value); persist(); drawCanvas(); };
-          const rsel=document.createElement("select"); rsel.style.cssText="padding:3px 5px;border:1px solid #cbd5e1;border-radius:5px;font-size:11px";
+          const vin=document.createElement("input"); vin.type="number"; vin.step="any"; vin.value=(sv.val!=null?sv.val:""); vin.style.cssText="width:56px;padding:3px 5px;border:1px solid var(--line2);border-radius:5px;font-size:11px"; vin.oninput=()=>{ sv.val=parseFloat(vin.value); persist(); drawCanvas(); };
+          const rsel=document.createElement("select"); rsel.style.cssText="padding:3px 5px;border:1px solid var(--line2);border-radius:5px;font-size:11px";
           REF_ROLES.forEach(o=>{ const op=document.createElement("option"); op.value=o[0]; op.textContent=o[1]; if(o[0]===(sv.ref||"Ln"))op.selected=true; rsel.appendChild(op); });
           rsel.onchange=()=>{ sv.ref=rsel.value; persist(); drawCanvas(); };
           mrow.append(document.createTextNode("mL/mmol"),vin,document.createTextNode("기준"),rsel);
@@ -4007,14 +5703,45 @@ function renderProcedurePanel(root){
         sb.appendChild(mrow); bwrap.appendChild(sb);
       });
       const addRow=document.createElement("div"); addRow.style.cssText="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px";
-      SOLV_ORDER.forEach(k=>{ const ab=document.createElement("button"); ab.type="button"; ab.textContent="＋ "+(SOLV_INFO[k]?SOLV_INFO[k].name:k); ab.style.cssText="border:1px solid #cbd5e1;background:#fff;border-radius:12px;padding:2px 9px;font-size:11px;cursor:pointer"; ab.onclick=()=>{ m.bind.solv=m.bind.solv||[]; m.bind.solv.push(solvDefault(k)); persist(); redraw(); }; addRow.appendChild(ab); });
+      SOLV_ORDER.forEach(k=>{ const ab=document.createElement("button"); ab.type="button"; ab.textContent="＋ "+(SOLV_INFO[k]?SOLV_INFO[k].name:k); ab.style.cssText="border:1px solid var(--line2);background:var(--card);border-radius:12px;padding:2px 9px;font-size:11px;cursor:pointer"; ab.onclick=()=>{ m.bind.solv=m.bind.solv||[]; m.bind.solv.push(solvDefault(k)); persist(); redraw(); }; addRow.appendChild(ab); });
       bwrap.appendChild(addRow); box.appendChild(bwrap);
     }
     const wh=document.createElement("div"); wh.style.cssText="font-size:11px;color:#94a3b8;margin-top:11px;line-height:1.45"; wh.textContent="크기는 오른쪽 카드에서 블록 모서리 손잡이를 끌어 조절합니다(가로 1~3칸·세로 1~6칸)."; box.appendChild(wh);
-    const del=document.createElement("button"); del.className="btn sm danger"; del.style.marginTop="11px"; del.textContent="이 블록 삭제";
-    del.onclick=()=>{ const a=mods(); const idx=a.map(x=>x.id).indexOf(m.id); if(idx>=0)a.splice(idx,1); selId=null; persist(); redraw(); }; box.appendChild(del);
+    const cprow=document.createElement("div"); cprow.style.cssText="display:flex;gap:5px;flex-wrap:wrap;margin-top:11px";
+    const bCopy=document.createElement("button"); bCopy.className="btn sm"; bCopy.textContent="복사"; bCopy.title="이 블록을 클립보드에 복사 (Ctrl+C)";
+    bCopy.onclick=()=>{ modClipCopy(m); toast("블록을 복사했습니다 — 붙여넣기로 추가할 수 있습니다","ok"); redraw(); };
+    const bDup=document.createElement("button"); bDup.className="btn sm"; bDup.textContent="복제"; bDup.title="이 블록을 바로 아래에 복제 (Ctrl+D)";
+    bDup.onclick=()=>{ dupMod(m); };
+    const bPaste=document.createElement("button"); bPaste.className="btn sm"; bPaste.textContent="붙여넣기"; bPaste.title="복사한 블록을 이 절차에 추가 (Ctrl+V)";
+    bPaste.disabled=!_modClip; bPaste.onclick=()=>{ pasteMod(); };
+    cprow.append(bCopy,bDup,bPaste); box.appendChild(cprow);
+    const del=document.createElement("button"); del.className="btn sm danger"; del.style.marginTop="8px"; del.textContent="이 블록 삭제";
+    del.onclick=()=>{ const a=mods(); const idx=a.map(x=>x.id).indexOf(m.id); if(idx>=0)a.splice(idx,1); setSel(null); persist(); redraw(); }; box.appendChild(del);
     leftP.appendChild(box);
   }
+  /* 새 블록을 맨 아래 행에 배치 */
+  function bottomRow(a){ let b=1; a.forEach(z=>{ b=Math.max(b,(z.gy||1)+posH(z.gh)); }); return b; }
+  function addMod(src){
+    const a=mods(); ensurePositions(a);
+    const nm=JSON.parse(JSON.stringify(src));
+    nm.id=modClipNewId(); nm.gx=Math.max(1,Math.min(3,nm.gx||1)); nm.gy=bottomRow(a);
+    a.push(nm); setSel(nm.id); persist(); redraw();
+    return nm;
+  }
+  function dupMod(m){ addMod(m); toast("블록을 복제했습니다","ok"); }
+  function pasteMod(){ if(!_modClip) return; addMod(_modClip); toast("블록을 붙여넣었습니다","ok"); }
+  /* 편집기가 열려 있는 동안의 단축키 (입력칸에 포커스가 있을 때는 무시) */
+  function onKey(e){
+    if(!document.body.contains(card)){ document.removeEventListener("keydown",onKey); return; }
+    if(!(e.ctrlKey||e.metaKey)) return;
+    const t=e.target, tag=t&&t.tagName;
+    if(tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT"||(t&&t.isContentEditable)) return;
+    const k=e.key.toLowerCase();
+    if(k==="c"){ const m=selMod(); if(m){ e.preventDefault(); modClipCopy(m); toast("블록을 복사했습니다","ok"); redraw(); } }
+    else if(k==="v"){ if(_modClip){ e.preventDefault(); pasteMod(); } }
+    else if(k==="d"){ const m=selMod(); if(m){ e.preventDefault(); dupMod(m); } }
+  }
+  document.addEventListener("keydown",onKey);
   function pgEl(){ return canvasWrap.querySelector(".c2pg"); }
   function frameEl(){ return canvasWrap.querySelector(".synCard2"); }
   function outsideFrame(x,y){ const el=frameEl(); if(!el) return false; const r=el.getBoundingClientRect(); return x<r.left-10||x>r.right+10||y<r.top-10||y>r.bottom+10; }
@@ -4044,13 +5771,13 @@ function renderProcedurePanel(root){
     let dragging=false, clone=null, off={x:0,y:0}, orig={};
     const onMove=ev=>{
       if(!dragging){ if(Math.abs(ev.clientX-startX)<5 && Math.abs(ev.clientY-startY)<5) return;
-        dragging=true; _draggingId=mId; selId=mId;
+        dragging=true; _draggingId=mId; setSel(mId);
         if(ensurePositions(mods())) persist();
         orig={}; mods().forEach(z=>{ orig[z.id]={gx:z.gx,gy:z.gy}; });
         const r=srcEl.getBoundingClientRect(); off={x:startX-r.left,y:startY-r.top};
         clone=srcEl.cloneNode(true); const cs=clone.style; cs.position="fixed"; cs.left="0"; cs.top="0"; cs.margin="0";
         cs.width=r.width+"px"; cs.height=r.height+"px"; cs.pointerEvents="none"; cs.zIndex="9999"; cs.opacity=".95";
-        cs.boxShadow="0 10px 24px rgba(0,0,0,.28)"; cs.outline="2px solid #2563eb"; cs.background="#fff";
+        cs.boxShadow="0 10px 24px rgba(0,0,0,.28)"; cs.outline="2px solid #2563eb"; cs.background="var(--card)";
         cs.transform="translate("+r.left+"px,"+r.top+"px)"; document.body.appendChild(clone);
         drawCanvas(); }
       clone.style.transform="translate("+(ev.clientX-off.x)+"px,"+(ev.clientY-off.y)+"px)";
@@ -4066,9 +5793,9 @@ function renderProcedurePanel(root){
       document.removeEventListener("pointermove",onMove); document.removeEventListener("pointerup",onUp);
       if(clone){ clone.remove(); clone=null; }
       const wasDragging=dragging; dragging=false; _draggingId=null;
-      if(!wasDragging){ selId=mId; redraw(); return; }
+      if(!wasDragging){ setSel(mId); redraw(); return; }
       const a=mods();
-      if(outsideFrame(ev.clientX,ev.clientY)){ a.forEach(z=>{ if(orig[z.id]){ z.gx=orig[z.id].gx; z.gy=orig[z.id].gy; } }); const idx=a.map(z=>z.id).indexOf(mId); if(idx>=0){ a.splice(idx,1); if(selId===mId) selId=null; } }
+      if(outsideFrame(ev.clientX,ev.clientY)){ a.forEach(z=>{ if(orig[z.id]){ z.gx=orig[z.id].gx; z.gy=orig[z.id].gy; } }); const idx=a.map(z=>z.id).indexOf(mId); if(idx>=0){ a.splice(idx,1); if(selId===mId) setSel(null); } }
       sortByLayout(a); persist(); redraw();
     };
     document.addEventListener("pointermove",onMove); document.addEventListener("pointerup",onUp);
@@ -4090,8 +5817,8 @@ function renderProcedurePanel(root){
       stp.dataset.mid=m.id;
       stp.style.position="relative"; stp.style.cursor="grab"; stp.style.border="1px solid "+(COL[m.k]||"#cbd5e1")+"66"; stp.style.borderRadius="6px"; stp.style.padding="4px 8px"; stp.style.touchAction="none";
       const selq=(m.id===selId);
-      if(selq){ stp.style.outline="2px solid #2563eb"; stp.style.outlineOffset="1px"; stp.style.borderRadius="4px"; stp.style.background="#eff6ff"; }
-      if(m.id===_draggingId){ stp.style.opacity=".35"; stp.style.borderStyle="dashed"; stp.style.background="#f1f5f9"; }
+      if(selq){ stp.style.outline="2px solid #2563eb"; stp.style.outlineOffset="1px"; stp.style.borderRadius="4px"; stp.style.background="var(--primary-soft)"; }
+      if(m.id===_draggingId){ stp.style.opacity=".35"; stp.style.borderStyle="dashed"; stp.style.background="var(--chip)"; }
       stp.onpointerdown=e=>{ if(e.button!=null&&e.button!==0) return; if(e.target&&e.target.dataset&&e.target.dataset.rh) return; e.preventDefault(); startBlockDrag(m.id, e); };
       const rh=document.createElement("div"); rh.dataset.rh="1"; rh.title="드래그해서 크기 조절 (가로·세로)";
       rh.style.cssText="position:absolute;right:0;bottom:0;width:16px;height:16px;cursor:nwse-resize;border-radius:5px 0 6px 0;background:"+(COL[m.k]||"#94a3b8")+"26;display:flex;align-items:flex-end;justify-content:flex-end;touch-action:none";
@@ -4146,19 +5873,20 @@ function renderSettings(root) {
     <div class="card"><h3>Parameter Setting</h3>
       <div class="tblwrap" style="max-height:none;border:0"><table class="tbl"><tbody>
         <tr><td class="l" style="width:110px"><b>Core Synthesis</b></td><td class="l">
-          <span class="row" style="gap:8px">
-          <label class="f">Na 과량 계수<input type="number" step="0.1" class="w80" id="cNaX" value="${S.naExcess}"></label>
-          <label class="f">F 과량 계수<input type="number" step="0.05" class="w80" id="cFX" value="${S.fExcess ?? 1}"
-            title="NH₄F 질량·Methanol에 반영 — 조성 기록 계수(4)는 유지"></label>
-          <label class="f">Oleic acid [mL/mmol]<input type="number" step="0.5" class="w80" id="cOaPer" value="${S.oaPerMmol}"></label>
-          <label class="f">Methanol [mL/mg NH₄F]<input type="number" step="0.005" class="w100" id="cMtoh" value="${S.mtohPerMgF}"></label>
-          </span>
-          <span class="row" style="gap:8px;margin-top:4px">
-          <label class="f">Oleyl amine 당량 [eq/tgt]<input type="number" step="0.1" class="w80" id="cOamEq" value="${S.oamEq}"></label>
-          <label class="f">Oleyl amine M.W. [g/mol]<input type="number" step="0.01" class="w100" id="cOamMw" value="${S.oamMw}"></label>
-          <label class="f">Oleyl amine 밀도 [g/mL]<input type="number" step="0.001" class="w80" id="cOamDens" value="${S.oamDens}"></label>
-          </span>
-          <div class="muted" style="margin-top:2px">Oleyl amine 부피 = tgt × 당량 × M.W. ÷ 1000 ÷ 밀도 (순액 100% 가정, 소수 2자리 반올림) — 0.1 mmol 기준 ${fmtN((0.1 * S.oamEq * S.oamMw / 1000 / (S.oamDens || 1)) || 0, 3)} mL</div>
+          <div class="row" style="gap:6px;flex-wrap:wrap">
+            <span class="badge gray">Na 과량 ×${S.naExcess}</span>
+            <span class="badge gray">F 과량 ×${S.fExcess ?? 1}</span>
+            <span class="badge gray">Oleic acid ${S.oaPerMmol} mL/mmol</span>
+            <span class="badge gray" title="target ≤ 1 mmol이면 ${S.odeTotalSmall} mL, 초과면 ${S.odeTotalLarge} mL 총량에서 Oleic acid를 뺀 값">1-Octadecene 총 ${S.odeTotalSmall} / ${S.odeTotalLarge} mL</span>
+            <span class="badge ${(S.oamEq > 0) ? "gray" : "warn"}">Oleyl amine ${(S.oamEq > 0)
+              ? `${S.oamEq} eq · ${S.oamMw} g/mol · ${S.oamDens} g/mL` : "미사용"}</span>
+            <span class="badge gray">Methanol ${S.mtohPerMgF} mL/mg NH₄F</span>
+          </div>
+          <div class="muted" style="margin-top:7px;line-height:1.6">이 조건들은 <b>합성 계획 탭</b>에서 입력합니다 —
+            투입량 결과를 바로 보면서 고칠 수 있고, 여기 표시된 값과 항상 같습니다.
+            ${(S.oamEq > 0) ? `<br>Oleyl amine 부피 = tgt × 당량 × M.W. ÷ 1000 ÷ 밀도 (순액 100% 가정) — 0.1 mmol 기준 ${fmtN((0.1 * S.oamEq * S.oamMw / 1000 / (S.oamDens || 1)) || 0, 3)} mL`
+              : `<br>Oleyl amine 미사용 — 계획창·출력 카드에서 항목이 표시되지 않습니다.`}
+            <br><button class="btn sm" id="cGoPlan" style="margin-top:6px">합성 계획 탭에서 편집</button></div>
           </td></tr>
         <tr><td class="l"><b>Shell Solution</b></td><td class="l">
           <span class="row" style="gap:8px">
@@ -4237,27 +5965,30 @@ function renderSettings(root) {
     toast("전체 삭제 완료 (직전 상태는 스냅샷에 보관)", "ok");
   };
   $("#cSave").onclick = () => {
-    S.naExcess = parseFloat($("#cNaX").value) || 2.5;
-    S.fExcess = parseFloat($("#cFX").value) || 1;
-    S.oaPerMmol = parseFloat($("#cOaPer").value) || 10;
-    S.oamEq = parseFloat($("#cOamEq").value) || 1.5;
-    S.oamMw = parseFloat($("#cOamMw").value) || 267.49;
-    S.oamDens = parseFloat($("#cOamDens").value) || 0.813;
-    S.mtohPerMgF = parseFloat($("#cMtoh").value) || 0.05;
-    S.shellSol.volMl = parseFloat($("#cSolV").value) || 10;
-    S.shellSol.lnConcM = parseFloat($("#cSolLnM").value) || 0.025;
-    S.shellSol.tfaConcM = parseFloat($("#cTfaM").value) || 0.1;
+    /* NZ = 0 허용(0을 유효한 값으로 저장) · NP = 0 불가(나눗셈 분모라 양수여야 함) */
+    const NZ = (sel, fb) => { const v = parseFloat($(sel).value); return (isFinite(v) && v >= 0) ? v : fb; };
+    const NP = (sel, fb) => { const v = parseFloat($(sel).value); return (isFinite(v) && v > 0) ? v : fb; };
+    /* Na·F 과량과 시약 조건은 합성 계획 탭에서 관리 (여기서는 표시만) */
+    S.shellSol.volMl = NP("#cSolV", 10);
+    S.shellSol.lnConcM = NZ("#cSolLnM", 0.025);
+    S.shellSol.tfaConcM = NZ("#cTfaM", 0.1);
     S.shellSyn.inj = $("#cInj").value.split(/[,\s]+/).map(Number).filter(v => v > 0);
-    S.defaultStockVolCore = parseFloat($("#cStC").value) || 10;
-    S.defaultStockVolShell = parseFloat($("#cStS").value) || 5;
-    S.shellSyn.aliquotMl = parseFloat($("#cAli").value) || 1;
-    S.shellSyn.oaMl = parseFloat($("#cShOa").value) || 4;
-    S.shellSyn.odeMl = parseFloat($("#cShOde").value) || 6;
-    S.lnPerNm3 = parseFloat($("#cLnRho").value) || 13.85;
+    S.defaultStockVolCore = NP("#cStC", 10);
+    S.defaultStockVolShell = NP("#cStS", 5);
+    S.shellSyn.aliquotMl = NP("#cAli", 1);
+    S.shellSyn.oaMl = NZ("#cShOa", 4);
+    S.shellSyn.odeMl = NZ("#cShOde", 6);
+    S.lnPerNm3 = NP("#cLnRho", 13.85);
     S.lotPrefix = $("#cLotPre").value.trim();
-    saveSettings(); syncConstants();
-    toast("상수를 저장했습니다", "ok");
+    setLotPrefix(S.lotPrefix);
+    saveSettings(); syncConstants(); syncPlannerFromSettings();
+    toast("상수를 저장했습니다 — 계획창·프로토콜·카드에 즉시 반영됩니다", "ok");
     renderSettings(root);
+  };
+  $("#cGoPlan").onclick = () => {
+    if (!state.plannerCtx || state.plannerCtx.mode !== "core") state.plannerCtx = defaultPlannerCtx("core");
+    go("plan");
+    toast("‘용매 / 시약 및 조건’ 카드 맨 위 줄에서 조건을 입력하세요", "ok");
   };
   root.querySelectorAll("[data-pedit]").forEach(b => b.onclick = () => editPrecursor(Number(b.dataset.pedit)));
   $("#pAdd").onclick = () => editPrecursor(-1);
@@ -4308,6 +6039,39 @@ function editPrecursor(idx) {
 <script>
 /* ===================== boot ===================== */
 "use strict";
+/* ---------------- 테마 (라이트/다크) ---------------- */
+const THEME_KEY = "innolab_theme";
+function currentTheme() { return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light"; }
+const _SVG_MOON = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+const _SVG_SUN = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></svg>';
+function renderThemeChip() {
+  const b = document.getElementById("chipTheme"); if (!b) return;
+  const dark = currentTheme() === "dark";
+  b.innerHTML = (dark ? _SVG_MOON : _SVG_SUN) + (dark ? "다크" : "라이트");
+  b.title = dark ? "다크 모드 — 클릭하면 라이트로 전환" : "라이트 모드 — 클릭하면 다크로 전환";
+  b.setAttribute("aria-pressed", dark ? "true" : "false");
+}
+function applyTheme(t, persist) {
+  document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+  if (persist !== false) { try { localStorage.setItem(THEME_KEY, currentTheme()); } catch (e) {} }
+  renderThemeChip();
+}
+function toggleTheme() {
+  applyTheme(currentTheme() === "dark" ? "light" : "dark", true);
+  try { render(); } catch (e) {}
+}
+function initTheme() {
+  renderThemeChip();
+  const b = document.getElementById("chipTheme"); if (b) b.onclick = toggleTheme;
+  try {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const onMq = e => {
+      let saved = null; try { saved = localStorage.getItem(THEME_KEY); } catch (_) {}
+      if (saved !== "light" && saved !== "dark") { applyTheme(e.matches ? "dark" : "light", false); try { render(); } catch (_) {} }
+    };
+    if (mq.addEventListener) mq.addEventListener("change", onMq); else if (mq.addListener) mq.addListener(onMq);
+  } catch (e) {}
+}
 (function boot() {
   loadDb();
   // 배포 빌드: 이전 로그인 때 받아둔 기준 데이터베이스(Reference DB) 캐시를 즉시 적용
@@ -4338,6 +6102,7 @@ function editPrecursor(idx) {
     setTimeout(() => toast(`마지막 백업 후 ${Math.floor(age)}일 지났습니다 — 백업을 권장합니다`, "warn"), 1200);
   $("#chipBackup").onclick = () => { backupJson(); renderTopChips(); };
   $("#chipSync").onclick = () => go("set");
+  initTheme();
 })();
 
 </script>
