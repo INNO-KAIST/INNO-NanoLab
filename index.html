@@ -3967,7 +3967,7 @@ function openSynthWizard() {
       const list = _wiz.parsed.list;
       const map = mapCompositionToPlan(list);
       body.innerHTML = `<div class="note">마지막입니다. <b>합성 절차</b>는 어디서 가져올까요?</div>
-        <label class="f" style="margin-top:10px">절차 원본
+        <label class="f" style="margin-top:10px">가져올 절차
           <select id="wzProc" style="max-width:340px">
             <option value="">현재 절차를 그대로 사용</option>
             ${protos.map(([id, p]) => `<option value="${esc(id)}">${esc(p.name || id)} 복사</option>`).join("")}
@@ -4199,7 +4199,7 @@ function renderReco(root) {
       }
     }
     resultHtml = `<div class="card"><h3>추천 결과
-        <span class="hint">Score = max[I(간섭 co-element)/I(기준)] → sum → N → I 순 정렬 (원본 알고리즘 동일)</span></h3>
+        <span class="hint">Score = max[I(간섭 co-element)/I(기준)] → 합 → 간섭 개수 → 세기 순으로 정렬</span></h3>
       <div class="tblwrap"><table class="tbl"><thead><tr>
         <th>Element</th><th>Rank</th><th>λ ref (nm)</th><th>I ref</th><th>Worst ratio</th><th>Sum ratio</th>
         <th>N</th><th class="l">Worst interferer</th><th>Status</th><th class="l">전체 간섭 상세</th></tr></thead>
@@ -4373,7 +4373,7 @@ function renderImport(root) {
       <div class="dropzone" id="dz">
         <div style="font-size:34px">📄</div>
         <div><b>ICP-OES 내보내기 엑셀(.xlsx)</b>을 이곳에 끌어다 놓거나 클릭하여 선택</div>
-        <div class="muted" style="margin-top:4px">장비 export 원본 형식 자동 인식 (Solution Label + "원소 파장 nm" 열)</div>
+        <div class="muted" style="margin-top:4px">장비 export 형식을 자동 인식합니다 (Solution Label + "원소 파장 nm" 열)</div>
         <input type="file" id="dzFile" accept=".xlsx,.xls" style="display:none">
       </div>
     </div>`;
@@ -4751,7 +4751,7 @@ function renderManualCalc(root) {
       </tbody></table></div>
       <div class="note" style="margin-top:8px">총 ${fmtN(manualCtx.out.totalMmol)} mmol · stock conc = ppm × (final/aliquot) × n · mmol = mg ÷ 원자량</div>`;
   }
-  root.innerHTML = `<div class="card"><h3>수동 역산 계산기 <span class="hint">기존 ICP calculator의 reverse 탭과 동일한 공식</span></h3>
+  root.innerHTML = `<div class="card"><h3>수동 역산 계산기 <span class="hint">측정 ppm과 희석 조건에서 원 시료 농도를 거꾸로 계산</span></h3>
     <div class="row" style="margin-bottom:10px">
       <label class="f">Stock volume [mL]<input type="number" class="w80" id="mcStock" value="${manualCtx.stockMl}" step="0.5"></label>
       <label class="f">Aliquot [μL]<input type="number" class="w80" id="mcAli" value="${manualCtx.aliquotUl}"></label>
@@ -5698,9 +5698,14 @@ function openLotDrawer(serial) {
         <dt>입자수 (TEM)</dt><dd id="dPartN">${(() => {
           const p = particleCount(d.AB, lot.stockVol, lot.temRadius, state.db.settings.lnPerNm3 || 13.85);
           return p ? `<b>${fmtSci(p.N)}</b> 개 · <b>${fmtSci(p.perMl)}</b> 개/mL
-            <span class="muted">(R=${fmtN(lot.temRadius, 1)} nm · ${fmtN(state.db.settings.lnPerNm3 || 13.85, 2)} Ln/nm³ · 입자당 Ln ${fmtSci(p.lnPerParticle)}개)</span>`
-            : `<span class="muted">TEM 반지름 입력 시 N = AB×N_A ÷ (4/3πR³ × Ln밀도) 로 계산</span>`;
+            <span class="muted">(입자 하나에 Ln ${fmtSci(p.lnPerParticle)}개)</span>`
+            : `<span class="muted">TEM 반지름을 입력하면 계산됩니다</span>`;
         })()}</dd>
+        ${isNum(lot.temRadius) && lot.temRadius > 0 ? `<dt>격자 Ln 밀도</dt><dd>
+          <input type="number" step="0.01" min="0" class="slim w80" id="dLnRho" value="${fmtN(state.db.settings.lnPerNm3 || 13.85, 2)}"> Ln/nm³
+          <div class="muted" style="margin-top:3px;line-height:1.55">단위 부피당 Ln(양이온) 원자 수 — 위 입자수 계산에만 쓰입니다.
+            13.85 = β-NaLnF₄ 육방정(a 5.97 Å · c 3.51 Å · Z 1.5) → 1.5 ÷ 108.3 Å³.
+            <b>호스트 격자가 다르면 바꾸세요</b> (α-NaYF₄ 입방정 ≈ 24.4).</div></dd>` : ""}
         <dt>열처리</dt><dd>${typeof lot.heat === "number" ? fmtN(lot.heat, 0) + " min" : "–"}</dd>
         <dt>Group (자동)</dt><dd>${esc(lotGroup(serial, activeLots()) || "–")}</dd>
         <dt>메모</dt><dd>${esc(lot.memo || "–")}</dd>
@@ -5726,6 +5731,13 @@ function openLotDrawer(serial) {
   ov.querySelectorAll("[data-go]").forEach(n => n.onclick = () => { ov.remove(); openLotDrawer(Number(n.dataset.go)); });
   ov.querySelector("#dCard").onclick = () => { ov.remove(); openCardModal(serial); };
   ov.querySelector("#dEdit").onclick = () => { ov.remove(); editLotInPlanner(serial); };
+  { const rho = ov.querySelector("#dLnRho"); if (rho) rho.onchange = e => {
+    const v = parseFloat(e.target.value);
+    if (!(isFinite(v) && v > 0)) { e.target.value = fmtN(state.db.settings.lnPerNm3 || 13.85, 2); return; }
+    setShared("lnPerNm3", v);
+    ov.remove(); openLotDrawer(serial);
+    toast(`격자 Ln 밀도 ${fmtN(v, 2)} Ln/nm³ — 입자수를 다시 계산했습니다`, "ok");
+  }; }
   ov.querySelector("#dTemSave").onclick = () => {
     const v = parseFloat(ov.querySelector("#dTem").value);
     lot.temRadius = isFinite(v) && v > 0 ? v : null;
@@ -6234,63 +6246,27 @@ function renderSettings(root) {
     <div class="card"><h3>클라우드 동기화 (Firebase) <span class="hint">여러 PC에서 같은 DB — 선택 사항</span></h3>
       <div id="syncBox"></div>
     </div>
-    <div class="card"><h3>자동 스냅샷 <span class="hint">복원·재시드·전체삭제 직전에 자동 저장 (최근 3개)</span></h3>
+    <div class="card"><h3>자동 스냅샷 <span class="hint">복원·초기화·전체삭제 직전에 자동 저장 (최근 3개)</span></h3>
       <div id="snapBox"></div>
     </div>
     <div class="card"><h3>위험 구역 <span class="hint">실행 직전 자동 스냅샷이 저장됩니다</span></h3>
       <div class="row">
-        <button class="btn danger" id="setReseed">초기 데이터로 재시드 (마이그레이션 상태로 되돌림)</button>
+        <button class="btn danger" id="setReseed">초기 데이터로 되돌리기</button>
         <button class="btn danger" id="setWipe">전체 삭제</button>
       </div>
     </div>
   </div>
   <div>
-    <div class="card"><h3>Parameter Setting</h3>
-      <div class="tblwrap" style="max-height:none;border:0"><table class="tbl"><tbody>
-        <tr><td class="l" style="width:110px"><b>Core Synthesis</b></td><td class="l">
-          <div class="row" style="gap:6px;flex-wrap:wrap">
-            <span class="badge gray">Na 과량 ×${S.naExcess}</span>
-            <span class="badge gray">F 과량 ×${S.fExcess ?? 1}</span>
-            <span class="badge gray">Oleic acid ${S.oaPerMmol} mL/mmol</span>
-            <span class="badge gray" title="target ≤ 1 mmol이면 ${S.odeTotalSmall} mL, 초과면 ${S.odeTotalLarge} mL 총량에서 Oleic acid를 뺀 값">1-Octadecene 총 ${S.odeTotalSmall} / ${S.odeTotalLarge} mL</span>
-            <span class="badge ${(S.oamEq > 0) ? "gray" : "warn"}">Oleyl amine ${(S.oamEq > 0)
-              ? `${S.oamEq} eq · ${S.oamMw} g/mol · ${S.oamDens} g/mL` : "미사용"}</span>
-            <span class="badge gray">Methanol ${S.mtohPerMgF} mL/mg NH₄F</span>
-          </div>
-          <div class="muted" style="margin-top:7px;line-height:1.6">이 조건들은 <b>합성 계획 탭</b>에서 입력합니다 —
-            투입량 결과를 바로 보면서 고칠 수 있고, 여기 표시된 값과 항상 같습니다.
-            ${(S.oamEq > 0) ? `<br>Oleyl amine 부피 = tgt × 당량 × M.W. ÷ 1000 ÷ 밀도 (순액 100% 가정) — 0.1 mmol 기준 ${fmtN((0.1 * S.oamEq * S.oamMw / 1000 / (S.oamDens || 1)) || 0, 3)} mL`
-              : `<br>Oleyl amine 미사용 — 계획창·출력 카드에서 항목이 표시되지 않습니다.`}
-            <br><button class="btn sm" id="cGoPlan" style="margin-top:6px">합성 계획 탭에서 편집</button></div>
-          </td></tr>
-        <tr><td class="l"><b>Shell Solution</b></td><td class="l">
-          <span class="row" style="gap:8px">
-          <label class="f">용액 부피 [mL]<input type="number" step="1" class="w80" id="cSolV" value="${S.shellSol.volMl}"></label>
-          <label class="f">Ln 몰농도 [M]<input type="number" step="0.005" class="w80" id="cSolLnM" value="${S.shellSol.lnConcM}"></label>
-          <label class="f">Na-TFA 몰농도 [M]<input type="number" step="0.01" class="w100" id="cTfaM" value="${S.shellSol.tfaConcM}"></label>
-          <label class="f">주입 단계 [μL]<input type="text" class="w120 mono" id="cInj" value="${S.shellSyn.inj.join(", ")}"></label>
-          </span>
-          <div class="muted" style="margin-top:2px">→ Ln ${fmtN(S.shellSol.lnConcM * S.shellSol.volMl, 3)} mmol · Na-TFA ${fmtN(S.shellSol.tfaConcM * S.shellSol.volMl, 3)} mmol / 용액 ${fmtN(S.shellSol.volMl, 0)} mL</div>
-          </td></tr>
-        <tr><td class="l"><b>Stock Defaults</b></td><td class="l">
-          <span class="row" style="gap:8px">
-          <label class="f">Core Stock 기본값 [mL]<input type="number" class="w100" id="cStC" value="${S.defaultStockVolCore}"></label>
-          <label class="f">Shell Stock 기본값 [mL]<input type="number" class="w100" id="cStS" value="${S.defaultStockVolShell}"></label>
-          <label class="f">Core aliquot 기본 [mL]<input type="number" step="0.5" class="w100" id="cAli" value="${S.shellSyn.aliquotMl}"></label>
-          <label class="f">Shell OA 기본 [mL]<input type="number" step="0.5" class="w100" id="cShOa" value="${S.shellSyn.oaMl}"></label>
-          <label class="f">Shell ODE 기본 [mL]<input type="number" step="0.5" class="w100" id="cShOde" value="${S.shellSyn.odeMl}"></label>
-          </span>
-          <div class="muted" style="margin-top:4px">Lot 접두사는 <b>합성 계획</b> 탭으로 옮겼습니다 —
-            현재 <span class="mono">${esc(S.lotPrefix || "(없음)")}</span> · 거기서 고치면 카드·기록·ICP까지 함께 바뀝니다.</div>
-          </td></tr>
-        <tr><td class="l"><b>Particle</b></td><td class="l">
-          <span class="row" style="gap:8px">
-          <label class="f"><span>Ln 밀도 [Ln/nm³]</span><input type="number" step="0.01" class="w100" id="cLnRho" value="${S.lnPerNm3 ?? 13.85}"
-            title="격자 Ln(양이온) 수밀도 — TEM 입자수 계산용. β-NaLnF₄ (P6̄, a≈5.97 Å, c≈3.51 Å, Z=1.5) ≈ 13.85"></label>
-          <span class="muted" style="align-self:end;padding-bottom:6px">TEM 입자수: N = AB×N_A ÷ ((4/3)πR³ × Ln밀도)</span>
-          </span></td></tr>
-      </tbody></table></div>
-      <div class="row right" style="margin-top:8px"><button class="btn primary sm" id="cSave">Save</button></div>
+    <div class="card"><h3>새 계획 기본값 <span class="hint">합성 계획 탭에서는 바꿀 수 없는 값</span></h3>
+      <div class="row" style="gap:8px">
+        <label class="f">Core Stock volume [mL]<input type="number" step="0.5" class="w100" id="cStC" value="${S.defaultStockVolCore}"></label>
+        <label class="f">Shell Stock volume [mL]<input type="number" step="0.5" class="w100" id="cStS" value="${S.defaultStockVolShell}"></label>
+        <span style="flex:1"></span>
+        <button class="btn primary sm" id="cSave" style="align-self:flex-end">Save</button>
+      </div>
+      <div class="muted" style="margin-top:8px;line-height:1.6">시약 조건 · 과량 · Shell 용액 농도 · 주입 단계 · aliquot은
+        <b>합성 계획</b> 탭에서 결과를 보면서 고칩니다 — 거기서 고친 값이 곧 다음 계획의 기본값이 됩니다.<br>
+        자주 쓰는 조합은 계획 탭의 <b>레시피</b>로 저장해 두면 한 번에 불러올 수 있습니다.</div>
     </div>
     <div class="card"><h3>Precursor Database</h3>
       <div class="tblwrap" style="max-height:300px"><table class="tbl"><thead><tr>
@@ -6307,8 +6283,6 @@ function renderSettings(root) {
       <div class="note">
         <b>INNO NanoLab — Synthesis &amp; ICP</b> · © 2026 WonJeong Yu · <b>All Rights Reserved</b> (비공개 · 내부 연구용)<br>
         본 프로그램과 내장된 연구 데이터는 저작권자의 사전 허가 없이 복제·배포·공개할 수 없습니다.<br>
-        원본 Synthesis calculator / Synthesis Log / ICP calculator(py) / ICP logbook의 계산식을 1:1 포팅했으며,
-        원본 파일에서 생성한 <b>1,967개 자동 검증</b>(추천 알고리즘·전체 lot 유도값·ICP 실측 파일 조성 재현)을 통과한 엔진입니다.<br>
         ICP peak 추천: interference DB ${APP_DATA.idb.length} peaks · 기준원소 ${[...new Set(APP_DATA.idb.map(g => g.e))].length}종<br>
         <span class="muted">Third-party: SheetJS Community Edition (Apache-2.0, © SheetJS LLC) 내장 · Firebase JS SDK (Apache-2.0, Google LLC)는 동기화 사용 시 CDN 로드</span>
       </div>
@@ -6325,11 +6299,11 @@ function renderSettings(root) {
   $("#setXlsx").onclick = exportAllXlsx;
   $("#setReseed").onclick = () => {
     const syncNote = state.sync.status === "on" ? "\n(동기화 켜짐: 서버 사본은 지워지지 않으며, 다음 동기화 때 서버 데이터가 다시 내려올 수 있습니다)" : "";
-    if (!confirm("현재 데이터를 모두 버리고 초기 마이그레이션 데이터로 되돌립니다. 계속할까요?" + syncNote)) return;
+    if (!confirm("현재 데이터를 모두 버리고 앱에 내장된 초기 데이터로 되돌립니다. 계속할까요?" + syncNote)) return;
     if (!confirm("정말로요? 직전 상태는 자동 스냅샷으로 남지만, 별도 백업도 권장합니다.")) return;
-    saveSnapshot("재시드 직전 상태");
+    saveSnapshot("초기화 직전 상태");
     state.db = seedDb(); state.derived = null; saveDb(); syncConstants(); render();
-    toast("초기 데이터로 재시드했습니다 (직전 상태는 스냅샷에 보관)", "ok");
+    toast("초기 데이터로 되돌렸습니다 (직전 상태는 스냅샷에 보관)", "ok");
   };
   $("#setWipe").onclick = () => {
     const syncNote = state.sync.status === "on" ? "\n(동기화 켜짐: 서버 사본은 지워지지 않으며, 다음 동기화 때 서버 데이터가 다시 내려올 수 있습니다)" : "";
@@ -6341,28 +6315,12 @@ function renderSettings(root) {
     toast("전체 삭제 완료 (직전 상태는 스냅샷에 보관)", "ok");
   };
   $("#cSave").onclick = () => {
-    /* NZ = 0 허용(0을 유효한 값으로 저장) · NP = 0 불가(나눗셈 분모라 양수여야 함) */
-    const NZ = (sel, fb) => { const v = parseFloat($(sel).value); return (isFinite(v) && v >= 0) ? v : fb; };
     const NP = (sel, fb) => { const v = parseFloat($(sel).value); return (isFinite(v) && v > 0) ? v : fb; };
-    /* Na·F 과량과 시약 조건은 합성 계획 탭에서 관리 (여기서는 표시만) */
-    S.shellSol.volMl = NP("#cSolV", 10);
-    S.shellSol.lnConcM = NZ("#cSolLnM", 0.025);
-    S.shellSol.tfaConcM = NZ("#cTfaM", 0.1);
-    S.shellSyn.inj = $("#cInj").value.split(/[,\s]+/).map(Number).filter(v => v > 0);
     S.defaultStockVolCore = NP("#cStC", 10);
     S.defaultStockVolShell = NP("#cStS", 5);
-    S.shellSyn.aliquotMl = NP("#cAli", 1);
-    S.shellSyn.oaMl = NZ("#cShOa", 4);
-    S.shellSyn.odeMl = NZ("#cShOde", 6);
-    S.lnPerNm3 = NP("#cLnRho", 13.85);
     saveSettings(); syncConstants(); syncPlannerFromSettings();
-    toast("상수를 저장했습니다 — 계획창·프로토콜·카드에 즉시 반영됩니다", "ok");
+    toast("저장했습니다 — 다음에 새 계획을 열 때 적용됩니다", "ok");
     renderSettings(root);
-  };
-  $("#cGoPlan").onclick = () => {
-    if (!state.plannerCtx || state.plannerCtx.mode !== "core") state.plannerCtx = defaultPlannerCtx("core");
-    go("plan");
-    toast("‘용매 / 시약 및 조건’ 카드 맨 위 줄에서 조건을 입력하세요", "ok");
   };
   root.querySelectorAll("[data-pedit]").forEach(b => b.onclick = () => editPrecursor(Number(b.dataset.pedit)));
   $("#pAdd").onclick = () => editPrecursor(-1);
