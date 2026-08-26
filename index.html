@@ -158,6 +158,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 .mrc .mx{color:#94a3b8;flex:none;font-size:12px}
 .mrc .mc{flex:none;color:#334155;font-variant-numeric:tabular-nums}
 .tblwrap{overflow:auto;max-height:64vh;border:1px solid var(--line);border-radius:var(--r-s)}
+.xscroll{overflow-x:auto;max-width:100%}
 .tbl .rowbtns{display:flex;gap:4px;justify-content:center}
 /* 성분표: 열이 많아 기본 표보다 촘촘하게 */
 .comptbl th,.comptbl td{padding:5px 5px}
@@ -869,7 +870,7 @@ function planValidation(o) {
   })();
 
   const badge = c => `<span class="badge ${c.ok ? "ok" : "warn"}">${c.ok ? "✓" : "!"}</span>`;
-  const tbl = rows.length ? `<table class="tbl" style="margin-top:8px;max-width:620px"><thead><tr>
+  const tbl = rows.length ? `<div class="xscroll"><table class="tbl" style="margin-top:8px;max-width:620px"><thead><tr>
       <th class="l">원소</th><th>조성계수</th><th>필요 [mmol]</th><th>실제 [mmol]</th><th>비율</th></tr></thead><tbody>
       ${rows.map(r => `<tr><td class="l"><b>${esc(r.el)}</b></td>
         <td class="num">${isNum(r.coeff) ? fmtN(r.coeff, 4) : "–"}</td>
@@ -878,7 +879,7 @@ function planValidation(o) {
           ? `<span class="muted">${fmtN(r.x, 2)}× 화학량론</span>`
           : (r.x < 1 ? `<span class="badge warn">${fmtN(r.x, 2)}× 부족</span>`
                      : `<span class="badge">${fmtN(r.x, 2)}× 과량</span>`))}</td></tr>`).join("")}
-      </tbody></table>` : "";
+      </tbody></table></div>` : "";
 
   const body = `<div class="note ${problem ? "warn" : (rows.length ? "okay" : "")}" style="margin:0">
     <div class="readout">${checks.map(c => `<div style="display:flex;gap:6px;align-items:center;margin:2px 0">
@@ -3106,7 +3107,7 @@ function renderPlannerCore(root, ctx) {
         <div class="row" style="gap:6px;align-items:center">${body}</div>${extra || ""}</div>`;
     const _u = t => `<span class="muted" style="font-size:11px">${t}</span>`;
     const condRow = `<div style="margin-bottom:11px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--chip)">
-        <div style="font-size:11.5px;font-weight:700;color:var(--sub);margin-bottom:7px">투입 조건 <span class="muted" style="font-weight:500">— 고치면 아래 결과와 출력 카드가 즉시 바뀌고, 설정 탭에도 같은 값으로 반영됩니다</span></div>
+        <div style="font-size:11.5px;font-weight:700;color:var(--sub);margin-bottom:7px">투입 조건 <span class="muted" style="font-weight:500">— 고치면 아래 결과와 출력 카드가 즉시 바뀌고, 다음 계획의 기본값으로도 남습니다</span></div>
         <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:flex-start">
         ${_cg("Oleic acid",
             `<input type="number" step="0.5" min="0" class="slim w80" id="rgOaPer" value="${_S.oaPerMmol}">${_u("mL/mmol × tgt")}`)}
@@ -3142,7 +3143,7 @@ function renderPlannerCore(root, ctx) {
       <h3>Core 합성 계획 <span class="hint">목표 mmol 기준</span></h3>
       <div class="row" style="margin-bottom:10px">
         <label class="f"><span>Lot 접두사</span><input type="text" class="w80" id="pLotPre" value="${esc(state.db.settings.lotPrefix ?? "WJ")}"
-          title="설정 탭과 같은 값입니다 — 여기서 고치면 설정·기록·ICP 라벨에 모두 반영됩니다"></label>
+          title="lot 번호 앞에 붙는 표기입니다 — 고치면 기록·ICP 라벨에 모두 반영되고 다음 계획에도 이어집니다"></label>
         <label class="f" style="min-width:190px"><span>샘플명 <span class="muted" style="font-weight:500">(비우면 자동 ${esc(autoLotLabel(preview))})</span></span>
           <input type="text" class="w160" id="pName" value="${esc(ctx.name || "")}" placeholder="${esc(autoLotLabel(preview))}"
             title="출력 카드 제목과 같은 값입니다 — 카드에서 고쳐도 여기에 반영됩니다"></label>
@@ -3170,7 +3171,7 @@ function renderPlannerCore(root, ctx) {
       summary: procSummary(["core"]),
       body: `<div id="procInline"></div>` })}
     ${secHtml({ key: "planSolv", open: false, title: "용매 / 시약 및 조건",
-      hint: _bound ? "시퀀스 기반 · 자동 계산" : "설정 탭과 같은 값",
+      hint: _bound ? "시퀀스 기반 · 자동 계산" : "고치면 다음 계획의 기본값이 됩니다",
       summary: solvSummary(recipe.reagents || { oa: recipe.oaMl, ode: recipe.odeMl, oam: recipe.oamMl, mtoh: recipe.mtohMl }),
       body: solvSection })}
    </div>
@@ -3386,7 +3387,7 @@ function renderPlannerShell(root, ctx) {
       <h3>Shell 성장 계획 <span class="hint">기하(R·T) 기준 — 필요량이 계산되어 나옵니다</span></h3>
       <div class="row" style="margin-bottom:10px">
         <label class="f"><span>Lot 접두사</span><input type="text" class="w80" id="sLotPre" value="${esc(S.lotPrefix ?? "WJ")}"
-          title="설정 탭과 같은 값입니다 — 여기서 고치면 설정·기록·ICP 라벨에 모두 반영됩니다"></label>
+          title="lot 번호 앞에 붙는 표기입니다 — 고치면 기록·ICP 라벨에 모두 반영되고 다음 계획에도 이어집니다"></label>
         <label class="f" style="min-width:180px"><span>샘플명 <span class="muted" style="font-weight:500">(비우면 자동 ${esc(autoLotLabel(preview))})</span></span>
           <input type="text" class="w160" id="sName" value="${esc(ctx.name || "")}" placeholder="${esc(autoLotLabel(preview))}"
             title="출력 카드 제목과 같은 값입니다 — 카드에서 고쳐도 여기에 반영됩니다"></label>
@@ -3429,7 +3430,7 @@ function renderPlannerShell(root, ctx) {
       summary: procSummary(["shell", "sol"]),
       body: `<div id="procInlineS"></div>` })}
     ${secHtml({ key: "planSol", open: false, title: "Shell-precursor solution",
-      hint: "설정 탭의 Shell Solution과 같은 값",
+      hint: "고치면 다음 계획의 기본값이 됩니다",
       summary: solSummary(sol, calc.totalInjUl),
       body: `
       <div class="row" style="gap:8px;margin-bottom:8px;align-items:flex-end">
