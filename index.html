@@ -305,6 +305,7 @@ input.slim,select.slim{padding:4px 7px;border-radius:6px}
 .synCard .sgrow .k{color:#334155}
 .synCard .sgrow .v{font-variant-numeric:tabular-nums;font-weight:600}
 .cardsWrap{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+.cardsWrap>.synCard,.cardsWrap>.synCard2{flex:0 0 auto}
 
 /* ============ PRINT ============ */
 @media print{
@@ -317,12 +318,12 @@ input.slim,select.slim{padding:4px 7px;border-radius:6px}
   #printArea .printPage{page-break-after:always;break-after:page}
   #printArea .printPage:last-child{page-break-after:auto;break-after:auto}
   #printArea .printRow{display:flex;gap:4mm;margin-bottom:4mm;align-items:flex-start}
-  #printArea .printRow .synCard{width:94mm;break-inside:avoid;page-break-inside:avoid}
+  #printArea .printRow .synCard{width:96mm;break-inside:avoid;page-break-inside:avoid}
   #printArea .printCols{display:flex;gap:4mm;align-items:flex-start}
-  #printArea .printCol{display:flex;flex-direction:column;gap:4mm}
+  #printArea .printCol{display:flex;flex-direction:column;gap:4mm;width:96mm}
   .cardsWrap{gap:4mm}
-  .cardsWrap .synCard{width:94mm;break-inside:avoid;page-break-inside:avoid}
-  @page{size:A4 portrait;margin:8mm}
+  .cardsWrap .synCard,.cardsWrap .synCard2{width:96mm;break-inside:avoid;page-break-inside:avoid}
+  @page{size:A4 portrait;margin:6mm}
 }
 .print-only{display:none}
 #printArea{display:none}
@@ -332,29 +333,30 @@ body.printing #mainUI{display:none}
 
 
 /* ===== 동적 카드 v2 (P2b-2) ===== */
-.synCard2{width:352px;background:#fff;border:1.6px solid #94a3b8;border-radius:6px;overflow:hidden;font-size:10.5px;color:#111;break-inside:avoid;page-break-inside:avoid}
+.synCard2{width:96mm;background:#fff;border:1.6px solid #94a3b8;border-radius:6px;overflow:hidden;font-size:10.5px;color:#111;break-inside:avoid;page-break-inside:avoid}
 .synCard2 .ced{display:inline;cursor:text} .synCard2 .ced:hover{background:#eef6ff;outline:1px solid #cfe3fb}
 .synCard2 .c2hd{background:#1f2733;color:#fff;padding:6px 11px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.synCard2 .c2ti{font-weight:700;font-size:12.5px;white-space:nowrap} .synCard2 .c2lot{font-size:11px;font-weight:600;opacity:.95;white-space:nowrap}
+.synCard2 .c2ti{font-weight:700;font-size:12.5px;white-space:nowrap;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis} .synCard2 .c2lot{font-size:11px;font-weight:600;opacity:.95;white-space:nowrap;flex:0 0 auto}
 .synCard2 .c2meta{padding:5px 11px;border-bottom:1.3px solid #cbd5e1;background:#f8fafc;font-size:10.5px}
 .synCard2 .c2grp{font-weight:700;color:#1f2733}
 .synCard2 .c2stir{padding:4px 11px;border-bottom:1.3px solid #e2e8f0;font-size:10.5px;color:#334155}
 .synCard2 .c2stir b{color:#1f2733;font-weight:600}
-.synCard2 .c2cols{display:grid;grid-template-columns:1.02fr 1fr}
+.synCard2 .c2cols{display:grid;grid-template-columns:1.12fr 1fr}
+.synCard2 .c2cols>.c2col{min-width:0}
 .synCard2 .c2col{padding:8px 9px} .synCard2 .c2l{border-right:1.3px solid #e2e8f0}
 .synCard2 .c2sec{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.3px;margin:0 0 4px} .synCard2 .c2mt{margin-top:6px} .synCard2 .c2note{font-size:9.5px;color:var(--muted);line-height:1.4;padding:3px 1px;border-top:1px solid #f1f4f7;margin-top:3px}
 .synCard2 .c2tb{width:100%;border-collapse:collapse}
-.synCard2 .c2tb th{font-size:9.5px;font-weight:600;color:#94a3b8;text-align:right;padding:0 3px 3px} .synCard2 .c2tb th.lft{text-align:left}
+.synCard2 .c2tb th{font-size:9.5px;font-weight:600;color:#94a3b8;text-align:right;padding:0 3px 3px;white-space:nowrap;width:1%} .synCard2 .c2tb th.lft{text-align:left;white-space:normal;width:auto}
 .synCard2 .c2tb td{padding:2.5px 3px;vertical-align:baseline;border-bottom:1px solid #f1f4f7} .synCard2 .c2tb tr:last-child td{border-bottom:0}
-.synCard2 .c2tb td.nm{white-space:nowrap;font-weight:600} .synCard2 .c2tb td.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap} .synCard2 .c2tb td.r b{font-size:11.5px}
+.synCard2 .c2tb td.nm{white-space:normal;word-break:keep-all;overflow-wrap:break-word;font-weight:600} .synCard2 .c2tb td.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;width:1%} .synCard2 .c2tb td.r b{font-size:11.5px}
 .synCard2 .c2dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:middle;border:.5px solid rgba(0,0,0,.15)}
 .synCard2 .c2dot.cLn{background:#E69F00} .synCard2 .c2dot.cNa{background:#009E73} .synCard2 .c2dot.cF{background:#0072B2} .synCard2 .c2dot.cRg{background:#CC79A7}
 .synCard2 .stp{padding:3px 0;border-bottom:1px solid #f1f4f7} .synCard2 .stp:last-child{border-bottom:0}
 .synCard2 .c2pg{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-flow:row dense;grid-auto-rows:minmax(18px,auto);column-gap:5px;row-gap:0} .synCard2 .c2pg>.stp{min-width:0}
-.synCard2 .stt{font-variant-numeric:tabular-nums;font-weight:700;color:#1f2733;font-size:11px;word-break:keep-all;overflow-wrap:anywhere} .synCard2 .snt{color:#0072B2;font-size:9.5px;margin-top:1px;word-break:keep-all;overflow-wrap:anywhere}
+.synCard2 .stt{font-variant-numeric:tabular-nums;font-weight:700;color:#1f2733;font-size:11px;word-break:keep-all;overflow-wrap:break-word} .synCard2 .snt{color:#0072B2;font-size:9.5px;margin-top:1px;word-break:keep-all;overflow-wrap:break-word}
 .synCard2 .c2warn{color:#b91c1c;font-size:9.5px;padding:5px 11px;border-top:1.3px solid #e2e8f0;background:#fff7f7;line-height:1.4}
 .synCard2 .c2kv{display:flex;justify-content:space-between;align-items:baseline;padding:2px 1px;border-bottom:1px solid #f1f4f7;font-size:10px}
-.synCard2 .c2kv:last-child{border-bottom:0} .synCard2 .c2k{color:var(--muted)} .synCard2 .c2v{font-variant-numeric:tabular-nums;text-align:right}
+.synCard2 .c2kv:last-child{border-bottom:0} .synCard2 .c2k{color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .synCard2 .c2v{font-variant-numeric:tabular-nums;text-align:right;flex:0 0 auto}
 .synCard2 .c2badge{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;margin-bottom:2px}
 .synCard2 .c2badge.vac{background:#dbeafe;color:#1e40af} .synCard2 .c2badge.n2{background:#fee2e2;color:#991b1b} .synCard2 .c2badge.inj{background:#dcfce7;color:#166534} .synCard2 .c2badge.addp{background:#fef3c7;color:#92400e}
 .synCard2 .c2full{padding:8px 11px}
@@ -2735,38 +2737,57 @@ function printCards(htmlList, title) {
   const area = $("#printArea");
   area.innerHTML = `<div class="cardsWrap">${htmlList.join("")}</div>`;
   document.body.classList.add("printing");
-  const done = () => { document.body.classList.remove("printing"); window.removeEventListener("afterprint", done); };
+  const done = () => { document.body.classList.remove("printing"); area.style.zoom = ""; window.removeEventListener("afterprint", done); };
   window.addEventListener("afterprint", done);
   /* A4 자동배치: 렌더된 카드 높이를 실측해 2열×N행으로 페이지를 채워 묶는다
      (flex/inline-block은 브라우저 페이지 분할이 부실해 페이지당 한 행만 나오는 문제가 있음) */
-  requestAnimationFrame(() => {
+  const run = () => requestAnimationFrame(() => {
     try { paginateCardsA4(area); } catch (e) { console.warn("paginate fail", e); }
     setTimeout(() => window.print(), 60);
   });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(run, run); else run();
 }
+/* A4 자동배치 — 카드 높이를 실측해 2열×N행으로 채운다.
+   · PAGE_H는 실제 인쇄 가능 높이(A4 297 − @page margin 6×2 − 여유 2)와 일치시킨다.
+   · 페이지 수가 이론 최소치보다 많으면 1%씩 축소(zoom)해 한 페이지에 밀어 넣는다.
+   · 카드 한 장이 페이지보다 크면 그 카드에 맞춰 먼저 축소한다. */
 function paginateCardsA4(area) {
   const cards = [...area.querySelectorAll(".synCard, .synCard2")];
   if (!cards.length) return;
   const mm = px => px / 96 * 25.4;
-  const PAGE_H = 275;   // A4 297 − 인쇄여백 − 여유 (mm)
+  const PAGE_H = 283;   // A4 297 − 인쇄여백 6×2 − 여유 2 (mm)
   const COL_GAP = 4;    // 카드 세로 간격 (mm)
   const COLS = 2;       // 페이지당 열 수
-  /* .cardsWrap는 align-items:flex-start라 카드가 늘어나지 않음 → 자연 높이 실측.
-     열(column) 우선 채움: 한 열을 세로로 채우고, 다 차면 다음 열→다음 페이지.
-     (짧은 solution 카드 + 긴 synthesis 카드가 한 열에 쌓여 페이지당 4장까지 배치) */
   const H = cards.map(c => mm(c.getBoundingClientRect().height || 0));
-  const pages = [];
-  let page, col, colH;
-  const addPage = () => { col = []; page = { cols: [col] }; pages.push(page); colH = 0; };
-  addPage();
-  for (let i = 0; i < cards.length; i++) {
-    const h = H[i];
-    if (col.length === 0)                   colH = h;                          // 새 열 첫 카드
-    else if (colH + COL_GAP + h <= PAGE_H)  colH += COL_GAP + h;               // 같은 열 계속
-    else if (page.cols.length < COLS)     { col = []; page.cols.push(col); colH = h; }  // 다음 열
-    else                                  { addPage(); colH = h; }            // 다음 페이지
-    col.push(cards[i]);
+  const EPS = 0.05;
+  const pack = s => {
+    const pages = []; let page, col, colH;
+    const addPage = () => { col = []; page = { cols: [col] }; pages.push(page); colH = 0; };
+    addPage();
+    for (let i = 0; i < cards.length; i++) {
+      const h = H[i] * s;
+      if (col.length === 0)                          colH = h;
+      else if (colH + COL_GAP + h <= PAGE_H + EPS)   colH += COL_GAP + h;
+      else if (page.cols.length < COLS)            { col = []; page.cols.push(col); colH = h; }
+      else                                         { addPage(); colH = h; }
+      col.push(cards[i]);
+    }
+    return pages;
+  };
+  /* 단일 카드가 한 페이지를 넘으면 먼저 그만큼 축소 */
+  const maxH = Math.max(...H);
+  let scale = maxH > PAGE_H ? Math.max(0.5, PAGE_H / maxH) : 1;
+  let pages = pack(scale);
+  /* 이론상 최소 페이지 수보다 많으면 조금씩 줄여 본다 (최대 15%) */
+  const total = H.reduce((a, b) => a + b, 0) + COL_GAP * Math.max(0, cards.length - COLS);
+  const ideal = Math.max(1, Math.ceil(total * scale / (PAGE_H * COLS) - 1e-9));
+  if (pages.length > ideal) {
+    for (let s = scale - 0.01; s >= scale * 0.85; s -= 0.01) {
+      const p = pack(s);
+      if (p.length <= ideal) { scale = s; pages = p; break; }
+    }
   }
+  area.style.zoom = (scale >= 0.999) ? "" : scale.toFixed(3);
   area.innerHTML = pages.map(p =>
     `<div class="printPage"><div class="printCols">${p.cols.map(c =>
       `<div class="printCol">${c.map(x => x.outerHTML).join("")}</div>`).join("")}</div></div>`).join("");
