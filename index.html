@@ -8,22 +8,18 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#3a241b">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
 <script>/* theme boot (FOUC 방지: 첫 페인트 전 적용) */
 (function(){try{var t=localStorage.getItem("innolab_theme");
 if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}
 document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","light");}})();</script>
 <style>
 /* ============ INNO NanoLab — Synthesis & ICP ============ */
-:root{
-  --bg:#F8FAFC; --card:#FFFFFF; --line:#E2E8F0; --line2:#CBD5E1;
-  --ink:#0F172A; --ink2:#334155; --sub:#475569; --muted:#64748B;
-  --primary:#2563EB; --primary-strong:#1D4ED8; --primary-soft:#DBEAFE;
-  --ok:#059669; --ok-soft:#DCFCE7; --warn:#D97706; --warn-soft:#FEF3C7;
-  --risk:#DC2626; --risk-soft:#FEE2E2; --chip:#F1F5F9;
-  --amber-soft:#FEF9C3; --green-soft:#DCFCE7; --blue-soft:#DBEAFE; --orange-soft:#FFEDD5;
-  --shadow:0 1px 2px rgba(15,23,42,.06),0 4px 12px rgba(15,23,42,.05);
-  --r:12px; --r-s:8px;
-}
+/* INNO suite tokens — 공통 틀 + NanoLab 강조색(terracotta). 옛 변수명은 별칭 */
+:root{color-scheme:light;--page:#f5f6f3;--surface:#ffffff;--surface-2:#eef1ed;--surface-3:#e6eae5;--ink:#243433;--ink-2:#4a5a56;--muted:#62706b;--faint:#8b978f;--border:#dde3dc;--border-strong:#c9d3c8;--grid:#e4e8e2;--ok:#2a7141;--ok-soft:#e3f0e5;--warn:#8a5f0a;--warn-soft:#f7ecd3;--risk:#ab3f35;--risk-soft:#f6e1dd;--info:#2f5f9e;--info-soft:#e2eaf5;--scrim:rgba(20,32,30,.42);--shadow:0 1px 2px rgba(24,40,37,.05),0 6px 20px rgba(24,40,37,.06);--shadow-lg:0 24px 70px rgba(24,40,37,.18);--accent:#9b4d2e;--accent-strong:#7e3d24;--accent-soft:#f5e8e1;--focus:#b8745a;--chrome:#3a241b;--chrome-mark:#e5b9a2;--on-accent:#ffffff;--toast-bg:#3a241b;--toast-ink:#f1f4ef;--chrome-ink:#f1f4ef;--chrome-ink-2:rgba(241,244,239,.72);--chrome-line:rgba(255,255,255,.09);--chrome-soft:rgba(255,255,255,.08);--chrome-soft-2:rgba(255,255,255,.14);--font:"DM Sans","Noto Sans KR",system-ui,-apple-system,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif;--mono:ui-monospace,"Cascadia Mono",Consolas,"D2Coding",monospace;}
+html[data-theme="dark"]{color-scheme:dark;--page:#1b2422;--surface:#232f2c;--surface-2:#2b3733;--surface-3:#33403b;--ink:#e3ebe2;--ink-2:#c3cfc5;--muted:#a3b0a6;--faint:#7f8c84;--border:#3a4841;--border-strong:#4d5d54;--grid:#33403b;--ok:#6cc68a;--ok-soft:#1f3a2a;--warn:#e3b04f;--warn-soft:#3a3018;--risk:#e8847a;--risk-soft:#3d2320;--info:#8fb3e6;--info-soft:#1f2d44;--scrim:rgba(5,12,10,.60);--shadow:0 1px 2px rgba(0,0,0,.30),0 8px 24px rgba(0,0,0,.28);--shadow-lg:0 24px 70px rgba(0,0,0,.50);--accent:#e0a07f;--accent-strong:#eab596;--accent-soft:#43291f;--focus:#e8b093;--chrome:#2c1b14;--chrome-mark:#e5b9a2;--on-accent:#2c1b14;--toast-bg:#e3ebe2;--toast-ink:#2c1b14;--chrome-ink:#f1f4ef;--chrome-ink-2:rgba(241,244,239,.72);--chrome-line:rgba(255,255,255,.09);--chrome-soft:rgba(255,255,255,.08);--chrome-soft-2:rgba(255,255,255,.14);}
+:root{--bg:var(--page);--card:var(--surface);--line:var(--border);--line2:var(--border-strong);--ink2:var(--ink-2);--sub:var(--ink-2);--primary:var(--accent);--primary-strong:var(--accent-strong);--primary-soft:var(--accent-soft);--chip:var(--surface-2);--amber-soft:var(--warn-soft);--green-soft:var(--ok-soft);--blue-soft:var(--info-soft);--orange-soft:var(--warn-soft);--field:var(--surface);--hover:var(--surface-2);--rowhover:var(--surface-2);--r:10px;--r-s:7px}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif;-webkit-font-smoothing:antialiased}
@@ -365,18 +361,6 @@ body.printing #mainUI{display:none}
 @media print{ .synCard2{box-shadow:none} }
 
 /* ============ THEME · DARK MODE ============ */
-:root{color-scheme:light}
-html[data-theme="dark"]{
-  color-scheme:dark;
-  --bg:#0B1220; --card:#111A2E; --line:#1E293B; --line2:#334155;
-  --ink:#E5EAF2; --ink2:#CBD5E1; --sub:#94A3B8; --muted:#8497AE;
-  --primary:#60A5FA; --primary-strong:#3B82F6; --primary-soft:#17274A;
-  --ok:#10B981; --ok-soft:#0F3227; --warn:#F59E0B; --warn-soft:#3A2A12;
-  --risk:#F87171; --risk-soft:#3B1A1A; --chip:#1B2540;
-  --amber-soft:#3A320F; --green-soft:#0F3227; --blue-soft:#17274A; --orange-soft:#3A230F;
-  --shadow:0 1px 2px rgba(0,0,0,.45),0 6px 16px rgba(0,0,0,.35);
-  --field:#0E1728; --hover:#26324A; --rowhover:#1A2542;
-}
 html[data-theme="dark"] body{background:var(--bg);color:var(--ink)}
 /* controls */
 html[data-theme="dark"] input[type=text],html[data-theme="dark"] input[type=number],
@@ -432,22 +416,15 @@ html[data-theme="dark"] .toast.ok{background:#0F3227;color:#A7F3D0;border-color:
 html[data-theme="dark"] .toast.warn{background:#3A2A12;color:#FDE68A;border-color:#4A3714}
 html[data-theme="dark"] .toast.err{background:#3B1A1A;color:#FCA5A5;border-color:#5B2020}
 /* 합성 카드(출력 replica)는 '종이'로 유지 — 인쇄 결과와 동일하게 보이도록 라이트 변수 재주입 */
-html[data-theme="dark"] .synCard,html[data-theme="dark"] .synCard2,html[data-theme="dark"] #printArea{
-  color-scheme:light;
-  --bg:#FFFFFF; --card:#FFFFFF; --line:#E2E8F0; --line2:#CBD5E1;
-  --ink:#0F172A; --ink2:#334155; --sub:#475569; --muted:#64748B;
-  --primary:#2563EB; --primary-strong:#1D4ED8; --primary-soft:#DBEAFE;
-  --ok:#059669; --ok-soft:#DCFCE7; --warn:#D97706; --warn-soft:#FEF3C7;
-  --risk:#DC2626; --risk-soft:#FEE2E2; --chip:#F1F5F9;
-  --amber-soft:#FEF9C3; --green-soft:#DCFCE7; --blue-soft:#DBEAFE; --orange-soft:#FFEDD5;
-}
+.synCard,.synCard2,#printArea{color-scheme:light;--page:#f5f6f3;--surface:#ffffff;--surface-2:#eef1ed;--surface-3:#e6eae5;--ink:#243433;--ink-2:#4a5a56;--muted:#62706b;--faint:#8b978f;--border:#dde3dc;--border-strong:#c9d3c8;--grid:#e4e8e2;--ok:#2a7141;--ok-soft:#e3f0e5;--warn:#8a5f0a;--warn-soft:#f7ecd3;--risk:#ab3f35;--risk-soft:#f6e1dd;--info:#2f5f9e;--info-soft:#e2eaf5;--scrim:rgba(20,32,30,.42);--shadow:0 1px 2px rgba(24,40,37,.05),0 6px 20px rgba(24,40,37,.06);--shadow-lg:0 24px 70px rgba(24,40,37,.18);--accent:#9b4d2e;--accent-strong:#7e3d24;--accent-soft:#f5e8e1;--focus:#b8745a;--chrome:#3a241b;--chrome-mark:#e5b9a2;--on-accent:#ffffff;--bg:#FFFFFF;--card:#FFFFFF;--line:#E2E8F0;--line2:#CBD5E1;--ink:#0F172A;--ink2:#334155;--sub:#475569;--muted:#64748B;--primary:#2563EB;--primary-strong:#1D4ED8;--primary-soft:#DBEAFE;--ok:#059669;--ok-soft:#DCFCE7;--warn:#D97706;--warn-soft:#FEF3C7;--risk:#DC2626;--risk-soft:#FEE2E2;--chip:#F1F5F9;--amber-soft:#FEF9C3;--green-soft:#DCFCE7;--blue-soft:#DBEAFE;--orange-soft:#FFEDD5;}
+.synCard,.synCard2,#printArea{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif;line-height:1.5;font-synthesis:weight style}
 /* 테마 토글 칩 */
 .chipbtn svg{display:block;flex:none}
 #chipTheme{gap:5px}
 /* 인쇄는 항상 라이트(흰 종이) */
 @media print{
   html[data-theme="dark"]{
-    color-scheme:light;
+    color-scheme:light;--page:#f5f6f3;--surface:#ffffff;--surface-2:#eef1ed;--surface-3:#e6eae5;--ink:#243433;--ink-2:#4a5a56;--muted:#62706b;--faint:#8b978f;--border:#dde3dc;--border-strong:#c9d3c8;--grid:#e4e8e2;--ok:#2a7141;--ok-soft:#e3f0e5;--warn:#8a5f0a;--warn-soft:#f7ecd3;--risk:#ab3f35;--risk-soft:#f6e1dd;--info:#2f5f9e;--info-soft:#e2eaf5;--scrim:rgba(20,32,30,.42);--shadow:0 1px 2px rgba(24,40,37,.05),0 6px 20px rgba(24,40,37,.06);--shadow-lg:0 24px 70px rgba(24,40,37,.18);--accent:#9b4d2e;--accent-strong:#7e3d24;--accent-soft:#f5e8e1;--focus:#b8745a;--chrome:#3a241b;--chrome-mark:#e5b9a2;--on-accent:#ffffff;
     --bg:#F8FAFC; --card:#FFFFFF; --line:#E2E8F0; --line2:#CBD5E1;
     --ink:#0F172A; --ink2:#334155; --sub:#475569; --muted:#64748B;
     --primary:#2563EB; --primary-strong:#1D4ED8; --primary-soft:#DBEAFE;
@@ -457,6 +434,141 @@ html[data-theme="dark"] .synCard,html[data-theme="dark"] .synCard2,html[data-the
     --shadow:0 1px 2px rgba(15,23,42,.06),0 4px 12px rgba(15,23,42,.05);
   }
   html[data-theme="dark"] body{background:#fff;color:#0F172A}
+}
+
+/* ════════ INNO suite skin — Workspace 결 (2026-09-29) ════════
+   공통 틀은 RefAtlas·Ledger 와 같고, 강조색만 NanoLab 고유(terracotta).
+   합성 카드(.synCard/.synCard2/#printArea)는 '종이' — 인쇄 결과와 같게 이 층에서 건드리지 않는다. */
+body{background:var(--page);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.55;font-synthesis:none}
+.mono{font-family:var(--mono)}
+::selection{background:color-mix(in srgb,var(--accent) 22%,transparent)}
+:where(button,a,input,select,textarea,summary,[tabindex],[contenteditable]):focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+input::placeholder,textarea::placeholder{color:var(--faint)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* ── 상단 크롬: 짙은 terracotta 띠 (상단바 + 탭, 전체 폭) ── */
+.topbar{background:var(--chrome);color:var(--chrome-ink);box-shadow:0 0 0 100vmax var(--chrome);clip-path:inset(0 -100vmax);padding:14px 2px 8px}
+.brand .logo{color:var(--chrome-ink);font-weight:700;font-size:18px;letter-spacing:.01em}
+.brand .logo em{color:var(--chrome-mark)}
+.brand .ver{color:var(--chrome-ink-2);letter-spacing:.03em}
+.copyright{color:var(--chrome-ink-2)}
+.topbar .chipbtn{background:var(--chrome-soft);border-color:var(--chrome-line);color:var(--chrome-ink);font-weight:500;min-height:30px}
+.topbar .chipbtn:hover{background:var(--chrome-soft-2)}
+.topbar .chipbtn .dot{background:var(--chrome-ink-2)}
+.topbar .chipbtn.on .dot{background:#7fd49a}
+.topbar .chipbtn.warn .dot{background:#f0c060}
+.nav{background:var(--chrome);box-shadow:0 0 0 100vmax var(--chrome);clip-path:inset(0 -100vmax);border-bottom:0;margin-bottom:20px;gap:2px}
+.nav button{position:relative;color:var(--chrome-ink-2);font-weight:500;padding:9px 15px 12px;border-bottom:0;margin-bottom:0;border-radius:7px 7px 0 0;transition:color .15s,background .15s}
+.nav button:hover{color:var(--chrome-ink);background:var(--chrome-soft)}
+.nav button.active{color:var(--chrome-ink);font-weight:600;background:var(--chrome-soft)}
+.nav button.active::after{content:"";position:absolute;left:15px;right:15px;bottom:3px;height:2px;border-radius:2px;background:var(--chrome-mark)}
+.nav button .cnt{color:inherit;opacity:.7;font-weight:500}
+
+/* ── 카드·섹션 ── */
+.card{border-color:var(--border);border-radius:10px;box-shadow:var(--shadow);padding:18px 20px;margin-bottom:16px}
+.card>h3{font-size:14.5px;font-weight:600;letter-spacing:-.01em}
+.card>h3 .hint{color:var(--muted)}
+.card.sec>h3.sechead:hover .sectitle{color:var(--accent)}
+.planbar{border-color:var(--border);background:var(--surface);box-shadow:0 -8px 24px rgba(24,40,37,.10)}
+html[data-theme="dark"] .planbar{box-shadow:0 -8px 24px rgba(0,0,0,.45)}
+.sep{background:var(--border)}
+.muted{color:var(--muted)}
+.note{background:var(--surface-2);border-color:var(--border);color:var(--ink-2);border-radius:8px}
+.note.warn{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 30%,transparent);color:var(--ink)}
+.note.danger{background:var(--risk-soft);border-color:color-mix(in srgb,var(--risk) 30%,transparent);color:var(--risk)}
+.note.okay{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 30%,transparent);color:var(--ink)}
+
+/* ── 입력 ── */
+label.f{color:var(--ink-2)}
+input[type=text],input[type=number],input[type=date],input[type=email],input[type=password],input[type=search],select,textarea{background:var(--surface);color:var(--ink);border-color:var(--border-strong);border-radius:7px}
+.mrc .mx{color:var(--muted)} .mrc .mc{color:var(--ink-2)}
+
+/* ── 버튼 ── */
+.btn{background:var(--surface);border-color:var(--border-strong);border-radius:7px;color:var(--ink);font-weight:600;min-height:34px;transition:background .15s,border-color .15s}
+.btn:hover:not(:disabled){background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover:not(:disabled){background:var(--accent-strong);border-color:var(--accent-strong);color:var(--on-accent)}
+.btn.danger{background:transparent;border-color:color-mix(in srgb,var(--risk) 38%,transparent);color:var(--risk)}
+.btn.danger:hover:not(:disabled){background:var(--risk-soft)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--accent)}
+.btn.ghost:hover:not(:disabled){background:var(--accent-soft)}
+.btn.sm{min-height:28px;border-radius:6px}
+.seg{background:var(--surface-2);border-color:var(--border);border-radius:9px}
+.seg button{color:var(--ink-2);font-weight:500;min-height:32px}
+.seg button:hover:not(.active){color:var(--ink)}
+.seg button.active{background:var(--surface);color:var(--accent);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.closex{background:var(--surface-2);color:var(--ink-2)}
+.closex:hover{background:var(--surface-3)}
+
+/* ── 표 ── */
+.tbl th{background:var(--surface-2);color:var(--ink-2);font-weight:600;border-bottom:1px solid var(--border-strong)}
+.tbl td{border-bottom-color:var(--grid)}
+.tbl tr:hover td{background:var(--surface-2)}
+.tblwrap{border-color:var(--border);border-radius:8px}
+.plan2>.planside::-webkit-scrollbar-thumb{background:var(--border-strong)}
+
+/* ── 배지·상태: 두 테마 모두 토큰. 'Good'은 강조색이 아니라 info(파랑) — terracotta 가 주의색처럼 읽히지 않게 ── */
+.badge{border-radius:6px;font-weight:600}
+.badge.core,.badge.info{background:var(--info-soft);color:var(--info)}
+.badge.shell,.badge.warn{background:var(--warn-soft);color:var(--warn)}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}
+.badge.risk{background:var(--risk-soft);color:var(--risk)}
+.badge.gray{background:var(--surface-2);color:var(--muted)}
+.stExcellent{background:var(--ok);color:var(--surface)}
+.stGood{background:var(--info);color:var(--surface)}
+.stCaution{background:var(--warn);color:var(--surface)}
+.stHigh{background:var(--risk);color:var(--surface)}
+.cellExcellent{background:var(--ok-soft)}.cellGood{background:var(--info-soft)}
+.cellCaution{background:var(--warn-soft)}.cellHigh{background:var(--risk-soft)}
+
+/* ── 원소 칩·주기율표: 선택 = 강조색(채움), 누락 = 경고(점선 외곽) — 모양으로도 구분 ── */
+.elchip{background:var(--surface);border-color:var(--border-strong);color:var(--ink);font-weight:600}
+.elchip.sel{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.elchip.sel .badge{background:color-mix(in srgb,var(--on-accent) 22%,transparent);color:var(--on-accent)}
+.elchip.miss{background:var(--warn-soft);border:1.5px dashed var(--warn);color:var(--warn)}
+.ptable .pel,html[data-theme="dark"] .ptable .pel:not(.sel):not(.miss){background:var(--surface);border-color:var(--border-strong);color:var(--ink);font-weight:600}
+.ptable .pel:hover,html[data-theme="dark"] .ptable .pel:not(.sel):not(.miss):hover{background:var(--surface-2);border-color:var(--muted)}
+.ptable .pel.sel,html[data-theme="dark"] .ptable .pel.sel{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.ptable .pel.miss{background:var(--warn-soft);border:1.5px dashed var(--warn);color:var(--warn)}
+.ptable .pph,html[data-theme="dark"] .ptable .pph{background:var(--surface-2);color:var(--ink-2)}
+.lineage .nodechip{background:var(--surface-2);border-color:var(--border-strong)}
+.lineage .nodechip.cur,html[data-theme="dark"] .lineage .nodechip.cur{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+
+/* ── 통계 타일 ── */
+.tile{border-color:var(--border);border-radius:10px;box-shadow:var(--shadow);padding:15px 18px}
+.tile .v{font-weight:700;letter-spacing:-.02em}
+.tile .k{color:var(--ink-2)}
+.tile .s{color:var(--muted)}
+.tile.accent .v{color:var(--accent)}
+.tile.warn .v{color:var(--warn)}
+.cmp .bar{background:var(--surface-2)}
+.cmp .bar .t,html[data-theme="dark"] .cmp .bar .t{background:var(--ink)}
+.cmp .val{color:var(--ink-2)}
+.legend{color:var(--muted)}
+
+/* ── 드롭존·모달·서랍·토스트 ── */
+.dropzone,html[data-theme="dark"] .dropzone:not(.over){background:var(--surface);border-color:var(--border-strong);border-radius:10px}
+.dropzone.over{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.overlay,html[data-theme="dark"] .overlay{background:var(--scrim)}
+.drawer,.modal,html[data-theme="dark"] .drawer,html[data-theme="dark"] .modal{background:var(--surface);color:var(--ink)}
+.modal,html[data-theme="dark"] .modal{border-radius:12px;box-shadow:var(--shadow-lg)}
+.drawer,html[data-theme="dark"] .drawer{box-shadow:var(--shadow-lg)}
+.toast,html[data-theme="dark"] .toast{background:var(--toast-bg);color:var(--toast-ink);border:0;font-weight:500;box-shadow:var(--shadow-lg)}
+.toast.ok,html[data-theme="dark"] .toast.ok{background:var(--ok-soft);color:var(--ok);border:1px solid color-mix(in srgb,var(--ok) 35%,transparent)}
+.toast.warn,html[data-theme="dark"] .toast.warn{background:var(--warn-soft);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 35%,transparent)}
+.toast.err,html[data-theme="dark"] .toast.err{background:var(--risk-soft);color:var(--risk);border:1px solid color-mix(in srgb,var(--risk) 35%,transparent)}
+.kv dt{color:var(--muted)}
+
+/* ── 좁은 화면 ── */
+@media (max-width:720px){
+  .topbar{gap:8px 10px}
+  .brand{width:100%}
+  .brand .ver,.copyright{display:none}
+  .nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
+  .nav button{white-space:nowrap;flex:none}
+  .card{padding:14px}
 }
 </style>
 </head>
@@ -5918,7 +6030,7 @@ function renderProtocolPanel(root){
     nmI.onchange=()=>{ const v=nmI.value.trim(); if(v){ proto.name=v; persistProto(); render(); } };
     ctrl.append(document.createTextNode("이름:"), nmI);
     if(activeId===defId){
-      const tag=document.createElement("span"); tag.style.cssText="font-size:11px;font-weight:700;color:#0f766e;background:#ccfbf1;padding:3px 8px;border-radius:6px"; tag.textContent="★ 기본값";
+      const tag=document.createElement("span"); tag.style.cssText="font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:3px 8px;border-radius:6px"; tag.textContent="★ 기본값";
       const unset=document.createElement("button"); unset.className="btn sm"; unset.textContent="기본값 해제"; unset.title="내장 기본값을 다시 표시합니다";
       unset.onclick=()=>{ S.defaultProtocolId=null; persistProto(); render(); };
       ctrl.append(tag, unset);
@@ -6019,7 +6131,7 @@ function renderProcedurePanel(root, opts){
     ? "블록을 <b>클릭</b>하면 왼쪽에서 상세값을 고치고, <b>드래그</b>로 배치·<b>모서리 손잡이</b>로 크기를 바꿉니다. <b>Ctrl+C / Ctrl+D / Ctrl+V</b>로 복사·복제·붙여넣기 (그룹 간 이동 가능)."
     : "오른쪽 <b>카드(출력 영역)</b>에서 블록을 <b>드래그</b>해 원하는 칸에 자유 배치(<b>빈칸 허용</b>)하고 <b>모서리 손잡이</b>를 끌어 가로 1~3칸·세로 1~6칸를 조절합니다. 블록을 <b>클릭</b>하면 왼쪽에 상세 입력칸이 나타나고, <b>카드 밖으로</b> 드래그하면 삭제됩니다.<br>블록 <b>복사·복제·붙여넣기</b>는 왼쪽 상세창의 버튼 또는 <b>Ctrl+C / Ctrl+D / Ctrl+V</b> — 복사한 블록은 Core·Shell·용액 조제 사이에서도 붙여넣을 수 있습니다.";
   card.appendChild(nt);
-  if(!opts.inline){ const apid=S.activeProtocolId; const apName=(apid&&apid!=="lab_naln"&&S.protocols&&S.protocols[apid])?S.protocols[apid].name:"기본값"; const apLine=document.createElement("div"); apLine.style.cssText="font-size:12px;margin:2px 0 9px;padding:6px 10px;background:var(--chip);border-radius:6px;color:var(--ink2)"; apLine.innerHTML="편집 대상 프로토콜: <b>"+esc(apName)+"</b>"+((apid&&apid!=="lab_naln")?" <span style=\"color:var(--muted)\">— 이 프로토콜 전용 절차</span>":" <span style=\"color:#94a3b8\">— 전역. 상단 \u2018화학물질 개요\u2019에서 + 새 프로토콜을 만들면 전용 절차가 됩니다.</span>"); card.appendChild(apLine); }
+  if(!opts.inline){ const apid=S.activeProtocolId; const apName=(apid&&apid!=="lab_naln"&&S.protocols&&S.protocols[apid])?S.protocols[apid].name:"기본값"; const apLine=document.createElement("div"); apLine.style.cssText="font-size:12px;margin:2px 0 9px;padding:6px 10px;background:var(--chip);border-radius:6px;color:var(--ink2)"; apLine.innerHTML="편집 대상 프로토콜: <b>"+esc(apName)+"</b>"+((apid&&apid!=="lab_naln")?" <span style=\"color:var(--muted)\">— 이 프로토콜 전용 절차</span>":" <span style=\"color:var(--muted)\">— 전역. 상단 \u2018화학물질 개요\u2019에서 + 새 프로토콜을 만들면 전용 절차가 됩니다.</span>"); card.appendChild(apLine); }
   const tabs=document.createElement("div"); tabs.className="row"; tabs.style.cssText="gap:6px;flex-wrap:wrap;margin-bottom:8px"; card.appendChild(tabs);
   const split=document.createElement("div"); split.style.cssText="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap"; card.appendChild(split);
   const leftP=document.createElement("div"); leftP.style.cssText="flex:0 0 236px;max-width:236px;min-width:206px"; split.appendChild(leftP);
@@ -6084,7 +6196,7 @@ function renderProcedurePanel(root, opts){
       m.bind = m.bind || {prec:"", solv:[]};
       const bwrap=document.createElement("div"); bwrap.style.cssText="margin-top:12px;border-top:1px dashed #e2e8f0;padding-top:9px";
       const bt=document.createElement("div"); bt.style.cssText="font-weight:700;font-size:12px;color:var(--ink);margin-bottom:2px"; bt.textContent="이 단계 투입물 (묶음)"; bwrap.appendChild(bt);
-      const bh=document.createElement("div"); bh.style.cssText="font-size:10.5px;color:#94a3b8;line-height:1.4;margin-bottom:6px"; bh.textContent="이 시퀀스에 함께 넣는 전구체와 유기용매를 지정하면 계획창·카드에 자동 반영됩니다."; bwrap.appendChild(bh);
+      const bh=document.createElement("div"); bh.style.cssText="font-size:10.5px;color:var(--muted);line-height:1.4;margin-bottom:6px"; bh.textContent="이 시퀀스에 함께 넣는 전구체와 유기용매를 지정하면 계획창·카드에 자동 반영됩니다."; bwrap.appendChild(bh);
       const pl=document.createElement("div"); pl.style.cssText="font-size:11px;color:var(--muted)"; pl.textContent="전구체"; bwrap.appendChild(pl);
       const psel=document.createElement("select"); psel.style.cssText="width:100%;padding:5px 7px;border:1px solid var(--line2);border-radius:6px;font-size:12px;margin-top:2px";
       [["","(없음)"],["Ln","Dopant"],["Na","Host Cation"],["F","Host Anion"]].forEach(o=>{ const op=document.createElement("option"); op.value=o[0]; op.textContent=o[1]; if(o[0]===(m.bind.prec||""))op.selected=true; psel.appendChild(op); });
@@ -6115,7 +6227,7 @@ function renderProcedurePanel(root, opts){
       SOLV_ORDER.forEach(k=>{ const ab=document.createElement("button"); ab.type="button"; ab.textContent="＋ "+(SOLV_INFO[k]?SOLV_INFO[k].name:k); ab.style.cssText="border:1px solid var(--line2);background:var(--card);border-radius:12px;padding:2px 9px;font-size:11px;cursor:pointer"; ab.onclick=()=>{ m.bind.solv=m.bind.solv||[]; m.bind.solv.push(solvDefault(k)); persist(); redraw(); }; addRow.appendChild(ab); });
       bwrap.appendChild(addRow); box.appendChild(bwrap);
     }
-    const wh=document.createElement("div"); wh.style.cssText="font-size:11px;color:#94a3b8;margin-top:11px;line-height:1.45"; wh.textContent="크기는 오른쪽 카드에서 블록 모서리 손잡이를 끌어 조절합니다(가로 1~3칸·세로 1~6칸)."; box.appendChild(wh);
+    const wh=document.createElement("div"); wh.style.cssText="font-size:11px;color:var(--muted);margin-top:11px;line-height:1.45"; wh.textContent="크기는 오른쪽 카드에서 블록 모서리 손잡이를 끌어 조절합니다(가로 1~3칸·세로 1~6칸)."; box.appendChild(wh);
     const cprow=document.createElement("div"); cprow.style.cssText="display:flex;gap:5px;flex-wrap:wrap;margin-top:11px";
     const bCopy=document.createElement("button"); bCopy.className="btn sm"; bCopy.textContent="복사"; bCopy.title="이 블록을 클립보드에 복사 (Ctrl+C)";
     bCopy.onclick=()=>{ modClipCopy(m); toast("블록을 복사했습니다 — 붙여넣기로 추가할 수 있습니다","ok"); redraw(); };
@@ -6218,9 +6330,9 @@ function renderProcedurePanel(root, opts){
     const sec=document.createElement("div"); sec.className="c2sec"; sec.textContent="절차 (출력 미리보기 · 편집)";
     const pg=document.createElement("div"); pg.className="c2pg"; pg.style.rowGap="6px"; pg.style.columnGap="6px";
     colc.append(sec,pg); frame.appendChild(colc); canvasWrap.appendChild(frame);
-    const chint=document.createElement("div"); chint.className="muted"; chint.style.cssText="font-size:10.5px;margin-top:6px;color:#94a3b8;line-height:1.5"; chint.innerHTML="블록을 <b>드래그</b>해 원하는 칸에 <b>자유 배치</b>(빈칸 허용) · <b>오른쪽 아래 손잡이</b>로 가로 1~3칸·세로 1~6칸 크기 조절 · 블록을 <b>카드 밖으로</b> 드래그하면 삭제"; canvasWrap.appendChild(chint);
+    const chint=document.createElement("div"); chint.className="muted"; chint.style.cssText="font-size:10.5px;margin-top:6px;color:var(--muted);line-height:1.5"; chint.innerHTML="블록을 <b>드래그</b>해 원하는 칸에 <b>자유 배치</b>(빈칸 허용) · <b>오른쪽 아래 손잡이</b>로 가로 1~3칸·세로 1~6칸 크기 조절 · 블록을 <b>카드 밖으로</b> 드래그하면 삭제"; canvasWrap.appendChild(chint);
     const arr=mods();
-    if(!arr.length){ const e=document.createElement("div"); e.style.cssText="grid-column:1/-1;font-size:11px;color:#94a3b8;padding:10px 2px"; e.textContent="위 팔레트에서 블록을 추가하세요."; pg.appendChild(e); return; }
+    if(!arr.length){ const e=document.createElement("div"); e.style.cssText="grid-column:1/-1;font-size:11px;color:var(--muted);padding:10px 2px"; e.textContent="위 팔레트에서 블록을 추가하세요."; pg.appendChild(e); return; }
     arr.forEach((m,i)=>{
       const tmp=document.createElement("div"); tmp.innerHTML=modStp(m,{}); const stp=tmp.firstChild;
       stp.dataset.mid=m.id;
