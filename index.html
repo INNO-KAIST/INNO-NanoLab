@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>INNO NanoLab — Synthesis &amp; ICP</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='bg' cx='0.5' cy='0.42' r='0.72'><stop offset='0' stop-color='%23243086'/><stop offset='1' stop-color='%23080B18'/></radialGradient><linearGradient id='sh' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%237C6CF2'/><stop offset='1' stop-color='%2312B6E8'/></linearGradient><radialGradient id='co' cx='0.44' cy='0.4' r='0.62'><stop offset='0' stop-color='%23ffffff'/><stop offset='0.4' stop-color='%2386D9FF'/><stop offset='1' stop-color='%232F6BF0'/></radialGradient></defs><rect width='100' height='100' rx='24' fill='url(%23bg)'/><circle cx='50' cy='50' r='31' fill='none' stroke='%2322D3EE' stroke-opacity='0.55' stroke-width='2'/><circle cx='50' cy='50' r='27' fill='url(%23sh)'/><circle cx='50' cy='50' r='13' fill='url(%23co)'/></svg>">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Cdefs%3E%3ClinearGradient id=%22inan%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%235a3526%22/%3E%3Cstop offset=%22.62%22 stop-color=%22%233a241b%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%2264%22 height=%2264%22 rx=%2215%22 fill=%22url%28%23inan%29%22/%3E%3Crect x=%22.75%22 y=%22.75%22 width=%2262.5%22 height=%2262.5%22 rx=%2214.3%22 fill=%22none%22 stroke=%22%23fff%22 stroke-opacity=%22.10%22 stroke-width=%221.5%22/%3E%3Cpath d=%22M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13%22 stroke=%22%23e8b598%22 stroke-width=%224.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 fill=%22none%22/%3E%3Cpath d=%22M19.6 40.5a12.5 12.5 0 0 0 24.8 0z%22 fill=%22%23e8b598%22 opacity=%22.38%22/%3E%3Ccircle cx=%2232%22 cy=%2239.5%22 r=%225.2%22 fill=%22%23F4F6F1%22/%3E%3Ccircle cx=%2232%22 cy=%2239.5%22 r=%228.4%22 fill=%22none%22 stroke=%22%23F4F6F1%22 stroke-width=%221.8%22 opacity=%22.7%22/%3E%3C/svg%3E">
 <link rel="icon" type="image/x-icon" href="favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="color-scheme" content="light dark">
@@ -570,13 +570,15 @@ input[type=text],input[type=number],input[type=date],input[type=email],input[typ
   .nav button{white-space:nowrap;flex:none}
   .card{padding:14px}
 }
+
+.brand-mark{display:block;flex:none;width:30px;height:30px;border-radius:8px}
 </style>
 </head>
 <body>
 <div id="app">
   <div id="mainUI">
     <div class="topbar">
-      <div class="brand"><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.3.7 · deploy</span></div>
+      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.3.7 · deploy</span></div>
       <div class="spacer"></div>
       <button class="chipbtn" id="chipBackup" title="클릭하여 즉시 백업"><span class="dot"></span>백업</button>
       <button class="chipbtn" id="chipSync" title="동기화 설정으로 이동"><span class="dot"></span>로컬 저장</button>
