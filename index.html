@@ -418,6 +418,7 @@ html[data-theme="dark"] .toast.err{background:#3B1A1A;color:#FCA5A5;border-color
 /* 합성 카드(출력 replica)는 '종이'로 유지 — 인쇄 결과와 동일하게 보이도록 라이트 변수 재주입 */
 .synCard,.synCard2,#printArea{color-scheme:light;--page:#f5f6f3;--surface:#ffffff;--surface-2:#eef1ed;--surface-3:#e6eae5;--ink:#243433;--ink-2:#4a5a56;--muted:#62706b;--faint:#8b978f;--border:#dde3dc;--border-strong:#c9d3c8;--grid:#e4e8e2;--ok:#2a7141;--ok-soft:#e3f0e5;--warn:#8a5f0a;--warn-soft:#f7ecd3;--risk:#ab3f35;--risk-soft:#f6e1dd;--info:#2f5f9e;--info-soft:#e2eaf5;--scrim:rgba(20,32,30,.42);--shadow:0 1px 2px rgba(24,40,37,.05),0 6px 20px rgba(24,40,37,.06);--shadow-lg:0 24px 70px rgba(24,40,37,.18);--accent:#9b4d2e;--accent-strong:#7e3d24;--accent-soft:#f5e8e1;--focus:#b8745a;--chrome:#3a241b;--chrome-mark:#e5b9a2;--on-accent:#ffffff;--bg:#FFFFFF;--card:#FFFFFF;--line:#E2E8F0;--line2:#CBD5E1;--ink:#0F172A;--ink2:#334155;--sub:#475569;--muted:#64748B;--primary:#2563EB;--primary-strong:#1D4ED8;--primary-soft:#DBEAFE;--ok:#059669;--ok-soft:#DCFCE7;--warn:#D97706;--warn-soft:#FEF3C7;--risk:#DC2626;--risk-soft:#FEE2E2;--chip:#F1F5F9;--amber-soft:#FEF9C3;--green-soft:#DCFCE7;--blue-soft:#DBEAFE;--orange-soft:#FFEDD5;}
 .synCard,.synCard2,#printArea{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif;line-height:1.5;font-synthesis:weight style}
+.synCard,.synCard2,#printArea,.synCard *,.synCard2 *,#printArea *{word-break:normal;text-wrap:wrap}
 /* 테마 토글 칩 */
 .chipbtn svg{display:block;flex:none}
 #chipTheme{gap:5px}
@@ -570,6 +571,21 @@ input[type=text],input[type=number],input[type=date],input[type=email],input[typ
   .nav button{white-space:nowrap;flex:none}
   .card{padding:14px}
 }
+
+/* ── 한글 줄바꿈 (2026-09-29) ──
+   한글은 기본값이 '음절마다 줄바꿈 가능'이라, 좁은 화면에서 "선택하세" / "요" 처럼
+   마지막 한두 글자만 다음 줄로 떨어진다. 어절(띄어쓰기) 단위로만 끊고,
+   한 줄에 한 단어만 남는 줄(orphan)을 브라우저가 피하게 한다. */
+body{word-break:keep-all}
+:where(h1,h2,h3,h4){text-wrap:balance}
+:where(p,li,dd,dt,td,th,label,small,.hint,.muted,.note,.sub,.tag,.desc){text-wrap:pretty}
+
+/* 좁은 화면: 분절 버튼은 한 줄 유지(가로 스크롤), 카드 제목과 힌트는 줄을 나눠 제목이 쪼개지지 않게 */
+.seg{max-width:100%;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{white-space:nowrap;flex:none}
+.card>h3{flex-wrap:wrap;row-gap:2px}
+.ptable .pel,.ptable .pph{overflow-wrap:normal;word-break:normal}
 
 .brand-mark{display:block;flex:none;width:30px;height:30px;border-radius:8px}
 </style>
