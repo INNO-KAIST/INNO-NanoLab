@@ -6691,7 +6691,7 @@ function initTheme() {
   const stack = [];   // {ov, panel, ret, snap}
   const overlaySel = C.overlay || ".overlay";
   const panelSel = C.panel || ".modal,.drawer";
-  const isOpen = ov => ov.isConnected && getComputedStyle(ov).display !== "none" && (!C.openClass || ov.classList.contains(C.openClass));
+  const isOpen = ov => ov.isConnected && (C.isOpen ? C.isOpen(ov) : (getComputedStyle(ov).display !== "none" && (!C.openClass || ov.classList.contains(C.openClass))));
   function snapshot(panel) {
     return [...panel.querySelectorAll("input,textarea,select")].map(e => e.type === "checkbox" || e.type === "radio" ? e.checked : e.value).join("\u0001");
   }
@@ -6704,6 +6704,9 @@ function initTheme() {
     if (h && !panel.getAttribute("aria-label")) panel.setAttribute("aria-label", h.textContent.trim().slice(0, 80));
     const entry = { ov, panel, ret: document.activeElement, snap: null };
     stack.push(entry);
+    /* 앱이 같은 대화창의 내용을 통째로 다시 그리면(저장·발급 뒤 재렌더) 그 시점을 새 기준으로 */
+    entry.mo = new MutationObserver(() => requestAnimationFrame(() => { entry.snap = snapshot(panel); }));
+    entry.mo.observe(panel, { childList: true });
     requestAnimationFrame(() => {
       entry.snap = snapshot(panel);
       if (panel.contains(document.activeElement)) return;
@@ -6714,9 +6717,13 @@ function initTheme() {
   }
   function onClose(entry) {
     const i = stack.indexOf(entry); if (i >= 0) stack.splice(i, 1);
+    if (entry.mo) entry.mo.disconnect();
     if (entry.ret && entry.ret.isConnected && typeof entry.ret.focus === "function") entry.ret.focus({ preventScroll: true });
   }
-  function dirty(entry) { return entry.snap != null && snapshot(entry.panel) !== entry.snap; }
+  function dirty(entry) {
+    if (C.noDirty && entry.ov.matches(C.noDirty)) return false;   // 입력이 자동 저장되는 창
+    return entry.snap != null && snapshot(entry.panel) !== entry.snap;
+  }
   function closeTop() {
     const e = stack[stack.length - 1]; if (!e) return false;
     if (dirty(e) && !confirm("입력한 내용이 저장되지 않았습니다. 닫을까요?")) return true;
