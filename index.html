@@ -418,7 +418,7 @@ html[data-theme="dark"] .toast.err{background:#3B1A1A;color:#FCA5A5;border-color
 /* 합성 카드(출력 replica)는 '종이'로 유지 — 인쇄 결과와 동일하게 보이도록 라이트 변수 재주입 */
 .synCard,.synCard2,#printArea{color-scheme:light;--page:#f5f6f3;--surface:#ffffff;--surface-2:#eef1ed;--surface-3:#e6eae5;--ink:#243433;--ink-2:#4a5a56;--muted:#62706b;--faint:#8b978f;--border:#dde3dc;--border-strong:#c9d3c8;--grid:#e4e8e2;--ok:#2a7141;--ok-soft:#e3f0e5;--warn:#8a5f0a;--warn-soft:#f7ecd3;--risk:#ab3f35;--risk-soft:#f6e1dd;--info:#2f5f9e;--info-soft:#e2eaf5;--scrim:rgba(20,32,30,.42);--shadow:0 1px 2px rgba(24,40,37,.05),0 6px 20px rgba(24,40,37,.06);--shadow-lg:0 24px 70px rgba(24,40,37,.18);--accent:#9b4d2e;--accent-strong:#7e3d24;--accent-soft:#f5e8e1;--focus:#b8745a;--chrome:#3a241b;--chrome-mark:#e5b9a2;--on-accent:#ffffff;--bg:#FFFFFF;--card:#FFFFFF;--line:#E2E8F0;--line2:#CBD5E1;--ink:#0F172A;--ink2:#334155;--sub:#475569;--muted:#64748B;--primary:#2563EB;--primary-strong:#1D4ED8;--primary-soft:#DBEAFE;--ok:#059669;--ok-soft:#DCFCE7;--warn:#D97706;--warn-soft:#FEF3C7;--risk:#DC2626;--risk-soft:#FEE2E2;--chip:#F1F5F9;--amber-soft:#FEF9C3;--green-soft:#DCFCE7;--blue-soft:#DBEAFE;--orange-soft:#FFEDD5;}
 .synCard,.synCard2,#printArea{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif;line-height:1.5;font-synthesis:weight style}
-.synCard,.synCard2,#printArea,.synCard *,.synCard2 *,#printArea *{word-break:normal;text-wrap:wrap}
+.synCard,.synCard2,#printArea,.synCard *,.synCard2 *,#printArea *{word-break:normal;text-wrap-style:auto}
 /* 테마 토글 칩 */
 .chipbtn svg{display:block;flex:none}
 #chipTheme{gap:5px}
@@ -577,8 +577,8 @@ input[type=text],input[type=number],input[type=date],input[type=email],input[typ
    마지막 한두 글자만 다음 줄로 떨어진다. 어절(띄어쓰기) 단위로만 끊고,
    한 줄에 한 단어만 남는 줄(orphan)을 브라우저가 피하게 한다. */
 body{word-break:keep-all}
-:where(h1,h2,h3,h4){text-wrap:balance}
-:where(p,li,dd,dt,td,th,label,small,.hint,.muted,.note,.sub,.tag,.desc){text-wrap:pretty}
+:where(h1,h2,h3,h4){text-wrap-style:balance}
+:where(p,li,dd,dt,td,th,label,small,.hint,.muted,.note,.sub,.tag,.desc){text-wrap-style:pretty}
 
 /* 좁은 화면: 분절 버튼은 한 줄 유지(가로 스크롤), 카드 제목과 힌트는 줄을 나눠 제목이 쪼개지지 않게 */
 .seg{max-width:100%;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
@@ -985,6 +985,9 @@ function planValidation(o) {
   const shortRows = rows.filter(r => isNum(r.x) && r.x < 0.98);
   const overRows = rows.filter(r => isNum(r.x) && r.x > 1.02);
   const problem = failed.length > 0 || (o.hardBalance && shortRows.length > 0);
+  /* 저장 버튼이 읽을 수 있게 마지막 검증 결과를 남긴다 */
+  state._planCheck = { problem, text: failed.length ? (failed[0].fail || `${failed[0].label} ${String(failed[0].val).replace(/<[^>]*>/g, "")}`) + (failed.length > 1 ? ` 외 ${failed.length - 1}건` : "")
+                                    : (o.hardBalance && shortRows.length ? "부족 " + shortRows.map(r => r.el).join(", ") : "") };
 
   const summary = (() => {
     if (failed.length) {
@@ -3434,11 +3437,12 @@ function renderPlannerCore(root, ctx) {
   root.querySelectorAll(".cUp").forEach(el => el.onclick = () => { const i = CI(el); if (i > 0) { const t = comps[i - 1]; comps[i - 1] = comps[i]; comps[i] = t; rr(); } });
   root.querySelectorAll(".cDn").forEach(el => el.onclick = () => { const i = CI(el); if (i < comps.length - 1) { const t = comps[i + 1]; comps[i + 1] = comps[i]; comps[i] = t; rr(); } });
   $("#pAddComp").onclick = () => { comps.push({ id: newCompId(), role: "dopant", el: "", coeff: 0, excess: 1 }); rr(); };
-  $("#pReset").onclick = () => { state.plannerCtx = defaultPlannerCtx("core"); renderView(); };
+  $("#pReset").onclick = () => { if (!plannerDiscardOK()) return; state.plannerCtx = defaultPlannerCtx("core"); renderView(); };
   $("#pEditProto").onclick = openProtocolEditor;
   $("#pPrint").onclick = () => printCards([coreCardHtml(preview, recipe)]);
   $("#pSave").onclick = () => {
-    if (!sumOk && !confirm("Dopant 계수 합이 1이 아닙니다. 그대로 저장할까요?")) return;
+    if (!sumOk) { if (!confirm("Dopant 계수 합이 1이 아닙니다. 그대로 저장할까요?")) return; }
+    else if (state._planCheck && state._planCheck.problem && !confirm(`검증에 문제가 있습니다 — ${state._planCheck.text}\n그대로 저장할까요?`)) return;
     const serial = ctx.editSerial !== null ? ctx.editSerial : nextSerial();
     const precs = {};
     for (const r of plannerRecipeRows(ctx)) if (r.el && r.prec) precs[r.el] = r.prec;
@@ -3451,6 +3455,7 @@ function renderPlannerCore(root, ctx) {
       heat: ctx.heat, memo: ctx.memo, precursors: precs,
       naExcessUsed: ctx.naExcess, fExcessUsed: ctx.fExcess, cardEdits: ctx.cardEdits, deleted: false });
     toast(`Lot ${serial} 저장 완료`, "ok");
+    if (state.plannerDrafts) delete state.plannerDrafts.core;
     state.plannerCtx = defaultPlannerCtx("core");
     go("log");
   };
@@ -3733,10 +3738,11 @@ function renderPlannerShell(root, ctx) {
   $("#solAdd").onclick = () => { ctx.solPrecs.push({ name: (APP_DATA.materials.precursors.find(p => dopantEls().includes(p.elem)) || {}).name, kind: "solute", mmol: 0 }); rr(); };
   $("#solAddAux").onclick = () => { ctx.solPrecs.push({ name: SHELL_NA_SOURCE, kind: "aux", mmol: 0 }); rr(); };
   $("#solPrint").onclick = () => printCards([shellSolutionCardHtml(lotFormula(preview) + " solution", sol, ctx.solCardEdits)]);
-  $("#sReset").onclick = () => { state.plannerCtx = defaultPlannerCtx("shell"); renderView(); };
+  $("#sReset").onclick = () => { if (!plannerDiscardOK()) return; state.plannerCtx = defaultPlannerCtx("shell"); renderView(); };
   $("#sEditProto").onclick = openProtocolEditor;
   $("#sPrint").onclick = () => printCards([shellCardHtml(preview, calc, lotFormula(preview))]);
   $("#sSave").onclick = () => {
+    if (state._planCheck && state._planCheck.problem && !confirm(`검증에 문제가 있습니다 — ${state._planCheck.text}\n그대로 저장할까요?`)) return;
     const serial = ctx.editSerial !== null ? ctx.editSerial : nextSerial();
     upsertLot({ serial, type: "Shell", date: ctx.date, stockVol: ctx.stockVol, tgtMmol: null,
       src: { serial: Number(ctx.src), volMl: ctx.volMl }, radius: ctx.radius, thick: ctx.thick, oaMl: ctx.oaMl, odeMl: ctx.odeMl,
@@ -3747,6 +3753,7 @@ function renderPlannerShell(root, ctx) {
       solPrecs: (ctx.solPrecs || []).map(r => ({ name: r.name, mmol: r.mmol, kind: r.kind || "solute" })),
       cardEdits: ctx.cardEdits, solCardEdits: ctx.solCardEdits || {}, deleted: false });
     toast(`Lot ${serial} 저장 완료`, "ok");
+    if (state.plannerDrafts) delete state.plannerDrafts.shell;
     state.plannerCtx = defaultPlannerCtx("shell");
     go("log");
   };
@@ -3829,6 +3836,7 @@ function recipeFromPlanner(ctx, name) {
 }
 function applyRecipe(rec) {
   if (!rec || !Array.isArray(rec.components)) return toast("레시피 형식이 올바르지 않습니다", "err");
+  if (!plannerDiscardOK()) return;
   if (rec.kind === "shell") {
     const c2 = defaultPlannerCtx("shell");
     c2.components = rec.components.map(c => ({ id: newCompId(), role: c.role || "dopant", el: c.el,
@@ -4016,6 +4024,7 @@ function recipeMissingPrecs(rec) {
 
 let _wiz = null;
 function openSynthWizard() {
+  if (!plannerDiscardOK()) return;
   const S = state.db.settings;
   _wiz = { step: 1, formula: "", parsed: null, precs: {}, excess: {},
            rg: { oaPerMmol: S.oaPerMmol, odeTot: S.odeTotalSmall, useOam: S.oamEq > 0,
@@ -4199,6 +4208,14 @@ function finishWizard(ov) {
                 : "일부만 옮겼습니다 — 요약의 안내를 확인하고 조정해 주세요", map.ok ? "ok" : "warn");
 }
 
+/* ---- 작성 중인 계획 보호 (2026-09-29) ---- */
+function plannerFp(c) { try { return JSON.stringify(c, (k, v) => k === "_base" ? undefined : v); } catch (e) { return ""; } }
+function plannerDirty() { const c = state.plannerCtx; return !!(c && c._base !== undefined && plannerFp(c) !== c._base); }
+function plannerDiscardOK() {
+  if (!plannerDirty()) return true;
+  return confirm("작성 중인 계획에 저장하지 않은 변경이 있습니다.\n버리고 계속할까요?");
+}
+window.addEventListener("beforeunload", e => { if (plannerDirty()) { e.preventDefault(); e.returnValue = ""; } });
 function renderPlanner(root) {
   if (!state.plannerCtx) state.plannerCtx = defaultPlannerCtx("core");
   const ctx = state.plannerCtx;
@@ -4208,19 +4225,23 @@ function renderPlanner(root) {
     <span style="flex:1"></span>
     <button class="btn sm" id="segWizard" title="조성식만 적으면 성분표·역할·검증 기준까지 만들어 드립니다">✨ 새 합성 프로세스 만들기</button>
   </div>${recipeBarHtml(ctx.mode)}<div id="plannerBody"></div>`;
-  $("#segCore").onclick = () => { if (ctx.mode !== "core") { state.plannerCtx = defaultPlannerCtx("core"); renderView(); } };
-  $("#segShell").onclick = () => { if (ctx.mode !== "shell") { state.plannerCtx = defaultPlannerCtx("shell"); renderView(); } };
-  const cancel = $("#segCancelEdit"); if (cancel) cancel.onclick = () => { state.plannerCtx = defaultPlannerCtx(ctx.mode); renderView(); };
+  const drafts = state.plannerDrafts || (state.plannerDrafts = {});
+  const switchMode = m => { if (ctx.mode === m) return; drafts[ctx.mode] = ctx; state.plannerCtx = drafts[m] || defaultPlannerCtx(m); renderView(); };
+  $("#segCore").onclick = () => switchMode("core");
+  $("#segShell").onclick = () => switchMode("shell");
+  const cancel = $("#segCancelEdit"); if (cancel) cancel.onclick = () => { if (!plannerDiscardOK()) return; state.plannerCtx = defaultPlannerCtx(ctx.mode); renderView(); };
   $("#segWizard").onclick = openSynthWizard;
   bindRecipeBar(() => renderView());
   const body = $("#plannerBody");
   if (ctx.mode === "core") renderPlannerCore(body, ctx); else renderPlannerShell(body, ctx);
+  if (ctx._base === undefined) ctx._base = plannerFp(ctx);   // 첫 렌더(정규화) 직후를 '변경 없음' 기준으로
 }
 
 /* prefill planner from an existing lot (edit) */
 function editLotInPlanner(serial) {
   const lot = lotOf(serial);
   if (!lot) return;
+  if (!plannerDiscardOK()) return;
   const S = state.db.settings;
   if (lot.type === "Core") {
     const ctx = defaultPlannerCtx("core");
@@ -5705,8 +5726,8 @@ function renderDash(root) {
   </div>`;
   const dashLogin = $("#dashLogin");
   if (dashLogin) dashLogin.onclick = () => Sync.quickConnect();
-  $("#qCore").onclick = () => { state.plannerCtx = defaultPlannerCtx("core"); go("plan"); };
-  $("#qShell").onclick = () => { state.plannerCtx = defaultPlannerCtx("shell"); go("plan"); };
+  $("#qCore").onclick = () => { if (plannerDiscardOK()) state.plannerCtx = defaultPlannerCtx("core"); go("plan"); };
+  $("#qShell").onclick = () => { if (plannerDiscardOK()) state.plannerCtx = defaultPlannerCtx("shell"); go("plan"); };
   $("#qIcp").onclick = () => { icpSub = "import"; go("icp"); };
   $("#qXlsx").onclick = exportAllXlsx;
   $("#qBackup").onclick = () => { backupJson(); renderTopChips(); };
@@ -5790,7 +5811,7 @@ function renderLog(root) {
   };
   $("#logType").onchange = e => { logCtx.type = e.target.value; renderLog(root); };
   $("#logGroup").onchange = e => { logCtx.group = e.target.value; renderLog(root); };
-  $("#logNew").onclick = () => { state.plannerCtx = null; go("plan"); };
+  $("#logNew").onclick = () => { if (plannerDiscardOK()) state.plannerCtx = null; go("plan"); };
   $("#logXlsx").onclick = exportAllXlsx;
   $("#selAll").onchange = e => {
     if (e.target.checked) filtered.forEach(l => logCtx.sel.add(l.serial)); else logCtx.sel.clear();
