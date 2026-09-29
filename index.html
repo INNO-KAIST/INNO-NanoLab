@@ -595,6 +595,12 @@ body{word-break:keep-all}
 .lothub-acts .btn{justify-content:center}
 .icpnote:hover{border-color:var(--accent)}
 
+/* rd3 NanoLab — 이 계획에만 적용된 값 */
+.planlocal{margin:0 0 9px;padding:8px 10px;border-radius:9px;border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));background:color-mix(in srgb,var(--accent) 7%,var(--card))}
+.planlocal .pl-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px}
+.planlocal .pl-acts{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.planlocal .pl-items{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:5px;font-size:12px}
+
 /* ════════ INNO suite UX layer — 공통 CSS (2026-09-29) ════════ */
 /* 앱 전환 버튼·메뉴 (크롬 위) */
 .inno-apps{position:relative;display:inline-flex}
@@ -2363,21 +2369,97 @@ function setShared(path, val) {
   saveSettings(); syncConstants();
   syncPlannerFromSettings();
 }
+/* ③ 계획 전용 값 — 계획창에서 고친 조건은 이 계획(ctx.local)에만 남는다 */
+const PLAN_LOCAL_LABEL = {
+  oaPerMmol: ["Oleic acid", "mL/mmol"], odeTotalSmall: ["ODE 총량 (tgt ≤ 1)", "mL"], odeTotalLarge: ["ODE 총량 (tgt > 1)", "mL"],
+  oamEq: ["Oleyl amine 당량", "eq"], oamMw: ["Oleyl amine M.W.", "g/mol"], oamDens: ["Oleyl amine 밀도", "g/mL"],
+  mtohPerMgF: ["Methanol", "mL/mg NH₄F"], naExcess: ["Host cation 과량", "×"], fExcess: ["Anion 과량", "×"],
+  "shellSyn.aliquotMl": ["Aliquot", "mL"], "shellSyn.oaMl": ["Shell OA", "mL"], "shellSyn.odeMl": ["Shell ODE", "mL"],
+  "shellSyn.inj": ["주입 단계", "mL"], "shellSol.volMl": ["Shell 용액 부피", "mL"], "shellSol.lnConcM": ["Shell 용액 Ln 농도", "M"],
+  "shellSol.tfaConcM": ["Shell 용액 TFA 농도", "M"],
+};
+function _getPath(o, path) { return String(path).split(".").reduce((a, k) => (a == null ? a : a[k]), o); }
+function _setPath(o, path, v) {
+  const seg = String(path).split("."); let t = o;
+  for (let i = 0; i < seg.length - 1; i++) { if (!t[seg[i]] || typeof t[seg[i]] !== "object") t[seg[i]] = {}; t = t[seg[i]]; }
+  t[seg[seg.length - 1]] = Array.isArray(v) ? v.slice() : v;
+}
+const REAGENT_KEYS = ["oaPerMmol", "odeTotalSmall", "odeTotalLarge", "oamEq", "oamMw", "oamDens", "mtohPerMgF"];
+function reagentsNow() { const C = APP_DATA.constants, o = {}; REAGENT_KEYS.forEach(k => { if (isNum(C[k])) o[k] = C[k]; }); return o; }
+function withReagents(r, fn) {
+  if (!r) return fn();
+  const C = APP_DATA.constants, keep = {};
+  REAGENT_KEYS.forEach(k => { keep[k] = C[k]; if (isNum(r[k])) C[k] = r[k]; });
+  try { return fn(); } finally { REAGENT_KEYS.forEach(k => { C[k] = keep[k]; }); }
+}
+function planLocalActive() { const c = state.plannerCtx; return state.view === "plan" && c && c.local && Object.keys(c.local).length ? c.local : null; }
+/* 계획창에서 보이는 값 = 설정값 위에 이 계획의 값 */
+function planEff() {
+  const S = JSON.parse(JSON.stringify(state.db.settings || {}));
+  const L = (state.plannerCtx && state.plannerCtx.local) || {};
+  for (const k in L) _setPath(S, k, L[k]);
+  return S;
+}
+function setPlanLocal(path, v) {
+  const ctx = state.plannerCtx; if (!ctx) return;
+  ctx.local = ctx.local || {};
+  const def = _getPath(state.db.settings, path);
+  if (JSON.stringify(def) === JSON.stringify(v)) delete ctx.local[path];   // 기본값과 같아지면 '계획 전용'이 아니다
+  else ctx.local[path] = Array.isArray(v) ? v.slice() : v;
+  syncConstants();
+}
+function _fmtLocal(v) { return Array.isArray(v) ? v.join(", ") : (typeof v === "number" ? fmtN(v, v < 1 ? 4 : 3).replace(/\.?0+$/, "") : String(v)); }
+function planLocalBarHtml(ctx) {
+  const L = (ctx && ctx.local) || {};
+  const keys = Object.keys(L);
+  if (!keys.length) return "";
+  const S = state.db.settings;
+  const items = keys.map(k => { const lb = PLAN_LOCAL_LABEL[k] || [k, ""];
+    return `<span class="pl-item"><b>${esc(lb[0])}</b> ${esc(_fmtLocal(L[k]))}${lb[1] ? " " + esc(lb[1]) : ""} <span class="muted">(기본 ${esc(_fmtLocal(_getPath(S, k)))})</span></span>`; }).join("");
+  return `<div class="planlocal" role="status"><div class="pl-head"><b>이 계획에만 적용된 값 ${keys.length}개</b>
+      <span class="pl-acts"><button class="btn sm" id="plSaveDef" title="다음 계획부터 이 값들을 기본값으로 씁니다 (설정 탭과 같은 값)">기본값으로 저장</button>
+      <button class="btn sm ghost" id="plRevert" title="이 계획의 값을 버리고 기본값으로 되돌립니다">기본값으로 되돌리기</button></span></div>
+    <div class="pl-items">${items}</div></div>`;
+}
+function bindPlanLocalBar(root, ctx, rr) {
+  const sv = root.querySelector("#plSaveDef"), rv = root.querySelector("#plRevert");
+  if (sv) sv.onclick = () => {
+    const L = ctx.local || {}, n = Object.keys(L).length;
+    for (const k in L) _setPath(state.db.settings, k, L[k]);
+    ctx.local = {};
+    saveSettings(); syncConstants();
+    toast(`${n}개 값을 기본값으로 저장했습니다 — 다음 계획부터 적용`, "ok"); rr();
+  };
+  if (rv) rv.onclick = () => {
+    const L = ctx.local || {};
+    ctx.local = {};
+    syncConstants(); syncPlannerFromSettings();
+    const S = state.db.settings;
+    /* Core: 과량은 성분표에 들어 있으므로 성분표도 기본값으로 */
+    if (ctx.mode !== "shell" && Array.isArray(ctx.components)) ctx.components.forEach(c => {
+      if (!c) return;
+      if (c.role === "hostCation" && "naExcess" in L) c.excess = S.naExcess;
+      if (c.role === "anion" && "fExcess" in L) c.excess = S.fExcess ?? 1;
+    });
+    toast("기본값으로 되돌렸습니다", "ok"); rr();
+  };
+}
 function syncPlannerFromSettings() {
   const ctx = state.plannerCtx, S = state.db.settings;
   if (!ctx) return;
+  const L = ctx.local || {};
   if (ctx.mode === "shell") {
-    ctx.volMl = S.shellSyn.aliquotMl;
-    ctx.oaMl = S.shellSyn.oaMl;
-    ctx.odeMl = S.shellSyn.odeMl;
-    ctx.inj = S.shellSyn.inj.slice();
-    ctx.solVolMl = S.shellSol.volMl;
-    ctx.solLnMmol = S.shellSol.lnConcM * S.shellSol.volMl;
-    ctx.solTfaMmol = S.shellSol.tfaConcM * S.shellSol.volMl;
+    if (!("shellSyn.aliquotMl" in L)) ctx.volMl = S.shellSyn.aliquotMl;
+    if (!("shellSyn.oaMl" in L)) ctx.oaMl = S.shellSyn.oaMl;
+    if (!("shellSyn.odeMl" in L)) ctx.odeMl = S.shellSyn.odeMl;
+    if (!("shellSyn.inj" in L)) ctx.inj = S.shellSyn.inj.slice();
+    if (!("shellSol.volMl" in L)) ctx.solVolMl = S.shellSol.volMl;
+    if (!("shellSol.lnConcM" in L) && !("shellSol.volMl" in L)) ctx.solLnMmol = S.shellSol.lnConcM * S.shellSol.volMl;
+    if (!("shellSol.tfaConcM" in L) && !("shellSol.volMl" in L)) ctx.solTfaMmol = S.shellSol.tfaConcM * S.shellSol.volMl;
     /* solPrecs(전구체별 mmol)와 stockVol은 계획마다 다른 값이므로 여기서 건드리지 않는다 */
   } else {
-    ctx.naExcess = S.naExcess;
-    ctx.fExcess = S.fExcess ?? 1;
+    if (!("naExcess" in L)) ctx.naExcess = S.naExcess;
+    if (!("fExcess" in L)) ctx.fExcess = S.fExcess ?? 1;
   }
 }
 
@@ -2389,6 +2471,7 @@ function syncConstants() {
   C.oamEq = s.oamEq; C.oamMw = s.oamMw; C.oamDens = s.oamDens; C.mtohPerMgF = s.mtohPerMgF;
   Object.assign(C.shellSol, s.shellSol);
   C.shellSyn.aliquotMl = s.shellSyn.aliquotMl; C.shellSyn.oaMl = s.shellSyn.oaMl; C.shellSyn.odeMl = s.shellSyn.odeMl; C.shellSyn.inj = s.shellSyn.inj.slice();
+  { const L = (typeof planLocalActive === "function") ? planLocalActive() : null; if (L) for (const k in L) _setPath(C, k, L[k]); }
   Object.assign(C.icpPrep, s.icpPrep); C.icpStd = s.icpStd.slice();
   setLotPrefix(s.lotPrefix === undefined ? "WJ" : s.lotPrefix);
 }
@@ -2858,7 +2941,7 @@ function cardForLot(lot) {
       const prec = (lot.precursors && lot.precursors[s.el]) || (Materials.defaultPrec(s.el) || {}).name;
       return { el: s.el, prec, ratio, role: s.role };
     });
-    const recipe = coreRecipe({ tgtMmol: lot.tgtMmol ?? 0.1, rows });
+    const recipe = withReagents(lot.reagentsUsed, () => coreRecipe({ tgtMmol: lot.tgtMmol ?? 0.1, rows }));
     return coreCardHtml(lot, recipe);
   } else {
     const d = derivedOf(lot.serial) || {};
@@ -3210,6 +3293,7 @@ function precSelect(cls, el, cur) {
 
 /* ---------------- CORE view ---------------- */
 function renderPlannerCore(root, ctx) {
+  syncConstants();                 // 이 계획의 값이 계산에 쓰이도록
   const R = APP_DATA.roles;
   const comps = ensureComponents(ctx);
   const recipe = coreRecipe({ tgtMmol: ctx.tgtMmol, components: plannerComponents(ctx) });
@@ -3287,7 +3371,7 @@ function renderPlannerCore(root, ctx) {
         const volTxt = (sv.ml==null?"–":fmtN(sv.ml, sv.dig!=null?sv.dig:2)) + " mL";
         let ctrl;
         if (sv.mode === "directMl") {
-          if (sv.auto) { ctrl = `<span class="muted" style="font-size:11px">자동 = ${_ctxR.tgt<=1?(state.db.settings.odeTotalSmall||10):(state.db.settings.odeTotalLarge||20)} − OA</span>`; }
+          if (sv.auto) { ctrl = `<span class="muted" style="font-size:11px">자동 = ${_ctxR.tgt<=1?(planEff().odeTotalSmall||10):(planEff().odeTotalLarge||20)} − OA</span>`; }
           else { const id=`sv_${gi}_${si}`; _solvWire.push({id, bi, si, field:"val", num:true}); ctrl = `직접 <input type="number" step="any" id="${id}" class="slim w80" value="${sv.val!=null?sv.val:""}"> mL`; }
         } else {
           const id=`sv_${gi}_${si}`; _solvWire.push({id, bi, si, field:"val", num:true});
@@ -3307,7 +3391,7 @@ function renderPlannerCore(root, ctx) {
   } else {
     /* 시약 조건을 계획 화면에서 직접 입력 — 값을 고치면 아래 결과 타일이 즉시 갱신되고,
        설정 탭의 같은 항목과 하나의 값으로 유지된다(setShared). */
-    const _S = state.db.settings;
+    const _S = planEff();
     const _odeKey = (ctx.tgtMmol <= 1) ? "odeTotalSmall" : "odeTotalLarge";
     const _useOam = _S.oamEq > 0;
     const _cg = (title, body, extra) => `<div style="border:1px solid var(--line2);border-radius:9px;padding:6px 9px 7px;background:var(--card);min-width:0">
@@ -3315,7 +3399,7 @@ function renderPlannerCore(root, ctx) {
         <div class="row" style="gap:6px;align-items:center">${body}</div>${extra || ""}</div>`;
     const _u = t => `<span class="muted" style="font-size:11px">${t}</span>`;
     const condRow = `<div style="margin-bottom:11px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--chip)">
-        <div style="font-size:11.5px;font-weight:700;color:var(--sub);margin-bottom:7px">투입 조건 <span class="muted" style="font-weight:500">— 고치면 아래 결과와 출력 카드가 즉시 바뀌고, 다음 계획의 기본값으로도 남습니다</span></div>
+        <div style="font-size:11.5px;font-weight:700;color:var(--sub);margin-bottom:7px">투입 조건 <span class="muted" style="font-weight:500">— 고치면 이 계획에만 적용됩니다</span></div>
         <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:flex-start">
         ${_cg("Oleic acid",
             `<input type="number" step="0.5" min="0" class="slim w80" id="rgOaPer" value="${_S.oaPerMmol}">${_u("mL/mmol × tgt")}`)}
@@ -3335,9 +3419,9 @@ function renderPlannerCore(root, ctx) {
         </div>
       </div>`;
     solvSection = condRow + `<div class="tiles" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">
-        <div class="tile"><div class="v">${fmtN(recipe.oaMl, 1)}<span style="font-size:13px"> mL</span></div><div class="k">Oleic acid</div><div class="s">= ROUND(tgt × ${state.db.settings.oaPerMmol}, 1)</div></div>
+        <div class="tile"><div class="v">${fmtN(recipe.oaMl, 1)}<span style="font-size:13px"> mL</span></div><div class="k">Oleic acid</div><div class="s">= ROUND(tgt × ${_S.oaPerMmol}, 1)</div></div>
         <div class="tile"><div class="v">${fmtN(recipe.odeMl, 1)}<span style="font-size:13px"> mL</span></div><div class="k">1-Octadecene</div><div class="s">= ${_S[_odeKey]} − Oleic acid</div></div>
-        ${recipe.oamMl === 0 ? "" : `<div class="tile"><div class="v">${fmtN(recipe.oamMl, 2)}<span style="font-size:13px"> mL</span></div><div class="k">Oleyl amine</div><div class="s">= tgt×${state.db.settings.oamEq} eq → 순액 부피</div></div>`}
+        ${recipe.oamMl === 0 ? "" : `<div class="tile"><div class="v">${fmtN(recipe.oamMl, 2)}<span style="font-size:13px"> mL</span></div><div class="k">Oleyl amine</div><div class="s">= tgt×${_S.oamEq} eq → 순액 부피</div></div>`}
         <div class="tile"><div class="v">${recipe.mtohMl === null ? "–" : fmtN(recipe.mtohMl, 0)}<span style="font-size:13px"> mL</span></div><div class="k">Methanol (NH₄F 분산)</div><div class="s">= ROUNDUP(W<sub>NH4F</sub>×${_S.mtohPerMgF})</div></div>
         <div class="tile"><div class="v">${fmtN(recipe.mw, 2)}</div><div class="k">M.W. [g/mol]</div><div class="s">투입비 기준</div></div>
         <div class="tile"><div class="v">${fmtN(recipe.targetMg, 2)}<span style="font-size:13px"> mg</span></div><div class="k">Target amount</div><div class="s">${ctx.tgtMmol} mmol</div></div>
@@ -3349,6 +3433,7 @@ function renderPlannerCore(root, ctx) {
    <div>
     <div class="card" id="planMain">
       <h3>Core 합성 계획 <span class="hint">목표 mmol 기준</span></h3>
+      ${planLocalBarHtml(ctx)}
       <div class="row" style="margin-bottom:10px">
         <label class="f"><span>Lot 접두사</span><input type="text" class="w80" id="pLotPre" value="${esc(state.db.settings.lotPrefix ?? "WJ")}"
           title="lot 번호 앞에 붙는 표기입니다 — 고치면 기록·ICP 라벨에 모두 반영되고 다음 계획에도 이어집니다"></label>
@@ -3425,13 +3510,14 @@ function renderPlannerCore(root, ctx) {
     if (el.tagName === "SELECT") el.onchange = handler; else el.onchange = handler; });
   $("#pTgt").onchange = e => { ctx.tgtMmol = parseFloat(e.target.value) || 0; rr(); };
   $("#pName").onchange = e => { ctx.name = e.target.value.trim(); rr(); };
-  /* 시약 조건 — 계획창에서 고치면 설정 탭의 같은 항목도 함께 바뀐다 */
+  /* 시약 조건 — 계획창에서 고친 값은 이 계획에만. 기본값으로 쓰려면 '기본값으로 저장' */
+  bindPlanLocalBar(root, ctx, rr);
   const bindCond = (sel, path, positive) => {
     const el = $(sel); if (!el) return;
     el.onchange = () => {
       const v = parseFloat(el.value);
       if (!isFinite(v) || v < 0 || (positive && v <= 0)) return rr();
-      setShared(path, v); rr();
+      setPlanLocal(path, v); rr();
     };
   };
   bindCond("#rgOaPer", "oaPerMmol");
@@ -3442,9 +3528,9 @@ function renderPlannerCore(root, ctx) {
   bindCond("#rgMtoh", "mtohPerMgF");
   const _oamUse = $("#rgOamUse");
   if (_oamUse) _oamUse.onchange = () => {
-    const S2 = state.db.settings;
-    if (_oamUse.checked) setShared("oamEq", (S2.oamEqLast > 0) ? S2.oamEqLast : 1.5);
-    else { if (S2.oamEq > 0) setShared("oamEqLast", S2.oamEq); setShared("oamEq", 0); }
+    const S2 = state.db.settings, E2 = planEff();
+    if (_oamUse.checked) setPlanLocal("oamEq", ctx._oamPrev > 0 ? ctx._oamPrev : (S2.oamEq > 0 ? S2.oamEq : (S2.oamEqLast > 0 ? S2.oamEqLast : 1.5)));
+    else { if (E2.oamEq > 0) ctx._oamPrev = E2.oamEq; setPlanLocal("oamEq", 0); }
     rr();
   };
   $("#pLotPre").onchange = e => { const p = e.target.value.trim(); setLotPrefix(p); setShared("lotPrefix", p); rr(); };
@@ -3479,8 +3565,8 @@ function renderPlannerCore(root, ctx) {
     const c = comps[CI(el)], v = parseFloat(el.value);
     c.excess = (isFinite(v) && v >= 0) ? v : 1;
     /* 설정 탭과 이어져 있는 두 값은 함께 갱신 (표시 일관성 유지) */
-    if (c.role === "hostCation") { ctx.naExcess = c.excess; setShared("naExcess", c.excess); }
-    else if (c.role === "anion") { ctx.fExcess = c.excess; setShared("fExcess", c.excess); }
+    if (c.role === "hostCation") { ctx.naExcess = c.excess; setPlanLocal("naExcess", c.excess); }
+    else if (c.role === "anion") { ctx.fExcess = c.excess; setPlanLocal("fExcess", c.excess); }
     rr();
   });
   root.querySelectorAll(".cDel").forEach(el => el.onclick = () => {
@@ -3507,7 +3593,7 @@ function renderPlannerCore(root, ctx) {
            prec: compPrec(ctx, c) }))
         .map((c, i, arr) => { if (c.mode === "multiple" && c.ref) { const t = ensureComponents(ctx).find(x => x.id === c.ref); c.ref = t ? t.el : null; } return c; }),
       heat: ctx.heat, memo: ctx.memo, precursors: precs,
-      naExcessUsed: ctx.naExcess, fExcessUsed: ctx.fExcess, cardEdits: ctx.cardEdits, deleted: false });
+      naExcessUsed: ctx.naExcess, fExcessUsed: ctx.fExcess, reagentsUsed: reagentsNow(), cardEdits: ctx.cardEdits, deleted: false });
     toast(`Lot ${serial} 저장 완료`, "ok");
     if (state.plannerDrafts) delete state.plannerDrafts.core;
     state.plannerCtx = defaultPlannerCtx("core");
@@ -3517,6 +3603,7 @@ function renderPlannerCore(root, ctx) {
 
 /* ---------------- SHELL view ---------------- */
 function renderPlannerShell(root, ctx) {
+  syncConstants();
   const R = APP_DATA.roles, S = state.db.settings;
   const lots = Object.values(activeLots()).sort((a, b) => b.serial - a.serial);
   if (!ctx.src && lots.length) ctx.src = lots[0].serial;
@@ -3595,6 +3682,7 @@ function renderPlannerShell(root, ctx) {
    <div>
     <div class="card">
       <h3>Shell 성장 계획 <span class="hint">기하(R·T) 기준 — 필요량이 계산되어 나옵니다</span></h3>
+      ${planLocalBarHtml(ctx)}
       <div class="row" style="margin-bottom:10px">
         <label class="f"><span>Lot 접두사</span><input type="text" class="w80" id="sLotPre" value="${esc(S.lotPrefix ?? "WJ")}"
           title="lot 번호 앞에 붙는 표기입니다 — 고치면 기록·ICP 라벨에 모두 반영되고 다음 계획에도 이어집니다"></label>
@@ -3713,10 +3801,11 @@ function renderPlannerShell(root, ctx) {
     if (sl && isFinite(sl.temRadius) && sl.temRadius > 0) ctx.radius = sl.temRadius;
     rr();
   };
-  /* aliquot·OA·ODE·주입단계·용액 조성은 설정 탭의 같은 항목과 하나의 값으로 유지 */
-  $("#sVol").onchange = e => { const v = parseFloat(e.target.value) || 0; ctx.volMl = v; setShared("shellSyn.aliquotMl", v); rr(); };
-  $("#sOa").onchange = e => { const v = parseFloat(e.target.value) || 0; ctx.oaMl = v; setShared("shellSyn.oaMl", v); rr(); };
-  $("#sOde").onchange = e => { const v = parseFloat(e.target.value) || 0; ctx.odeMl = v; setShared("shellSyn.odeMl", v); rr(); };
+  /* aliquot·OA·ODE·주입단계·용액 조성 — 고친 값은 이 계획에만. 기본값으로 쓰려면 '기본값으로 저장' */
+  bindPlanLocalBar(root, ctx, rr);
+  $("#sVol").onchange = e => { const v = parseFloat(e.target.value) || 0; ctx.volMl = v; setPlanLocal("shellSyn.aliquotMl", v); rr(); };
+  $("#sOa").onchange = e => { const v = parseFloat(e.target.value) || 0; ctx.oaMl = v; setPlanLocal("shellSyn.oaMl", v); rr(); };
+  $("#sOde").onchange = e => { const v = parseFloat(e.target.value) || 0; ctx.odeMl = v; setPlanLocal("shellSyn.odeMl", v); rr(); };
   $("#sName").onchange = e => { ctx.name = e.target.value.trim(); rr(); };
   $("#sLotPre").onchange = e => { const p = e.target.value.trim(); setLotPrefix(p); setShared("lotPrefix", p); rr(); };
   /* '배분' 버튼: 입력한 총 몰수를 조성비대로 각 행에 나눠 넣는 도우미.
@@ -3738,7 +3827,7 @@ function renderPlannerShell(root, ctx) {
       ctx.solPrecs[0].mmol = excelRound(v, 4);
     }
     ctx.solLnMmol = v;
-    if (ctx.solVolMl > 0) setShared("shellSol.lnConcM", v / ctx.solVolMl);
+    if (ctx.solVolMl > 0) setPlanLocal("shellSol.lnConcM", v / ctx.solVolMl);
     rr();
   };
   $("#sSolLnApply").onclick = applyLnTotal;
@@ -3750,10 +3839,10 @@ function renderPlannerShell(root, ctx) {
   $("#sSolVol").onchange = e => {
     const v = parseFloat(e.target.value); if (!(isFinite(v) && v > 0)) return rr();
     ctx.solVolMl = v;
-    setShared("shellSol.volMl", v);
+    setPlanLocal("shellSol.volMl", v);
     /* 몰수는 유지하고 농도를 다시 계산 — 사용자가 입력한 mmol이 기준 */
-    setShared("shellSol.lnConcM", (ctx.solLnMmol || 0) / v);
-    setShared("shellSol.tfaConcM", (ctx.solTfaMmol || 0) / v);
+    setPlanLocal("shellSol.lnConcM", (ctx.solLnMmol || 0) / v);
+    setPlanLocal("shellSol.tfaConcM", (ctx.solTfaMmol || 0) / v);
     rr();
   };
   $("#sRad").onchange = e => { ctx.radius = parseFloat(e.target.value) || 0; rr(); };
@@ -3763,7 +3852,7 @@ function renderPlannerShell(root, ctx) {
   $("#sMemo").onchange = e => ctx.memo = e.target.value;
   $("#sInj").onchange = e => {
     ctx.inj = e.target.value.split(/[,\s]+/).map(Number).filter(v => isFinite(v) && v > 0);
-    setShared("shellSyn.inj", ctx.inj.slice()); rr();
+    setPlanLocal("shellSyn.inj", ctx.inj.slice()); rr();
   };
   const SI = el => Number(el.dataset.si);
   root.querySelectorAll(".sRole").forEach(el => el.onchange = () => { scomps[SI(el)].role = el.value; ctx.solPrecs = null; rr(); });
@@ -3925,7 +4014,7 @@ function applyRecipe(rec) {
   state.plannerCtx = ctx;
   const rg = rec.reagents || {};
   for (const k of ["oaPerMmol", "odeTotalSmall", "odeTotalLarge", "oamEq", "oamMw", "oamDens", "mtohPerMgF"])
-    if (isNum(rg[k])) setShared(k, rg[k]);
+    if (isNum(rg[k])) setPlanLocal(k, rg[k]);
   const S = state.db.settings;
   if (rec.protocolId && S.protocols && S.protocols[rec.protocolId]) { S.activeProtocolId = rec.protocolId; saveSettings(); }
   S.activeRecipeId = rec.id;
@@ -4240,12 +4329,12 @@ function finishWizard(ov) {
   for (const el in W.precs) if (W.precs[el]) ctx.precs[el] = W.precs[el];
   state.plannerCtx = ctx;
   /* 시약 조건은 공유 파라미터로 반영 */
-  setShared("oaPerMmol", W.rg.oaPerMmol);
-  setShared(W.tgtMmol <= 1 ? "odeTotalSmall" : "odeTotalLarge", W.rg.odeTot);
-  setShared("mtohPerMgF", W.rg.mtoh);
-  setShared("oamEq", W.rg.useOam ? W.rg.oamEq : 0);
-  if (host) setShared("naExcess", ctx.naExcess);
-  if (anion) setShared("fExcess", ctx.fExcess);
+  setPlanLocal("oaPerMmol", W.rg.oaPerMmol);
+  setPlanLocal(W.tgtMmol <= 1 ? "odeTotalSmall" : "odeTotalLarge", W.rg.odeTot);
+  setPlanLocal("mtohPerMgF", W.rg.mtoh);
+  setPlanLocal("oamEq", W.rg.useOam ? W.rg.oamEq : 0);
+  if (host) setPlanLocal("naExcess", ctx.naExcess);
+  if (anion) setPlanLocal("fExcess", ctx.fExcess);
   /* 절차 복사 */
   if (W.procFrom && state.db.settings.protocols && state.db.settings.protocols[W.procFrom]) {
     state.db.settings.activeProtocolId = W.procFrom;
@@ -4324,6 +4413,11 @@ function editLotInPlanner(serial) {
     });
     ctx.precs = Object.assign({}, lot.precursors || {});
     if (Array.isArray(lot.components)) for (const c of lot.components) if (c && c.el && c.prec) ctx.precs[c.el] = c.prec;
+    /* 이 lot 을 만들 때 쓴 투입 조건이 기본값과 다르면 '이 계획에만' 값으로 되살린다 */
+    if (lot.reagentsUsed) { ctx.local = {}; const S0 = state.db.settings;
+      for (const k in lot.reagentsUsed) if (isNum(lot.reagentsUsed[k]) && lot.reagentsUsed[k] !== S0[k]) ctx.local[k] = lot.reagentsUsed[k]; }
+    if (isNum(lot.naExcessUsed) && lot.naExcessUsed !== S.naExcess) (ctx.local = ctx.local || {}).naExcess = lot.naExcessUsed;
+    if (isNum(lot.fExcessUsed) && lot.fExcessUsed !== (S.fExcess ?? 1)) (ctx.local = ctx.local || {}).fExcess = lot.fExcessUsed;
     state.plannerCtx = ctx;
   } else {
     const ctx = defaultPlannerCtx("shell");
@@ -5646,7 +5740,7 @@ function fmtSci(x, digits = 2) {
 
 /* ---------------- router ---------------- */
 const VIEWS = [["dash", "대시보드"], ["plan", "합성 계획"], ["log", "합성 기록"], ["icp", "ICP 분석"], ["icpdb", "ICP 기록"], ["set", "설정·백업"]];
-function go(v) { state.view = v; render(); }
+function go(v) { state.view = v; try { syncConstants(); } catch (e) {} render(); }
 function render() {
   const nav = $("#nav");
   const nLots = Object.values(activeLots()).length;
