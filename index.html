@@ -654,7 +654,7 @@ body{word-break:keep-all}
 <div id="app">
   <div id="mainUI">
     <div class="topbar">
-      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.3.7 · deploy</span></div>
+      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.4.0 · deploy</span></div>
       <div class="spacer"></div>
       <button class="chipbtn" id="chipBackup" title="클릭하여 즉시 백업"><span class="dot"></span>백업</button>
       <button class="chipbtn" id="chipSync" title="동기화 설정으로 이동"><span class="dot"></span>로컬 저장</button>
@@ -2093,6 +2093,7 @@ const state = {
   dirty: { lots: new Set(), icp: new Set(), recipes: new Set(), settings: false, refData: false },  // for cloud sync
   sync: { status: "off", detail: "", labErr: "" },
   importCtx: null,        // ICP import wizard context
+  msCtx: null,            // ICP-MS import wizard context
   plannerCtx: null,
 };
 
@@ -2667,14 +2668,14 @@ function buildIcpLogAoa() {
   return rows;
 }
 function buildIcpDetailAoa() {
-  const head = ["ICP lot", "Serial", "Date", "File", "Element", "λ used [nm]", "ppm (measured)",
+  const head = ["ICP lot", "Serial", "Date", "File", "Element", "λ [nm] / isotope", "ppm (measured)",
     "Stock conc [mg/L]", "Stock mass [mg]", "Stock mmol", "at%", "Target mmol", "Yield %",
     "Stock vol [mL]", "Aliquot [μL]", "Final [mL]", "Extra dilution", "비고"];
   const rows = [["ICP Analysis — 상세 (파장·수율)"], [], head];
   for (const r of activeIcp().sort((a, b) => (a.serial - b.serial) || String(a.icpLot).localeCompare(String(b.icpLot)))) {
     if (!r.detail || !r.detail.rows) continue;
     for (const d of r.detail.rows) {
-      rows.push([r.icpLot, r.serial, r.date, r.file || "", d.el, r.chosenWl ? (r.chosenWl[d.el] ?? "") : "",
+      rows.push([r.icpLot, r.serial, r.date, r.file || "", d.el, r.chosenIso ? (r.chosenIso[d.el] ?? "") : r.chosenWl ? (r.chosenWl[d.el] ?? "") : "",
         d.ppm ?? "", d.stockConc ?? "", d.stockMg ?? "", d.mmol ?? "", d.atPct ?? "", d.targetMmol ?? "", d.yieldPct ?? "",
         r.prep ? r.prep.stockMl : "", r.prep ? r.prep.aliquotUl : "", r.prep ? r.prep.finalMl : "", r.prep ? r.prep.extra : "",
         r.legacy ? "구 로그북 이관" : ""]);
@@ -4690,24 +4691,32 @@ function renderPrep(root) {
 
 /* ---------------- ③ 결과 가져오기 (wizard) ---------------- */
 function renderImport(root) {
+  if (state.msCtx) return renderMsWizard(root, state.msCtx);
   const ctx = state.importCtx;
   if (!ctx) {
     root.innerHTML = `
     <div class="card">
-      <h3>ICP-OES 결과 파일 가져오기</h3>
-      <div class="dropzone" id="dz">
+      <h3>ICP 결과 가져오기 <span class="hint">ICP-OES · ICP-MS 형식을 자동으로 구분합니다</span></h3>
+      <div class="dropzone" id="dz" tabindex="0">
         <div style="font-size:34px">📄</div>
-        <div><b>ICP-OES 내보내기 엑셀(.xlsx)</b>을 이곳에 끌어다 놓거나 클릭하여 선택</div>
-        <div class="muted" style="margin-top:4px">장비 export 형식을 자동 인식합니다 (Solution Label + "원소 파장 nm" 열)</div>
-        <input type="file" id="dzFile" accept=".xlsx,.xls" style="display:none">
+        <div><b>결과 파일을 끌어다 놓거나 클릭해서 선택 · 또는 이 화면에서 Ctrl+V</b></div>
+        <div class="muted" style="margin-top:6px;line-height:1.7">
+          <b>ICP-OES</b> 장비 내보내기 엑셀(.xlsx) — Solution Label + "원소 파장 nm" 열<br>
+          <b>ICP-MS</b> Thermo Qtegra 보고서 <b>PDF</b> · CSV/엑셀 표(행 = 샘플, 열 = 175Lu 같은 동위원소) · 보고서/표를 복사한 텍스트</div>
+        <input type="file" id="dzFile" accept=".xlsx,.xls,.csv,.pdf,.txt" style="display:none">
       </div>
+      <details style="margin-top:10px"><summary class="muted" style="cursor:pointer">텍스트로 붙여넣기 (PDF를 열어 Ctrl+A → Ctrl+C, 또는 엑셀 표 복사)</summary>
+        <textarea id="dzText" rows="6" style="width:100%;margin-top:6px;font-family:var(--mono);font-size:12px" placeholder="여기에 붙여넣은 뒤 [해석]"></textarea>
+        <div class="row right" style="margin-top:6px"><button class="btn primary sm" id="dzTextGo">해석</button></div></details>
     </div>`;
     const dz = $("#dz"), fi = $("#dzFile");
     dz.onclick = () => fi.click();
+    dz.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fi.click(); } };
     dz.ondragover = e => { e.preventDefault(); dz.classList.add("over"); };
     dz.ondragleave = () => dz.classList.remove("over");
-    dz.ondrop = e => { e.preventDefault(); dz.classList.remove("over"); if (e.dataTransfer.files[0]) loadIcpFile(e.dataTransfer.files[0]); };
-    fi.onchange = () => { if (fi.files[0]) loadIcpFile(fi.files[0]); };
+    dz.ondrop = e => { e.preventDefault(); dz.classList.remove("over"); if (e.dataTransfer.files[0]) icpIngestFile(e.dataTransfer.files[0]); };
+    fi.onchange = () => { if (fi.files[0]) icpIngestFile(fi.files[0]); };
+    $("#dzTextGo").onclick = () => icpIngestText($("#dzText").value, "붙여넣기");
     return;
   }
   renderImportWizard(root, ctx);
@@ -4784,35 +4793,7 @@ function computeWlDefaults(ctx, keepPicked) {
   ctx.validN = validN;
 }
 
-function loadIcpFile(file) {
-  const rd = new FileReader();
-  rd.onload = () => {
-    try {
-      const wb = XLSX.read(rd.result, { type: "array" });
-      const aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true });
-      const parsed = parseIcpAoa(aoa);
-      const dm = file.name.match(/(\d{6})/);
-      const P = state.db.settings.icpPrep;
-      const samples = parsed.rows.filter(r => r.kind === "sample").map(r => ({
-        label: r.label, serial: r.serialGuess, extra: r.extraGuess, include: true, vals: r.vals,
-        elsInclude: null,
-      }));
-      const measuredEls = parsed.elements;
-      const allLotEls = new Set();
-      for (const s of samples) { const lot = s.serial !== null ? lotOf(s.serial) : null; if (lot) lotElements(lot).forEach(e => allLotEls.add(e)); }
-      const unionEls = [...new Set([...measuredEls, ...allLotEls])];
-      const det = detectPreDil(samples);
-      const preDil = det.state === "pre" ? true : det.state === "raw" ? false : !!state.db.settings.icpPreDil;
-      const ctx = { file: file.name, date: dm ? dm[1] : todayYYMMDD(), parsed, samples, chosen: {}, validN: {},
-        unionEls, preDil, preDilAuto: det, userPicked: {},
-        prep: { aliquotUl: P.aliquotUl, finalMl: P.finalMl }, step: 1 };
-      computeWlDefaults(ctx, false);
-      state.importCtx = ctx;
-      renderView();
-    } catch (e) { console.error(e); toast("파일 해석 실패: " + e.message, "err"); }
-  };
-  rd.readAsArrayBuffer(file);
-}
+function loadIcpFile(file) { return icpIngestFile(file); }
 
 function sampleComputed(ctx, s) {
   /* per-sample: chosen-λ ppm per element -> composition + oor + yields */
@@ -4848,6 +4829,22 @@ function sampleComputed(ctx, s) {
     }
   }
   const inc = els.filter(e => s.elsInclude[e]);
+  /* 같은 원소의 다른 파장들(검정범위 안·플래그 없음)이 서로 맞는지 — 어긋나면 분광 간섭 의심 */
+  const lamAgree = {};
+  for (const el of inc) {
+    const vs = [];
+    for (const [wl, cell] of Object.entries(s.vals[el] || {})) {
+      if (!cell || cell.flagged || cell.v === null) continue;
+      const mv = measuredScale(ctx, s, cell.v);
+      if (mv >= ctx.parsed.stdMin && mv <= ctx.parsed.stdMax) vs.push({ wl: Number(wl), v: cell.v });
+    }
+    if (vs.length >= 2) {
+      const cv = s.vals[el][ctx.chosen[el]];
+      const ref = cv && cv.v !== null ? cv.v : vs[0].v;
+      const devs = vs.map(x => (x.v / ref - 1) * 100);
+      lamAgree[el] = { n: vs.length, dev: Math.max(...devs.map(Math.abs)), list: vs };
+    }
+  }
   const compPpm = {}; inc.forEach(e => { if (ppm[e] !== null) compPpm[e] = ppm[e]; });
   const comp = compositionFromPpm(compPpm);
   // yields — 사전입력 On이면 결과값에 희석이 이미 반영되어 있으므로 추가희석을 다시 곱하지 않음(×1)
@@ -4872,7 +4869,7 @@ function sampleComputed(ctx, s) {
     const raw = ppm[e] !== null ? ppm[e] : (flagVal[e] ?? null);
     return { el: e, ppm: raw !== null ? measuredScale(ctx, s, raw) : null, o: oorMap[e] };
   }).filter(Boolean)[0] || null;
-  return { lot, d, ppm, comp, oorMap, flaggedMap, inc, yields, totalMmol, overallYield, targetComp, worstOor, effExtra };
+  return { lot, d, ppm, comp, oorMap, flaggedMap, inc, yields, totalMmol, overallYield, targetComp, worstOor, effExtra, lamAgree };
 }
 
 function renderImportWizard(root, ctx) {
@@ -4911,7 +4908,7 @@ function renderImportWizard(root, ctx) {
       <td><input type="checkbox" class="mInc" data-i="${i}" ${s.include ? "checked" : ""}></td>
       <td class="mono l">${esc(s.label)}</td>
       <td class="l"><select class="mLot slim" data-i="${i}" style="max-width:280px">${opts}</select></td>
-      <td><input type="number" class="mExtra slim w60" data-i="${i}" value="${s.extra}" min="1" title="추가 희석배수 n (기본액 ×1/1000 기준)"></td>
+      <td><input type="number" class="mExtra slim w60" data-i="${i}" value="${s.extra}" min="1" title="추가 희석배수 n (기본액 대비)"></td>
       <td class="mono muted">${s.serial !== null ? `${s.serial}${(lotOf(s.serial) || {}).type === "Shell" ? "s" : "c"}${s.extra > 1 ? "_" + (s.extra === 20 ? "20k" : s.extra === 10 ? "10k" : s.extra + "x") : ""}` : "–"}</td>
       </tr>`;
   }).join("");
@@ -4923,7 +4920,9 @@ function renderImportWizard(root, ctx) {
       const v = c.comp[el];
       const o = c.oorMap[el];
       const fl = c.flaggedMap[el];
-      return `<span class="badge ${o ? "risk" : "info"}" title="${el} ${fmtN(c.ppm[el], 3)} ppm${o ? " · " + o.msg : ""}${fl ? " · 검출한계 미만(u)" : ""}">${el} ${v !== undefined ? fmtN(v, 2) + "%" : "–"}${fl ? " ⚠" : ""}</span>`;
+      const la = c.lamAgree[el];
+      const laB = la ? ` <span class="badge ${la.dev <= 5 ? "ok" : la.dev <= 10 ? "warn" : "risk"}" style="font-size:9.5px;padding:0 4px" title="검정범위 안 파장 ${la.n}개가 선택 파장 대비 최대 ${fmtN(la.dev, 1)}% 차이\n${la.list.map(x => `${x.wl.toFixed(3)} nm: ${fmtG(x.v, 4)}`).join("\n")}\n10% 넘게 어긋나면 분광 간섭 의심 — 다른 파장을 골라 비교하세요">λ±${fmtN(la.dev, 0)}%</span>` : "";
+      return `<span class="badge ${o ? "risk" : "info"}" title="${el} ${fmtN(c.ppm[el], 3)} ppm${o ? " · " + o.msg : ""}${fl ? " · 검출한계 미만(u)" : ""}">${el} ${v !== undefined ? fmtN(v, 2) + "%" : "–"}${fl ? " ⚠" : ""}</span>${laB}`;
     }).join(" ");
     const cmpBars = c.targetComp ? c.inc.filter(e => c.targetComp[e] !== undefined).map(el => {
       const t = c.targetComp[el] || 0, m = c.comp[el] || 0, mx = Math.max(t, m, 1) * 1.08;
@@ -4936,7 +4935,7 @@ function renderImportWizard(root, ctx) {
     return `<tr>
       <td class="mono l">${esc(s.label)}</td>
       <td>${c.lot ? `${lotLabel(c.lot)}<div class="muted" style="font-size:10.5px">${esc(lotFormula(c.lot))}</div>` : `<span class="muted">–</span>`}</td>
-      <td style="min-width:110px">×1/${1000 * s.extra}</td>
+      <td style="min-width:110px">×1/${fmtN(oesBaseF(ctx) * s.extra, 0)}</td>
       <td class="l" style="white-space:normal;max-width:250px">${compChips || "<span class='muted'>–</span>"}<div style="margin-top:3px">${elToggles}</div></td>
       <td class="l" style="min-width:190px">${cmpBars || "<span class='muted'>목표 조성 없음</span>"}</td>
       <td class="num">${c.overallYield !== null ? `<b>${fmtN(c.overallYield, 1)}%</b>${c.worstOor ? ` <span title="검정범위 밖 원소 포함 — 수율 신뢰도 낮음">⚠</span>` : ""}` : "–"}${c.yields ? `<div class="muted" style="font-size:10.5px">${c.yields.filter(y => y.yieldPct !== null).map(y => `${y.el} ${fmtN(y.yieldPct, 0)}%`).join(" · ")}</div>` : ""}</td>
@@ -4956,7 +4955,7 @@ function renderImportWizard(root, ctx) {
       <label class="f"><span>희석배율 사전입력<span class="muted" style="font-weight:400"> (장비 반영)</span></span>
         <button class="btn sm ${ctx.preDil ? "primary" : ""}" id="impPreDil" style="height:34px"
           title="On: ICP 프로그램에 희석배율을 미리 입력해 결과값에 이미 배율이 곱해져 출력된 파일. 농도·수율 계산에 추가희석 n을 다시 곱하지 않고(×1), n은 ICP lot 명칭(_20k)과 총 희석 기록에만 사용합니다. OoR 판정도 측정 스케일(값÷n)로 수행.">${ctx.preDil ? "On" : "Off"}</button></label>
-      <span class="note" style="flex:1">기본액 = 시료 ${ctx.prep.aliquotUl} μL → ${ctx.prep.finalMl} mL (×1/1000). 표의 '추가 희석'은 기본액 대비 n배.${
+      <span class="note" style="flex:1">기본액 = 시료 ${ctx.prep.aliquotUl} μL → ${ctx.prep.finalMl} mL (×1/${fmtN(oesBaseF(ctx), 0)}). 표의 '추가 희석'은 기본액 대비 n배.${
         ctx.preDilAuto && ctx.preDilAuto.state === "pre" ? `<br><b>자동 감지:</b> 희석 샘플 값이 원액 샘플과 유사(비율 중앙값 ${fmtN(ctx.preDilAuto.med, 2)}) — 장비에서 희석배율이 이미 반영된 파일로 보입니다.` :
         ctx.preDilAuto && ctx.preDilAuto.state === "raw" ? `<br><b>자동 감지:</b> 희석 샘플 값이 원액 대비 약 1/n — 원시(raw) 출력 파일로 보입니다.` : ""}</span>
     </div>
@@ -4976,11 +4975,13 @@ function renderImportWizard(root, ctx) {
     <div class="tblwrap" style="max-height:480px"><table class="tbl"><thead><tr>
       <th class="l">Label</th><th>Lot</th><th>총 희석</th><th class="l">실제 조성 (정량 원소 선택)</th><th class="l">목표 vs 측정</th><th>수율</th><th>Range</th></tr></thead>
       <tbody>${resRows}</tbody></table></div>
-    <div class="row right" style="margin-top:10px">
+  </div>
+  ${oesMergedCard(ctx)}
+  <div class="card"><div class="row right">
       <span class="muted" style="margin-right:auto">저장 시 선택 파장이 기억되어 다음 가져오기의 기본값이 됩니다.</span>
-      <button class="btn primary" id="impSave">ICP 기록으로 저장 (${ctx.samples.filter(s => s.include).length}건)</button>
-    </div>
-  </div>`;
+      ${oesMergeGroups(ctx).length ? `<label style="font-size:12.5px;font-weight:600"><input type="checkbox" id="impMerge" ${ctx.merge ? "checked" : ""}> 희석이 여러 개인 lot은 <b>통합 결과 1건</b>으로 저장</label>` : ""}
+      <button class="btn primary" id="impSave">ICP 기록으로 저장 (${oesSaveCount(ctx)}건)</button>
+  </div></div>`;
 
   /* 재렌더링 시 화면·표 스크롤 위치 유지 (값 수정 때마다 맨 위로 튀는 문제 방지) */
   const rw = () => {
@@ -5018,11 +5019,43 @@ function renderImportWizard(root, ctx) {
     ctx.samples[Number(el.dataset.i)].elsInclude[el.dataset.el] = el.checked; rw();
   });
   $("#impSave").onclick = () => saveImport(ctx);
+  const mg = $("#impMerge"); if (mg) mg.onchange = () => { ctx.merge = mg.checked; rw(); };
+  root.querySelectorAll(".oesPick").forEach(b => b.onclick = () => {
+    ctx.oesPick = ctx.oesPick || {};
+    const key = `${b.dataset.s}|${b.dataset.el}`;
+    if (ctx.oesPick[key] === b.dataset.l) delete ctx.oesPick[key]; else ctx.oesPick[key] = b.dataset.l;
+    rw();
+  });
 }
 
 function saveImport(ctx) {
   let n = 0, superseded = 0;
-  for (const s of ctx.samples.filter(x => x.include)) {
+  const mergedSerials = new Set();
+  if (ctx.merge) for (const m of oesMergeGroups(ctx)) {
+    const r = oesMergedCompute(ctx, m);
+    const lot = r.lot, serial = m.serial, type = lot ? lot.type : "";
+    const icpLot = `${serial}${type === "Shell" ? "s" : "c"}`;
+    const els = r.els.filter(el => r.per[el] && r.per[el].chosen);
+    const dils = [...new Set(els.map(el => r.per[el].chosen.D))];
+    const worst = els.map(el => ({ el, rd: r.per[el].chosen })).filter(x => x.rd.st !== "ok").sort((a, b) => b.rd.rank - a.rd.rank)[0];
+    const chosenWl = {}, ppmSel = {}, dilByEl = {};
+    els.forEach(el => { chosenWl[el] = ctx.chosen[el]; ppmSel[el] = r.per[el].chosen.u; dilByEl[el] = r.per[el].chosen.D; });
+    upsertIcp({
+      id: `${icpLot}@${ctx.date}`, icpLot, serial, type, date: ctx.date,
+      srcSerial: lot && lot.src ? lot.src.serial : null, method: "ICP-OES",
+      elements: els.slice(), dil: 1, totalDil: Math.min(...dils),
+      dilLabel: dils.length === 1 ? `×1/${fmtN(dils[0], 0)}` : "×1/" + dils.map(D => `${fmtN(D, 0)}(${els.filter(el => r.per[el].chosen.D === D).join("·")})`).join(", "),
+      oor: worst ? { el: worst.el, val: excelRound(worst.rd.m, 4) } : null,
+      values: els.map(el => [el, isNum(r.comp[el]) ? excelRound(r.comp[el], 6) : null]), vtype: "pct", chosenWl, ppm: ppmSel,
+      prep: { stockMl: lot ? lot.stockVol : null, aliquotUl: ctx.prep.aliquotUl, finalMl: ctx.prep.finalMl, extra: 1, preDil: !!ctx.preDil, effExtra: 1, dilByEl, merged: true },
+      detail: r.yields ? { rows: r.yields } : null,
+      totalMmol: r.totalMmol, overallYield: r.overallYield,
+      file: ctx.file, labels: m.members.map(x => x.label), legacy: false, deleted: false,
+    });
+    superseded += supersedeLegacy(state.db.icp[`${icpLot}@${ctx.date}`]);
+    mergedSerials.add(serial); n++;
+  }
+  for (const s of ctx.samples.filter(x => x.include && !(x.serial !== null && mergedSerials.has(x.serial)))) {
     const c = sampleComputed(ctx, s);
     const serial = s.serial;
     const lot = c.lot;
@@ -5034,7 +5067,8 @@ function saveImport(ctx) {
     const ppmSel = {}; c.inc.forEach(el => ppmSel[el] = c.ppm[el]);
     upsertIcp({
       id: `${icpLot}@${ctx.date}`, icpLot, serial, type, date: ctx.date,
-      srcSerial: lot && lot.src ? lot.src.serial : null,
+      srcSerial: lot && lot.src ? lot.src.serial : null, method: "ICP-OES",
+      totalDil: oesBaseF(ctx) * s.extra, dilLabel: `×1/${fmtN(oesBaseF(ctx) * s.extra, 0)}`,
       elements: c.inc.slice(),   // 실제 측정·포함된 원소만 (lot 양이온 목록 아님 — Na 등 미측정 원소 제외)
       dil: s.extra, oor: c.worstOor ? { el: c.worstOor.el, val: c.worstOor.ppm !== null ? excelRound(c.worstOor.ppm, 4) : null } : null,
       values, vtype: "pct", chosenWl, ppm: ppmSel,
@@ -5117,6 +5151,987 @@ function renderManualCalc(root) {
       { stockMl: manualCtx.stockMl, aliquotUl: manualCtx.aliquotUl, finalMl: manualCtx.finalMl, extra: manualCtx.extra });
     renderManualCalc(root);
   };
+}
+
+</script>
+<script>
+/* ICPMS-PATCH-1003 */
+/* =====================================================================
+ * icpms.js — ICP-MS 결과 가져오기 (Thermo Qtegra 보고서 PDF·텍스트·CSV/엑셀 표)
+ *   파싱 → 바탕선(blank) 오프셋 추정 → LoD/LoQ·검정범위 판정 → lot별 희석 자동 선택
+ *   → 조성(at%) ± 불확도 → 수율 → 간섭 후보 추정.  순수 계산부(이 블록)는 DOM 없음.
+ * ===================================================================== */
+"use strict";
+
+/* 천연 동위원소 존재비 [%] — Yb·Gd·Lu는 Qtegra 표시값과 동일하게 맞춤(장비와 같은 기준) */
+const MS_ISO = {
+  H: { 1: 99.985, 2: 0.015 }, C: { 12: 98.93, 13: 1.07 }, N: { 14: 99.636, 15: 0.364 },
+  O: { 16: 99.757, 17: 0.038, 18: 0.205 }, F: { 19: 100 }, Ar: { 36: 0.334, 38: 0.063, 40: 99.604 },
+  Li: { 6: 7.59, 7: 92.41 }, Na: { 23: 100 }, Mg: { 24: 78.99, 25: 10.0, 26: 11.01 },
+  K: { 39: 93.258, 40: 0.012, 41: 6.730 }, Ca: { 40: 96.941, 42: 0.647, 43: 0.135, 44: 2.086, 46: 0.004, 48: 0.187 },
+  Sc: { 45: 100 }, Sr: { 84: 0.56, 86: 9.86, 87: 7.0, 88: 82.58 }, Y: { 89: 100 },
+  Zr: { 90: 51.45, 91: 11.22, 92: 17.15, 94: 17.38, 96: 2.8 },
+  Ba: { 130: 0.106, 132: 0.101, 134: 2.417, 135: 6.592, 136: 7.854, 137: 11.232, 138: 71.698 },
+  La: { 138: 0.089, 139: 99.911 }, Ce: { 136: 0.185, 138: 0.251, 140: 88.45, 142: 11.114 }, Pr: { 141: 100 },
+  Nd: { 142: 27.152, 143: 12.174, 144: 23.798, 145: 8.293, 146: 17.189, 148: 5.756, 150: 5.638 },
+  Sm: { 144: 3.07, 147: 14.99, 148: 11.24, 149: 13.82, 150: 7.38, 152: 26.75, 154: 22.75 },
+  Eu: { 151: 47.81, 153: 52.19 },
+  Gd: { 152: 0.2, 154: 2.18, 155: 14.8, 156: 20.47, 157: 15.65, 158: 24.84, 160: 21.86 },
+  Tb: { 159: 100 }, Dy: { 156: 0.056, 158: 0.095, 160: 2.329, 161: 18.889, 162: 25.475, 163: 24.896, 164: 28.26 },
+  Ho: { 165: 100 }, Er: { 162: 0.139, 164: 1.601, 166: 33.503, 167: 22.869, 168: 26.978, 170: 14.91 },
+  Tm: { 169: 100 }, Yb: { 168: 0.126, 170: 3.023, 171: 14.216, 172: 21.754, 173: 16.098, 174: 31.896, 176: 12.887 },
+  Lu: { 175: 97.401, 176: 2.599 }, Hf: { 174: 0.16, 176: 5.26, 177: 18.6, 178: 27.28, 179: 13.62, 180: 35.08 },
+  Th: { 232: 100 }, U: { 234: 0.005, 235: 0.72, 238: 99.275 },
+};
+const MS_UNIT = { ppt: 1e-3, "ng/l": 1e-3, ppb: 1, "ug/l": 1, "µg/l": 1, "μg/l": 1, ppm: 1e3, "mg/l": 1e3 };
+const MS_ISO_RE = /(\d{1,3})\s?([A-Z][a-z]?)(?:\s*\(([^)]*)\))?/;
+
+function msNum(s) {
+  if (s === null || s === undefined) return null;
+  if (typeof s === "number") return isFinite(s) ? s : null;
+  const t = String(s).replace(/,/g, "").replace(/\s/g, "").replace(/−/g, "-");
+  if (!/^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(t)) return null;
+  return parseFloat(t);
+}
+function msIsoKey(mass, el) { return `${mass}${el}`; }
+
+/* 'WJ-150-500k' / 'WJ150d' / '150 x5M' / '1/500000' → { serial, D, dTok }  (D = 총 희석배수, 원액 기준) */
+function msParseLabel(label, opts) {
+  const L = String(label || "");
+  let D = null, tok = "";
+  let m = L.match(/(?:^|[^A-Za-z0-9.])(?:x\s*)?(?:1\s*\/\s*)?(\d+(?:\.\d+)?)\s*([kKmM])(?![a-zA-Z])/);
+  if (m) { D = parseFloat(m[1]) * (/k/i.test(m[2]) ? 1e3 : 1e6); tok = m[0]; }
+  if (D === null) { m = L.match(/(?:x|×|1\s*\/)\s*(\d{3,})/i); if (m) { D = parseFloat(m[1]); tok = m[0]; } }
+  let rest = tok ? L.replace(tok, " ") : L;
+  const dSuffix = /(\d)\s*d(?![a-zA-Z])|[-_\s]d(?![a-zA-Z])/i.test(rest);
+  if (D === null) D = dSuffix ? (opts && opts.dDil) : (opts && opts.baseDil);
+  const sm = rest.match(/(\d{2,})/) || rest.match(/(\d+)/);
+  return { serial: sm ? parseInt(sm[1], 10) : null, D: isNum(D) && D > 0 ? D : null, dTok: tok.trim(), dSuffix };
+}
+function msFmtDil(D) {
+  if (!isNum(D) || D <= 0) return "?";
+  if (D >= 1e6 && D % 1e5 === 0) return `${fmtG(D / 1e6, 4)}M`;
+  if (D >= 1e3 && D % 100 === 0) return `${fmtG(D / 1e3, 4)}k`;
+  return fmtG(D, 6);
+}
+
+/* ---------- 파서 1: Qtegra 보고서(PDF에서 뽑은 줄 / 붙여넣은 텍스트) ---------- */
+function parseMsReportLines(lines) {
+  const model = { format: "qtegra", instrument: "", started: "", unit: "ppb", isotopes: {}, order: [], analyses: [] };
+  const isoOf = (mass, el, mode) => {
+    const k = msIsoKey(mass, el);
+    if (!model.isotopes[k]) { model.isotopes[k] = { key: k, mass: +mass, el, mode: mode || "", cal: {} }; model.order.push(k); }
+    if (mode && !model.isotopes[k].mode) model.isotopes[k].mode = mode;
+    return model.isotopes[k];
+  };
+  let calGroup = null, cur = null;
+  const headerOnly = /^\s*(?:\d{1,3}\s?[A-Z][a-z]?\s*(?:\([^)]*\))?\s*)+$/;
+  for (let raw of lines) {
+    const line = String(raw || "").replace(/ /g, " ").trim();
+    if (!line) continue;
+    let m;
+    if ((m = line.match(/^Instrument Name:\s*(.+)$/i))) { if (!model.instrument) model.instrument = m[1].trim(); continue; }
+    if ((m = line.match(/^LabBook started:\s*(.+)$/i))) { model.started = m[1].trim(); continue; }
+    /* 검정곡선 블록: 'isotope isotope' 머리줄 → f(x)/R²/BEC/LoD 가 같은 순서로 */
+    if (headerOnly.test(line) && !/Analysis/i.test(line)) {
+      const g = [...line.matchAll(new RegExp(MS_ISO_RE.source, "g"))].map(x => isoOf(x[1], x[2], x[3]));
+      if (g.length) { calGroup = g; continue; }
+    }
+    if (calGroup && /f\(x\)/.test(line)) {
+      const fs = [...line.matchAll(/f\(x\)\s*=\s*([-+\d.eE]+)\s*\*\s*x\s*([+-])\s*([\d.eE+-]+)/g)];
+      fs.forEach((f, i) => { if (calGroup[i]) { calGroup[i].cal.slope = parseFloat(f[1]); calGroup[i].cal.intercept = parseFloat(f[3]) * (f[2] === "-" ? -1 : 1); } });
+      continue;
+    }
+    if (calGroup && /R²|R\^2|R2\s*=/.test(line)) {
+      [...line.matchAll(/R(?:²|\^2|2)\s*=\s*([\d.]+)/g)].forEach((f, i) => { if (calGroup[i]) calGroup[i].cal.r2 = parseFloat(f[1]); });
+      continue;
+    }
+    if (calGroup && /BEC\s*=/.test(line)) {
+      [...line.matchAll(/BEC\s*=\s*([-\d.eE]+)\s*([a-zµμ/A-Z]+)?/g)].forEach((f, i) => { if (calGroup[i]) calGroup[i].cal.bec = parseFloat(f[1]) * (MS_UNIT[(f[2] || "ppb").toLowerCase()] || 1); });
+      continue;
+    }
+    if (calGroup && /LoD\s*=/.test(line)) {
+      [...line.matchAll(/LoD\s*=\s*([-\d.eE]+)\s*([a-zµμ/A-Z]+)?/g)].forEach((f, i) => { if (calGroup[i]) calGroup[i].cal.lod = parseFloat(f[1]) * (MS_UNIT[(f[2] || "ppb").toLowerCase()] || 1); });
+      continue;
+    }
+    if ((m = line.match(/^Analysis\s+index:\s*(\d+)/i))) { cur = { idx: +m[1], name: "", type: "", started: "", vals: {}, std: {}, seen: {} }; model.analyses.push(cur); calGroup = null; continue; }
+    if ((m = line.match(/^Analysis\s+name:\s*(.+)$/i))) {
+      if (!cur || cur.name) { cur = { idx: model.analyses.length + 1, name: "", type: "", started: "", vals: {}, std: {}, seen: {} }; model.analyses.push(cur); }
+      cur.name = m[1].trim(); calGroup = null; continue;
+    }
+    if (cur && (m = line.match(/^Analysis\s+type:\s*(\S+)/i))) { cur.type = m[1].toUpperCase(); continue; }
+    if (cur && (m = line.match(/^Analysis\s+started\s+at:\s*(.+)$/i))) { cur.started = m[1].trim(); continue; }
+    /* 값 줄: '175Lu (S-Off-KED)  7.300 ppb  1.8 %'  /  '... 7.300 ppb  514,508 cps  1.8 %'  /  '... 0.761 ppb 3.8 % 1.000 ppb' */
+    if (cur && (m = line.match(/^(\d{1,3})\s?([A-Z][a-z]?)\s*(?:\(([^)]*)\))?\s+([-+−]?[\d,]*\.?\d+(?:[eE][-+]?\d+)?)\s*(ppt|ppb|ppm|[nµμu]g\/L|mg\/L)\b(.*)$/i))) {
+      const iso = isoOf(m[1], m[2], m[3]);
+      const f = MS_UNIT[m[5].toLowerCase()] || 1;
+      const c = msNum(m[4]); const rest = m[6] || "";
+      const v = cur.vals[iso.key] || (cur.vals[iso.key] = { c: null, rsd: null, cps: null, cpsRsd: null });
+      const n = (cur.seen[iso.key] = (cur.seen[iso.key] || 0) + 1);
+      const cps = rest.match(/([\d,]+(?:\.\d+)?)\s*cps/i);
+      const pct = rest.match(/([\d,]+(?:\.\d+)?)\s*%/);
+      const stdc = rest.match(/%\s*([-\d.,]+)\s*(ppt|ppb|ppm|[nµμu]g\/L|mg\/L)/i);
+      if (n === 1) { v.c = c === null ? null : c * f; v.rsd = pct ? msNum(pct[1]) : null; }
+      else { if (cps) v.cps = msNum(cps[1]); if (pct) v.cpsRsd = msNum(pct[1]); }
+      if (cps && n === 1) v.cps = msNum(cps[1]);
+      if (stdc) cur.std[iso.key] = msNum(stdc[1]) * (MS_UNIT[stdc[2].toLowerCase()] || 1);
+      continue;
+    }
+  }
+  /* 보고서는 표준을 두 번(검정 요약·분석별 페이지) 싣는다 → (index, 이름) 기준으로 합침 */
+  const uniq = [];
+  for (const a of model.analyses) {
+    a.name = String(a.name || "").replace(/\s+/g, " ").trim();
+    if (!a.name || !Object.keys(a.vals).length) continue;
+    const dup = uniq.find(u => u.name === a.name && u.idx === a.idx);
+    if (dup) {
+      for (const [k, v] of Object.entries(a.vals)) {
+        const d = dup.vals[k] || (dup.vals[k] = {});
+        for (const f of ["c", "rsd", "cps", "cpsRsd"]) if (!isNum(d[f]) && isNum(v[f])) d[f] = v[f];
+      }
+      Object.assign(dup.std, a.std); if (!dup.type) dup.type = a.type; if (!dup.started) dup.started = a.started;
+    } else uniq.push(a);
+  }
+  model.analyses = uniq;
+  for (const a of model.analyses) {
+    delete a.seen;
+    if (!a.type) a.type = /^(cal\s*)?blank|^blk/i.test(a.name) ? "BLK" : (Object.keys(a.std).length || /^(std|standard|cal)[\s_-]*\d/i.test(a.name)) ? "STD" : "SAMPLE";
+    if (a.type === "STD" && !Object.keys(a.std).length) {
+      const sm = a.name.match(/([\d.]+)\s*(ppt|ppb|ppm)/i);
+      if (sm) for (const k of Object.keys(a.vals)) a.std[k] = parseFloat(sm[1]) * (MS_UNIT[sm[2].toLowerCase()] || 1);
+    }
+  }
+  if (!model.analyses.length) throw new Error("ICP-MS 보고서에서 분석 결과(Analysis name + 동위원소 농도 줄)를 찾지 못했습니다.");
+  return model;
+}
+
+/* ---------- 파서 2: 표(CSV·엑셀·붙여넣은 표) — 행=샘플, 열=동위원소 ---------- */
+function parseMsAoa(aoa) {
+  const rows = aoa.map(r => (r || []).map(x => (x === null || x === undefined) ? "" : x));
+  let hr = -1, cols = [];
+  for (let r = 0; r < Math.min(15, rows.length); r++) {
+    const cs = [];
+    rows[r].forEach((cell, c) => {
+      const s = String(cell).trim();
+      const m = s.match(new RegExp("^" + MS_ISO_RE.source));
+      if (m && Materials.awICP(m[2]) !== null && +m[1] > 0 && +m[1] < 260) cs.push({ c, mass: +m[1], el: m[2], mode: m[3] || "", head: s });
+    });
+    if (cs.length) { hr = r; cols = cs; break; }
+  }
+  if (hr < 0) throw new Error("표 머리줄에서 동위원소 열(예: 175Lu, 169Tm (KED))을 찾지 못했습니다.");
+  /* 머리줄 아래 1–3줄이 'Concentration average'/'ppb' 같은 부제목이면 단위만 읽고 건너뜀 */
+  let unit = "ppb", start = hr + 1;
+  const unitIn = s => { const u = String(s).match(/\b(ppt|ppb|ppm|[nµμu]g\/L|mg\/L)\b/i); return u ? u[1].toLowerCase() : null; };
+  for (const c of cols) { const u = unitIn(c.head); if (u) unit = u; }
+  for (let r = hr + 1; r < Math.min(hr + 4, rows.length); r++) {
+    const vals = cols.map(c => msNum(rows[r][c.c]));
+    if (vals.some(v => v !== null)) break;
+    for (const c of cols) { const u = unitIn(rows[r][c.c]); if (u) unit = u; }
+    start = r + 1;
+  }
+  const f = MS_UNIT[unit] || 1;
+  let labCol = rows[hr].findIndex(x => /label|sample|name|시료|샘플/i.test(String(x)));
+  if (labCol < 0) labCol = rows[hr].findIndex((x, i) => !cols.some(c => c.c === i));
+  if (labCol < 0) labCol = 0;
+  const model = { format: "table", instrument: "", started: "", unit: "ppb", isotopes: {}, order: [], analyses: [] };
+  for (const c of cols) { const k = msIsoKey(c.mass, c.el); if (!model.isotopes[k]) { model.isotopes[k] = { key: k, mass: c.mass, el: c.el, mode: c.mode, cal: {} }; model.order.push(k); } }
+  for (let r = start; r < rows.length; r++) {
+    const name = String(rows[r][labCol] || "").trim();
+    if (!name) continue;
+    const vals = {};
+    let any = false;
+    for (const c of cols) {
+      const v = msNum(rows[r][c.c]);
+      if (v !== null) any = true;
+      const k = msIsoKey(c.mass, c.el);
+      if (!vals[k] || vals[k].c === null) vals[k] = { c: v === null ? null : v * f, rsd: null, cps: null, cpsRsd: null };
+    }
+    if (!any) continue;
+    const type = /^(cal\s*)?blank|^blk/i.test(name) ? "BLK" : /^(std|standard|cal)[\s_-]*[\d.]/i.test(name) ? "STD" : "SAMPLE";
+    const a = { idx: model.analyses.length + 1, name, type, started: "", vals, std: {} };
+    if (type === "STD") { const sm = name.match(/([\d.]+)\s*(ppt|ppb|ppm)?/i); if (sm) for (const k of Object.keys(vals)) a.std[k] = parseFloat(sm[1]) * (MS_UNIT[(sm[2] || unit).toLowerCase()] || 1); }
+    model.analyses.push(a);
+  }
+  if (!model.analyses.length) throw new Error("표에서 샘플 행을 찾지 못했습니다.");
+  return model;
+}
+
+/* ---------- 검정 정보: 표준 범위·저농도 회수율·LoD (보고서에 없으면 blank 반복성으로 추정 불가 → null) ---------- */
+function msCalInfo(model) {
+  const info = {};
+  for (const k of model.order) {
+    const iso = model.isotopes[k];
+    const stds = model.analyses.filter(a => a.type === "STD" && isNum(a.std[k]) && a.std[k] > 0 && a.vals[k] && isNum(a.vals[k].c))
+      .map(a => ({ name: a.name, nominal: a.std[k], read: a.vals[k].c, rec: a.vals[k].c / a.std[k] * 100 }))
+      .sort((x, y) => x.nominal - y.nominal);
+    const blank = model.analyses.find(a => a.type === "BLK" && a.vals[k]);
+    const lod = isNum(iso.cal.lod) ? iso.cal.lod : null;
+    info[k] = {
+      stds, stdMin: stds.length ? stds[0].nominal : null, stdMax: stds.length ? stds[stds.length - 1].nominal : null,
+      lod, loq: lod !== null ? lod * 10 / 3 : null, r2: iso.cal.r2 ?? null, bec: iso.cal.bec ?? null,
+      slope: iso.cal.slope ?? null, intercept: iso.cal.intercept ?? null,
+      blankCps: blank && blank.vals[k] ? blank.vals[k].cps : null,
+    };
+  }
+  return info;
+}
+
+/* ---------- 바탕선 오프셋: 해당 원소가 '없다고 알려진' 측정의 값 중앙값 ----------
+ * 근거 세트 = (포함·매핑된 샘플 중 그 원소가 조성에 없는 것: 값 < LoD)
+ *          + (조성을 모르는 샘플·타 사용자 샘플: 음수 값만 — 음수는 '0인데 절편이 높다'는 직접 증거)
+ * 보정 = −중앙값(>0일 때만; 바탕선이 양수로 뜨는 경우는 오염일 수 있어 자동 적용 안 함) */
+function msBaseline(ctx) {
+  const out = {};
+  /* 같은 serial 묶음에서 한 번이라도 '조성 원소'로 잡힌 원소는 그 묶음의 모든 판독에서 제외 */
+  const grpEls = {};
+  for (const s of ctx.samples) if (s.include && s.serial !== null) (grpEls[s.serial] = grpEls[s.serial] || new Set()), (s.els || []).forEach(e => grpEls[s.serial].add(e));
+  for (const k of ctx.model.order) {
+    const iso = ctx.model.isotopes[k];
+    const lod = ctx.cal[k].lod;
+    const pts = [];
+    for (const s of ctx.samples) {
+      const v = s.vals[k]; if (!v || !isNum(v.c)) continue;
+      const known = s.elsKnown;   // 조성을 아는 샘플이면 원소 집합
+      if (known) { if (!known.includes(iso.el) && (lod === null || v.c < lod)) pts.push({ label: s.label, c: v.c, why: "조성에 없음" }); }
+      else if (s.serial !== null && grpEls[s.serial] && grpEls[s.serial].has(iso.el)) continue;
+      else if (v.c < 0) pts.push({ label: s.label, c: v.c, why: "음수 판독" });
+    }
+    const cs = pts.map(p => p.c).sort((a, b) => a - b);
+    let med = null, sd = null;
+    if (cs.length) {
+      med = cs.length % 2 ? cs[(cs.length - 1) / 2] : (cs[cs.length / 2 - 1] + cs[cs.length / 2]) / 2;
+      const mad = cs.map(c => Math.abs(c - med)).sort((a, b) => a - b);
+      const md = mad.length % 2 ? mad[(mad.length - 1) / 2] : (mad[mad.length / 2 - 1] + mad[mad.length / 2]) / 2;
+      sd = cs.length >= 3 ? Math.max(1.4826 * md, 1e-4) : null;
+    }
+    const auto = (cs.length >= 2 && med < 0) ? -med : 0;
+    out[k] = { auto, n: cs.length, med, sd, pts };
+  }
+  return out;
+}
+function msOffsetOf(ctx, k) {
+  if (ctx.baseMode === "off") return 0;
+  const man = ctx.offManual[k];
+  if (isNum(man)) return man;
+  return ctx.base[k] ? ctx.base[k].auto : 0;
+}
+function msOffsetSd(ctx, k) {
+  if (ctx.baseMode === "off") return 0;
+  const b = ctx.base[k];
+  if (!b || !(b.auto > 0) || isNum(ctx.offManual[k])) return 0;
+  return isNum(b.sd) ? b.sd / Math.sqrt(b.n) : (ctx.cal[k].lod !== null ? ctx.cal[k].lod / 3 : 0);
+}
+
+/* 판독 1개의 품질 판정 (보정 후 값 c′ 기준) */
+function msJudge(ctx, k, c, rsd) {
+  const ci = ctx.cal[k];
+  if (!isNum(c)) return { st: "na", label: "값 없음", rank: 9 };
+  if (ci.stdMax !== null && c > ci.stdMax * 1.05) return { st: "high", label: `검정 상한(${fmtG(ci.stdMax, 4)} ppb) 초과`, rank: 3 };
+  if (ci.lod !== null && c < ci.lod) return { st: "lod", label: `검출한계(LoD ${fmtG(ci.lod, 3)} ppb) 미만 — 정량 불가`, rank: 4 };
+  if (ci.loq !== null && c < ci.loq) return { st: "loq", label: `정량한계(LoQ ${fmtG(ci.loq, 3)} ppb) 미만 — 반정량`, rank: 2 };
+  if (ci.stdMin !== null && c < ci.stdMin * 0.95) return { st: "low", label: `최저 표준(${fmtG(ci.stdMin, 4)} ppb) 미만 — 외삽`, rank: 1 };
+  if (isNum(rsd) && rsd > 10) return { st: "rsd", label: `반복 RSD ${fmtG(rsd, 3)}% (>10%)`, rank: 1 };
+  return { st: "ok", label: "검정범위 내", rank: 0 };
+}
+const MS_ST_KO = { low: "외삽(최저 표준 미만)", loq: "반정량(LoQ 미만)", lod: "검출한계 미만", high: "상한 초과", rsd: "RSD 높음", na: "값 없음" };
+const MS_ST_CLS = { ok: "ok", low: "warn", rsd: "warn", loq: "warn", high: "risk", lod: "risk", na: "gray" };
+
+/* ---------- 간섭 후보 (샘플 조성 기준) ----------
+ * 겉보기 기여[%] = (n_X / n_E) · (a_X,src / a_E,m) · f · 100
+ * f: 동중원소 1, MO⁺ fMO, MOH⁺ fMOH, MH⁺ fMH, M²⁺ fM2, ArM⁺ fAr (기본값은 사중극자 장비 전형값 — 설정에서 변경) */
+function msInterferences(targetMass, targetEl, molar, f) {
+  const aE = (MS_ISO[targetEl] || {})[targetMass];
+  if (!aE) return [];
+  const nE = molar[targetEl];
+  if (!(nE > 0)) return [];
+  const out = [];
+  const add = (X, srcMass, kind, fac, label) => {
+    const a = (MS_ISO[X] || {})[srcMass];
+    if (!a || !(molar[X] > 0)) return;
+    const pct = molar[X] / nE * (a / aE) * fac * 100;
+    out.push({ X, kind, label, pct });
+  };
+  for (const X of Object.keys(molar)) {
+    if (X === targetEl) continue;          // 같은 원소의 MO/MH 등은 표준용액에도 똑같이 생겨 검정에 이미 포함됨
+    add(X, targetMass, "isobar", 1, `${targetMass}${X}⁺ (동중원소)`);
+    add(X, targetMass - 16, "MO", (f.fMO) * 0.99757, `${targetMass - 16}${X}¹⁶O⁺`);
+    add(X, targetMass - 17, "MOH", (f.fMOH) * 0.99757, `${targetMass - 17}${X}¹⁶O¹H⁺`);
+    add(X, targetMass - 1, "MH", f.fMH, `${targetMass - 1}${X}¹H⁺`);
+    add(X, targetMass * 2, "M2", f.fM2, `${targetMass * 2}${X}²⁺`);
+    add(X, targetMass - 40, "ArM", f.fAr * 0.99604, `⁴⁰Ar${targetMass - 40}${X}⁺`);
+  }
+  return out.sort((a, b) => b.pct - a.pct);
+}
+const MS_F_DEFAULT = { fMO: 0.01, fMOH: 0.001, fMH: 1e-5, fM2: 0.02, fAr: 1e-5 };
+
+/* ---------- lot(시리얼)별 묶음 → 원소마다 최적 희석 선택 → 조성·불확도·수율 ---------- */
+function msCompute(ctx) {
+  const groups = {};
+  for (const s of ctx.samples) {
+    if (!s.include) continue;
+    const key = s.serial !== null ? `#${s.serial}` : `L:${s.label}`;
+    (groups[key] = groups[key] || { key, serial: s.serial, members: [] }).members.push(s);
+  }
+  const res = [];
+  for (const g of Object.values(groups)) {
+    const lot = g.serial !== null ? lotOf(g.serial) : null;
+    const d = lot ? derivedOf(lot.serial) : null;
+    const els = g.members[0].els.slice();
+    const per = {};
+    for (const el of els) {
+      const k = ctx.isoChosen[el];
+      if (!k) { per[el] = { el, missing: true }; continue; }
+      const reads = g.members.map(s => {
+        const v = s.vals[k] || {};
+        const off = msOffsetOf(ctx, k);
+        const c = isNum(v.c) ? v.c + off : null;
+        const j = msJudge(ctx, k, c, v.rsd);
+        const lod = ctx.cal[k].lod;
+        const sc = isNum(c) ? Math.sqrt(Math.pow((v.rsd || 0) / 100 * c, 2) + Math.pow(msOffsetSd(ctx, k), 2) + Math.pow(lod !== null ? lod / 3 : 0, 2)) : null;
+        return { label: s.label, D: s.D, raw: v.c, rsd: v.rsd, off, c, sc, j, u: isNum(c) && isNum(s.D) ? c * s.D : null };
+      }).filter(r => isNum(r.c) && isNum(r.D));
+      if (!reads.length) { per[el] = { el, k, reads: [], chosen: null }; continue; }
+      /* 선택: 품질 등급 최상 → (같은 등급이면) 측정값 큰 쪽(S/N↑) — 단 상한 초과 등급끼리는 작은 쪽 */
+      const pick = reads.slice().sort((a, b) => (a.j.rank - b.j.rank) || (a.j.st === "high" ? a.c - b.c : b.c - a.c))[0];
+      const userIdx = ctx.dilPick[`${g.key}|${el}`];
+      const chosen = (userIdx !== undefined && reads.find(r => r.label === userIdx)) || pick;
+      /* 희석 간 일치도: 둘 다 LoQ 이상·상한 이하인 판독끼리 */
+      const goods = reads.filter(r => ["ok", "low", "rsd"].includes(r.j.st));
+      let agree = null;
+      if (goods.length >= 2) {
+        const us = goods.map(r => r.u); const mn = Math.min(...us), mx = Math.max(...us);
+        agree = { dev: (mx / mn - 1) * 100, n: goods.length };
+      }
+      per[el] = { el, k, reads, chosen, auto: chosen === pick, agree };
+    }
+    /* 조성 (원액 환산 몰 → at%) */
+    const n = {}, sn = {};
+    for (const el of els) {
+      const p = per[el]; const aw = Materials.awICP(el);
+      if (!p || !p.chosen || !isNum(aw)) continue;
+      n[el] = Math.max(p.chosen.u, 0) / aw; sn[el] = (p.chosen.sc || 0) * p.chosen.D / aw;
+    }
+    const N = Object.values(n).reduce((a, b) => a + b, 0);
+    const comp = {}, compSd = {};
+    if (N > 0) for (const el of Object.keys(n)) {
+      comp[el] = n[el] / N * 100;
+      let v = 0; for (const j of Object.keys(n)) { const dd = ((j === el ? 1 : 0) - n[el] / N) / N; v += dd * dd * sn[j] * sn[j]; }
+      compSd[el] = Math.sqrt(v) * 100;
+    }
+    /* 목표 조성·수율 */
+    let targetComp = null, yields = null, overallYield = null, totalMmol = null;
+    if (lot) {
+      const cs = lotCations(lot).filter(c => els.includes(c.el));
+      const csum = cs.reduce((a, c) => a + (c.coeff || 0), 0);
+      if (csum > 0) { targetComp = {}; cs.forEach(c => targetComp[c.el] = (c.coeff || 0) / csum * 100); }
+      if (d && isNum(d.AB) && isNum(lot.stockVol)) {
+        yields = []; totalMmol = 0; let tgt = 0;
+        for (const el of els) {
+          const p = per[el]; const aw = Materials.awICP(el); const co = cs.find(c => c.el === el);
+          const targetMmol = co && isNum(co.coeff) ? d.AB * co.coeff : null;
+          if (!p || !p.chosen || !isNum(aw)) { yields.push({ el, ppm: null, stockConc: null, stockMg: null, mmol: null, atPct: null, targetMmol, yieldPct: null }); continue; }
+          const stockConc = Math.max(p.chosen.u, 0) / 1000;          // mg/L
+          const stockMg = stockConc * lot.stockVol / 1000;
+          const mmol = stockMg / aw;
+          totalMmol += mmol; if (isNum(targetMmol)) tgt += targetMmol;
+          yields.push({ el, ppm: p.chosen.c / 1000, ppb: p.chosen.c, stockConc, stockMg, mmol, atPct: comp[el] ?? null, targetMmol,
+            yieldPct: isNum(targetMmol) && targetMmol > 0 ? mmol / targetMmol * 100 : null, iso: p.k, dil: p.chosen.D, status: p.chosen.j.st });
+        }
+        overallYield = tgt > 0 ? totalMmol / tgt * 100 : null;
+      }
+    }
+    /* 간섭: 조성 몰비(목표 조성이 있으면 그것 — 미측정 원소(Na 등) 포함) */
+    const molar = {};
+    if (lot) lotCations(lot).forEach(c => { if (isNum(c.coeff) && c.coeff > 0) molar[c.el] = (molar[c.el] || 0) + c.coeff; });
+    else Object.assign(molar, n);
+    const interf = {};
+    for (const el of els) {
+      const p = per[el]; if (!p || !p.k) continue;
+      const iso = ctx.model.isotopes[p.k];
+      interf[el] = msInterferences(iso.mass, el, molar, ctx.f).filter(x => x.pct >= 0.01);
+    }
+    const worst = els.map(el => per[el] && per[el].chosen ? per[el].chosen.j : null).filter(Boolean).sort((a, b) => b.rank - a.rank)[0] || null;
+    res.push({ g, lot, d, els, per, comp, compSd, targetComp, yields, overallYield, totalMmol, interf, worst });
+  }
+  return res.sort((a, b) => (a.g.serial ?? 1e9) - (b.g.serial ?? 1e9));
+}
+
+/* ---------- ctx 구성 ---------- */
+function msSettings() {
+  const S = state.db.settings;
+  if (!S.icpMs || typeof S.icpMs !== "object") S.icpMs = {};
+  const M = S.icpMs;
+  if (!(M.baseDil > 0)) M.baseDil = 500000;
+  if (!(M.dDil > 0)) M.dDil = 5000000;
+  if (!M.f || typeof M.f !== "object") M.f = Object.assign({}, MS_F_DEFAULT);
+  for (const k of Object.keys(MS_F_DEFAULT)) if (!(M.f[k] >= 0)) M.f[k] = MS_F_DEFAULT[k];
+  if (!M.isoPref || typeof M.isoPref !== "object") M.isoPref = {};
+  if (typeof M.prefix !== "string") M.prefix = "";
+  return M;
+}
+function msLabelPrefix(label) { const m = String(label).match(/^\s*([A-Za-z]+)/); return m ? m[1].toUpperCase() : ""; }
+function msBuildCtx(model, fileName) {
+  const M = msSettings();
+  const cal = msCalInfo(model);
+  const elsMeasured = [...new Set(model.order.map(k => model.isotopes[k].el))];
+  /* 원소당 동위원소가 여럿이면: 지난 선택 → 존재비 큰 것 */
+  const isoChosen = {};
+  for (const el of elsMeasured) {
+    const ks = model.order.filter(k => model.isotopes[k].el === el);
+    isoChosen[el] = (M.isoPref[el] && ks.includes(M.isoPref[el])) ? M.isoPref[el]
+      : ks.slice().sort((a, b) => ((MS_ISO[el] || {})[model.isotopes[b].mass] || 0) - ((MS_ISO[el] || {})[model.isotopes[a].mass] || 0))[0];
+  }
+  const samples = model.analyses.filter(a => a.type !== "STD" && a.type !== "BLK").map(a => {
+    const p = msParseLabel(a.name, M);
+    const lot = p.serial !== null ? lotOf(p.serial) : null;
+    const pre = msLabelPrefix(a.name);
+    /* 기본 포함: (희석 표기가 있거나 접두어가 지난번과 같음) 그리고 (lot이 있거나 희석 표기가 있음) */
+    const mine = !!(p.dTok || p.dSuffix) || (M.prefix && pre === M.prefix);
+    const include = mine && (!!lot || !!p.dTok);
+    return { label: a.name, idx: a.idx, vals: a.vals, serial: lot ? p.serial : (include ? p.serial : null), D: p.D,
+      dTok: p.dTok, include, els: null, elsKnown: null };
+  });
+  const ctx = { file: fileName, model, cal, samples, isoChosen, elsMeasured, baseMode: "auto", offManual: {},
+    dilPick: {}, f: Object.assign({}, M.f), date: "", showAll: false };
+  const dm = String(fileName || "").match(/(\d{6})/);
+  if (dm) ctx.date = dm[1];
+  else {
+    const t = (model.started || (model.analyses[0] || {}).started || "").match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    ctx.date = t ? `${t[3].slice(2)}${String(t[1]).padStart(2, "0")}${String(t[2]).padStart(2, "0")}` : todayYYMMDD();
+  }
+  /* 2단계: ① 음수 판독만으로 1차 바탕선 → ② 보정값으로 원소 검출(LoD 이상) → ③ 묶음 단위 원소로 바탕선 재계산 */
+  for (const s of ctx.samples) s.els = null;
+  ctx.base = msBaseline(ctx);
+  msRefreshEls(ctx);
+  ctx.base = msBaseline(ctx);
+  return ctx;
+}
+/* 정량 원소(묶음 = 같은 serial 단위로 통일):
+ *  lot 있음 → lot 양이온(Na·Li·K 제외) ∩ 측정 원소  (elsKnown = lot 전체 양이온 → 바탕선 근거에 사용)
+ *  lot 없음 → 사용자가 적은 조성(s.userEls)이 있으면 그것, 없으면 어느 희석에서든 보정값 ≥ LoD 로 검출된 원소 */
+function msGroupKey(s) { return s.serial !== null ? `#${s.serial}` : `L:${s.label}`; }
+function msRefreshEls(ctx) {
+  const groups = {};
+  for (const s of ctx.samples) (groups[msGroupKey(s)] = groups[msGroupKey(s)] || []).push(s);
+  for (const mem of Object.values(groups)) {
+    const s0 = mem[0];
+    const lot = s0.serial !== null ? lotOf(s0.serial) : null;
+    const user = mem.map(x => x.userEls).find(Boolean);
+    let els, known;
+    if (user) { els = ctx.elsMeasured.filter(e => user.includes(e)); known = user.slice(); }
+    else if (lot) {
+      const ce = lotCations(lot).map(c => c.el);
+      els = ctx.elsMeasured.filter(e => ce.includes(e) && !["Na", "Li", "K"].includes(e));
+      known = [...new Set(ce)];
+    } else {
+      els = ctx.elsMeasured.filter(e => mem.some(x => {
+        const k = ctx.isoChosen[e]; const v = x.vals[k]; const lod = ctx.cal[k].lod;
+        if (!v || !isNum(v.c)) return false;
+        const c = v.c + msOffsetOf(ctx, k);
+        return lod !== null ? c >= lod : c > 0;
+      }));
+      known = null;
+    }
+    for (const x of mem) { x.els = els.slice(); x.elsKnown = known ? known.slice() : null; }
+  }
+}
+
+
+/* ---------- 파일·붙여넣기 입력 (ICP-OES / ICP-MS 자동 판별) ---------- */
+let _pdfjsP = null;
+function loadPdfJs() {
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if (_pdfjsP) return _pdfjsP;
+  const srcs = [
+    ["https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js", "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"],
+    ["https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js", "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js"],
+  ];
+  const tryOne = i => new Promise((ok, no) => {
+    if (i >= srcs.length) return no(new Error("PDF 해석 모듈을 불러오지 못했습니다(인터넷 연결 필요)."));
+    const sc = document.createElement("script");
+    sc.src = srcs[i][0];
+    sc.onload = () => { if (window.pdfjsLib) { window.pdfjsLib.GlobalWorkerOptions.workerSrc = srcs[i][1]; ok(window.pdfjsLib); } else tryOne(i + 1).then(ok, no); };
+    sc.onerror = () => { sc.remove(); tryOne(i + 1).then(ok, no); };
+    document.head.appendChild(sc);
+  });
+  _pdfjsP = tryOne(0).catch(e => { _pdfjsP = null; throw e; });
+  return _pdfjsP;
+}
+/* PDF 글자 조각을 줄 단위로 복원 (같은 y → 한 줄, x 순, 간격은 공백 2칸) */
+async function pdfToLines(buf) {
+  const pdfjs = await loadPdfJs();
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(buf) }).promise;
+  const out = [];
+  for (let p = 1; p <= doc.numPages; p++) {
+    const tc = await (await doc.getPage(p)).getTextContent();
+    const rows = [];
+    for (const it of tc.items) {
+      if (!it.str || !it.str.trim()) continue;
+      const y = it.transform[5], x = it.transform[4];
+      let r = rows.find(r => Math.abs(r.y - y) < 2.5);
+      if (!r) { r = { y, items: [] }; rows.push(r); }
+      r.items.push({ x, s: it.str, w: it.width || 0 });
+    }
+    rows.sort((a, b) => b.y - a.y);
+    for (const r of rows) {
+      r.items.sort((a, b) => a.x - b.x);
+      let line = "", lx = null;
+      for (const it of r.items) { if (lx !== null && it.x - lx > 2) line += "  "; line += it.s; lx = it.x + it.w; }
+      out.push(line);
+    }
+  }
+  return out;
+}
+function textToAoa(text) {
+  const lines = String(text).replace(/\r/g, "").split("\n");
+  const sep = lines.some(l => l.includes("\t")) ? "\t" : (lines.filter(l => l.includes(",")).length > lines.length / 2 ? "," : null);
+  return sep ? lines.map(l => l.split(sep).map(x => { const t = x.trim().replace(/^"|"$/g, ""); const n = toNum(t); return n !== null ? n : t; })) : null;
+}
+function aoaHasSolutionLabel(aoa) {
+  for (let r = 0; r < Math.min(6, aoa.length); r++) if ((aoa[r] || []).some(c => String(c || "").trim().toLowerCase() === "solution label")) return true;
+  return false;
+}
+function startOesFromAoa(aoa, name) {
+  const parsed = parseIcpAoa(aoa);
+  const dm = String(name).match(/(\d{6})/);
+  const P = state.db.settings.icpPrep;
+  const samples = parsed.rows.filter(r => r.kind === "sample").map(r => ({
+    label: r.label, serial: r.serialGuess, extra: r.extraGuess, include: true, vals: r.vals, elsInclude: null }));
+  const allLotEls = new Set();
+  for (const s of samples) { const lot = s.serial !== null ? lotOf(s.serial) : null; if (lot) lotElements(lot).forEach(e => allLotEls.add(e)); }
+  const unionEls = [...new Set([...parsed.elements, ...allLotEls])];
+  const det = detectPreDil(samples);
+  const preDil = det.state === "pre" ? true : det.state === "raw" ? false : !!state.db.settings.icpPreDil;
+  const ctx = { file: name, date: dm ? dm[1] : todayYYMMDD(), parsed, samples, chosen: {}, validN: {},
+    unionEls, preDil, preDilAuto: det, userPicked: {}, merge: true,
+    prep: { aliquotUl: P.aliquotUl, finalMl: P.finalMl }, step: 1 };
+  computeWlDefaults(ctx, false);
+  state.msCtx = null; state.importCtx = ctx;
+  renderView();
+  toast(`ICP-OES 결과로 인식했습니다 · 샘플 ${samples.length}개`, "ok");
+}
+function startMs(model, name) {
+  const ctx = msBuildCtx(model, name);
+  state.importCtx = null; state.msCtx = ctx;
+  renderView();
+  const n = ctx.samples.filter(s => s.include).length;
+  toast(`ICP-MS 결과로 인식했습니다 · 동위원소 ${model.order.length}종 · 내 샘플 ${n}개 자동 선택`, "ok");
+}
+function icpIngestAoa(aoa, name) {
+  if (aoaHasSolutionLabel(aoa)) return startOesFromAoa(aoa, name);
+  return startMs(parseMsAoa(aoa), name);
+}
+function icpIngestText(text, name) {
+  const t = String(text || "");
+  if (!t.trim()) return toast("붙여넣은 내용이 비어 있습니다", "warn");
+  try {
+    if (/Analysis\s+name\s*:/i.test(t) || /f\(x\)\s*=/.test(t)) return startMs(parseMsReportLines(t.split(/\r?\n/)), name || "붙여넣기");
+    const aoa = textToAoa(t);
+    if (aoa) return icpIngestAoa(aoa, name || "붙여넣기");
+    return startMs(parseMsReportLines(t.split(/\r?\n/)), name || "붙여넣기");
+  } catch (e) { console.error(e); toast("해석 실패: " + e.message, "err"); }
+}
+async function icpIngestFile(file) {
+  const name = file.name || "clipboard";
+  try {
+    if (/\.pdf$/i.test(name) || file.type === "application/pdf") {
+      toast("PDF 읽는 중…", "info");
+      const lines = await pdfToLines(await file.arrayBuffer());
+      return startMs(parseMsReportLines(lines), name);
+    }
+    if (/\.(txt|text)$/i.test(name) || file.type === "text/plain") return icpIngestText(await file.text(), name);
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: "array" });
+    const aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true });
+    return icpIngestAoa(aoa, name);
+  } catch (e) {
+    console.error(e);
+    toast("파일 해석 실패: " + e.message + (/PDF 해석 모듈/.test(e.message) ? " — PDF를 열어 전체 선택(Ctrl+A)·복사 후 이 화면에 붙여넣어도 됩니다." : ""), "err");
+  }
+}
+/* 결과 가져오기 화면에서 Ctrl+V: 파일이면 파일로, 아니면 텍스트(표/보고서)로 */
+document.addEventListener("paste", e => {
+  try {
+    if (state.view !== "icp" || icpSub !== "import" || state.importCtx || state.msCtx) return;
+    const tg = e.target; if (tg && (tg.tagName === "INPUT" || (tg.tagName === "TEXTAREA" && tg.id !== "dzText"))) return;
+    const cd = e.clipboardData; if (!cd) return;
+    if (cd.files && cd.files.length) { e.preventDefault(); icpIngestFile(cd.files[0]); return; }
+    const txt = cd.getData("text/plain");
+    if (txt && txt.trim()) { e.preventDefault(); icpIngestText(txt, "붙여넣기"); }
+  } catch (err) { console.error(err); }
+});
+
+/* ---------- ICP-MS 마법사 ---------- */
+function msSup(n) { return String(n).replace(/\d/g, d => "⁰¹²³⁴⁵⁶⁷⁸⁹"[d]); }
+function msIsoLabel(k, model) { const i = model.isotopes[k]; return i ? `${msSup(i.mass)}${i.el}` : k; }
+function msParseDilInput(v) {
+  const t = String(v || "").trim().replace(/,/g, "");
+  const m = t.match(/^(?:x|×|1\/)?\s*(\d+(?:\.\d+)?)\s*([kKmM])?$/);
+  if (!m) return null;
+  const D = parseFloat(m[1]) * (m[2] ? (/k/i.test(m[2]) ? 1e3 : 1e6) : 1);
+  return D > 0 ? D : null;
+}
+function msStBadge(j, text) {
+  return `<span class="badge ${MS_ST_CLS[j.st] || "gray"}" title="${esc(j.label)}">${text}</span>`;
+}
+
+function renderMsWizard(root, ctx) {
+  const M = msSettings();
+  const model = ctx.model;
+  const res = msCompute(ctx);
+  const lots = Object.values(activeLots()).sort((a, b) => b.serial - a.serial);
+  const incl = ctx.samples.filter(s => s.include);
+  const others = ctx.samples.filter(s => !s.include);
+  const rowOf = s => {
+    const i = ctx.samples.indexOf(s);
+    const opts = `<option value="">(연결 안 함)</option>` + lots.map(l =>
+      `<option value="${l.serial}" ${Number(s.serial) === l.serial && lotOf(s.serial) ? "selected" : ""}>${lotLabel(l)} · ${esc(lotFormula(l))}</option>`).join("");
+    const elChips = ctx.elsMeasured.map(el => {
+      const on = (s.els || []).includes(el);
+      return `<button class="elchip ${on ? "sel" : ""} msEl" data-i="${i}" data-el="${el}" title="정량에 포함/제외 (같은 lot의 모든 희석에 적용)">${el}</button>`;
+    }).join(" ");
+    const raw = ctx.elsMeasured.map(el => {
+      const k = ctx.isoChosen[el]; const v = s.vals[k];
+      if (!v || !isNum(v.c)) return "";
+      const c = v.c + msOffsetOf(ctx, k);
+      const j = msJudge(ctx, k, c, v.rsd);
+      return `<span class="badge ${MS_ST_CLS[j.st]}" title="${esc(msIsoLabel(k, model))} 원시 ${fmtG(v.c, 4)} ppb → 보정 ${fmtG(c, 4)} ppb · ${esc(j.label)}${isNum(v.rsd) ? ` · RSD ${fmtG(v.rsd, 3)}%` : ""}">${el} ${fmtG(c, 3)}</span>`;
+    }).join(" ");
+    return `<tr class="${s.include ? "" : "muted"}">
+      <td><input type="checkbox" class="msInc" data-i="${i}" ${s.include ? "checked" : ""}></td>
+      <td class="mono l">${esc(s.label)}</td>
+      <td class="l"><select class="msLot slim" data-i="${i}" style="max-width:250px">${opts}</select>
+        ${s.serial !== null && !lotOf(s.serial) ? `<div class="muted" style="font-size:10.5px">serial ${s.serial} (기록에 없는 lot)</div>` : ""}</td>
+      <td><input type="text" class="msDil slim w80 mono" data-i="${i}" value="${esc(msFmtDil(s.D))}" title="총 희석배수(원액 기준). 예: 500k, 5M, 50000"></td>
+      <td class="l" style="white-space:normal">${s.include ? elChips : ""}</td>
+      <td class="l" style="white-space:normal;max-width:330px">${raw}</td></tr>`;
+  };
+  const mapHead = `<thead><tr><th>포함</th><th class="l">라벨</th><th class="l">연결 Lot</th><th>총 희석</th><th class="l">정량 원소</th><th class="l">보정값 [ppb] (색 = 판정)</th></tr></thead>`;
+
+  /* --- 품질 표 --- */
+  const multiIso = el => model.order.filter(k => model.isotopes[k].el === el).length > 1;
+  const qRows = model.order.map(k => {
+    const iso = model.isotopes[k], ci = ctx.cal[k], b = ctx.base[k];
+    const off = msOffsetOf(ctx, k);
+    const lowStds = [...new Map(ci.stds.map(x => [x.nominal, x])).values()].slice(0, 2);
+    const rec = lowStds.map(x => {
+      const r1 = x.rec, r2 = (x.read + off) / x.nominal * 100;
+      const cls = Math.abs(r2 - 100) <= 10 ? "ok" : Math.abs(r2 - 100) <= 20 ? "warn" : "risk";
+      return `<span class="badge ${cls}" title="${fmtG(x.nominal, 4)} ppb 표준: 판독 ${fmtG(x.read, 4)} → 보정 후 ${fmtG(x.read + off, 4)} ppb">${fmtG(x.nominal, 3)}: ${fmtN(r1, 0)}→${fmtN(r2, 0)}%</span>`;
+    }).join(" ");
+    const tip = b && b.pts.length ? b.pts.map(p => `${p.label}: ${fmtG(p.c, 3)} (${p.why})`).join("\n") : "근거 판독 없음";
+    const worstI = res.map(r => (r.interf[iso.el] || [])[0]).filter(Boolean).sort((a, b) => b.pct - a.pct)[0];
+    const r2cls = isNum(ci.r2) ? (ci.r2 >= 0.999 ? "ok" : ci.r2 >= 0.995 ? "warn" : "risk") : "gray";
+    return `<tr>
+      <td class="l"><b>${msIsoLabel(k, model)}</b> <span class="muted" style="font-size:10.5px">${esc(iso.mode)}</span>
+        ${multiIso(iso.el) ? `<label style="font-size:11px;margin-left:6px"><input type="radio" name="iso_${iso.el}" class="msIso" data-el="${iso.el}" data-k="${k}" ${ctx.isoChosen[iso.el] === k ? "checked" : ""}> 사용</label>` : ""}</td>
+      <td><span class="badge ${r2cls}">${isNum(ci.r2) ? fmtN(ci.r2, 4) : "–"}</span></td>
+      <td class="num">${ci.stdMin !== null ? `${fmtG(ci.stdMin, 3)}–${fmtG(ci.stdMax, 4)}` : "–"}</td>
+      <td class="num">${ci.lod !== null ? `${fmtG(ci.lod, 3)} / ${fmtG(ci.loq, 3)}` : "–"}</td>
+      <td class="l">${rec || "–"}</td>
+      <td class="num" title="${esc(tip)}">${ctx.baseMode === "off" ? `<span class="muted">끔</span>` :
+        `<input type="number" step="0.001" class="slim w80 msOff" data-k="${k}" value="${isNum(ctx.offManual[k]) ? ctx.offManual[k] : ""}" placeholder="${fmtG(b ? b.auto : 0, 3)}">
+         <div class="muted" style="font-size:10.5px">${b && b.n ? `근거 ${b.n}개${isNum(b.sd) ? ` · σ ${fmtG(b.sd, 2)}` : ""}` : "근거 없음 → 0"}${isNum(ctx.offManual[k]) ? " · 수동" : ""}</div>`}</td>
+      <td class="l" style="font-size:11.5px">${worstI ? `<span class="badge ${worstI.pct >= 1 ? "risk" : worstI.pct >= 0.1 ? "warn" : "ok"}">${esc(worstI.label)} ≈ ${fmtG(worstI.pct, 2)}%</span>` : `<span class="badge ok">무시 가능</span>`}</td></tr>`;
+  }).join("");
+
+  /* --- 결과 --- */
+  const resBlocks = res.map(r => {
+    const title = r.lot ? `${lotLabel(r.lot)} <span class="muted" style="font-weight:400">· ${esc(lotFormula(r.lot))}</span>` : `<span class="mono">${esc(r.g.members[0].label)}</span> <span class="muted" style="font-weight:400">· lot 미연결</span>`;
+    const rows = r.els.map(el => {
+      const p = r.per[el];
+      if (!p || !p.chosen) return `<tr><td><b>${el}</b></td><td class="l muted" colspan="7">유효 판독 없음</td></tr>`;
+      const chips = p.reads.map(rd => {
+        const sel = rd === p.chosen;
+        return `<button class="elchip ${sel ? "sel" : ""} msPick" data-g="${esc(r.g.key)}" data-el="${el}" data-l="${esc(rd.label)}"
+          title="${esc(rd.label)} · 원시 ${fmtG(rd.raw, 4)} + 바탕선 ${fmtG(rd.off, 3)} = ${fmtG(rd.c, 4)} ppb · ${esc(rd.j.label)}${isNum(rd.rsd) ? ` · RSD ${fmtG(rd.rsd, 3)}%` : ""}">
+          ${msFmtDil(rd.D)} <span class="badge ${MS_ST_CLS[rd.j.st]}" style="font-size:9.5px;padding:0 4px">${fmtG(rd.c, 3)}</span></button>`;
+      }).join(" ");
+      const t = r.targetComp && r.targetComp[el] !== undefined ? r.targetComp[el] : null;
+      const m = r.comp[el];
+      const sd2 = isNum(r.compSd[el]) ? 2 * r.compSd[el] : null;
+      const diff = (t !== null && isNum(m)) ? m - t : null;
+      const itf = (r.interf[el] || [])[0];
+      return `<tr>
+        <td><b>${el}</b><div class="muted" style="font-size:10px">${msIsoLabel(p.k, model)}</div></td>
+        <td class="l">${chips}${p.auto ? "" : ` <span class="badge info" title="자동 선택 대신 직접 고른 판독">수동</span>`}</td>
+        <td class="num">${fmtG(p.chosen.u / 1000, 4)}</td>
+        <td class="num"><b>${isNum(m) ? fmtN(m, 2) : "–"}</b>${sd2 !== null ? `<span class="muted"> ± ${fmtN(sd2, 2)}</span>` : ""}</td>
+        <td class="num">${t !== null ? fmtN(t, 2) : "–"}</td>
+        <td class="num ${diff !== null && sd2 !== null && Math.abs(diff) > Math.max(sd2, 0.5) ? "cellCaution" : ""}">${diff !== null ? (diff > 0 ? "+" : "") + fmtN(diff, 2) : "–"}</td>
+        <td>${p.agree ? `<span class="badge ${p.agree.dev <= 10 ? "ok" : p.agree.dev <= 20 ? "warn" : "risk"}" title="LoQ 이상인 희석 ${p.agree.n}개의 원액 환산값 최대/최소">${fmtN(p.agree.dev, 1)}%</span>` : `<span class="muted" title="LoQ 이상 판독이 하나뿐">–</span>`}</td>
+        <td class="l" style="font-size:11px">${itf ? `<span class="badge ${itf.pct >= 1 ? "risk" : itf.pct >= 0.1 ? "warn" : "ok"}" title="${esc((r.interf[el] || []).slice(0, 5).map(x => `${x.label} ≈ ${fmtG(x.pct, 2)}%`).join("\n"))}">${esc(itf.label)} ${fmtG(itf.pct, 2)}%</span>` : `<span class="muted">–</span>`}</td></tr>`;
+    }).join("");
+    const bars = r.targetComp ? r.els.filter(e => r.targetComp[e] !== undefined).map(el => {
+      const t = r.targetComp[el] || 0, m = r.comp[el] || 0, mx = Math.max(t, m, 1) * 1.08;
+      return `<div class="cmp"><span class="el">${el}</span><span class="bar"><span class="m" style="width:${Math.min(m / mx * 100, 100)}%"></span><span class="t" style="left:${Math.min(t / mx * 100, 100)}%"></span></span><span class="val">${fmtN(t, 1)}→${fmtN(m, 1)}%</span></div>`;
+    }).join("") : "";
+    const w = r.worst;
+    return `<div class="msgrp" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px">
+      <div class="row" style="gap:8px;align-items:center;margin-bottom:6px">
+        <b style="font-size:14px">${title}</b>
+        ${w ? msStBadge(w, w.st === "ok" ? "정량 양호" : w.st === "lod" ? "검출한계 미만 원소 있음" : w.st === "loq" ? "반정량 원소 있음" : w.st === "high" ? "상한 초과 원소 있음" : "주의") : ""}
+        <span style="margin-left:auto" class="muted">${r.overallYield !== null ? `수율 <b style="color:var(--ink)">${fmtN(r.overallYield, 1)}%</b>` : r.lot ? "수율: lot의 stock 부피·물질량 필요" : ""}</span>
+      </div>
+      <div class="tblwrap" style="max-height:none"><table class="tbl"><thead><tr>
+        <th>원소</th><th class="l">사용 판독 <span class="muted" style="font-weight:400">(희석: 보정 ppb · 클릭해 변경)</span></th><th>원액<br>[mg/L]</th><th>측정 at%<br><span class="muted" style="font-weight:400">± 2σ</span></th><th>목표 at%</th><th>차이<br>[%p]</th><th>희석 간<br>일치</th><th class="l">최대 간섭 추정</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>
+      ${bars ? `<div style="max-width:520px;margin-top:6px">${bars}</div>` : ""}
+    </div>`;
+  }).join("") || `<div class="muted">포함된 샘플이 없습니다 — ①에서 내 샘플을 체크하세요.</div>`;
+
+  root.innerHTML = `
+  <div class="card">
+    <h3>ICP-MS 파일: <span class="mono">${esc(ctx.file)}</span>
+      <span class="hint">${esc(model.instrument || (model.format === "table" ? "표 형식" : "Qtegra 보고서"))} · 동위원소 ${model.order.length}종 · 측정 ${model.analyses.length}건 (표준 ${model.analyses.filter(a => a.type === "STD").length} · 샘플 ${ctx.samples.length})</span>
+      <button class="btn sm" style="margin-left:auto" id="msCancel">다른 파일</button></h3>
+    <div class="row">
+      <label class="f">분석일 (YYMMDD)<input type="text" class="w100" id="msDate" value="${esc(ctx.date)}"></label>
+      <label class="f"><span>희석 표기 없는 라벨</span><input type="text" class="w100 mono" id="msBaseDil" value="${esc(msFmtDil(M.baseDil))}"></label>
+      <label class="f"><span>'d' 붙은 라벨</span><input type="text" class="w100 mono" id="msDDil" value="${esc(msFmtDil(M.dDil))}"></label>
+      <label class="f"><span>바탕선(blank) 보정</span><div class="seg" style="margin:0"><button id="msBaseAuto" class="${ctx.baseMode !== "off" ? "active" : ""}">자동</button><button id="msBaseOff" class="${ctx.baseMode === "off" ? "active" : ""}">끄기</button></div></label>
+      <span class="note" style="flex:1;min-width:260px">라벨의 <b>500k·5M·x1/50000</b> 표기를 총 희석배수(원액 기준)로 읽습니다. 표기가 없으면 왼쪽 값을 씁니다.
+        같은 lot 번호의 여러 희석은 원소마다 <b>검정범위 안에서 신호가 가장 큰 희석</b>을 자동으로 골라 하나의 조성으로 합칩니다.</span>
+    </div>
+  </div>
+
+  <div class="card"><h3>① 샘플 고르기 · lot 연결 <span class="hint">라벨에서 자동 추측 — 다른 사람 샘플은 기본 제외 (바탕선 근거로만 사용)</span></h3>
+    <div class="tblwrap" style="max-height:none"><table class="tbl">${mapHead}<tbody>${incl.map(rowOf).join("")}</tbody></table></div>
+    ${others.length ? `<details style="margin-top:8px" ${ctx.showAll ? "open" : ""} id="msOthers"><summary class="muted" style="cursor:pointer">포함 안 된 측정 ${others.length}개 (다른 사용자·라벨 해석 불가) — 펼쳐서 추가</summary>
+      <div class="tblwrap" style="max-height:none;margin-top:6px"><table class="tbl">${mapHead}<tbody>${others.map(rowOf).join("")}</tbody></table></div></details>` : ""}
+  </div>
+
+  <div class="card"><h3>② 측정 품질 점검 <span class="hint">검정곡선 · 검출/정량한계 · 저농도 표준 회수율 · 바탕선 오프셋 · 간섭</span></h3>
+    <div class="tblwrap" style="max-height:none"><table class="tbl"><thead><tr>
+      <th class="l">동위원소</th><th>R²</th><th>검정범위<br>[ppb]</th><th>LoD / LoQ<br>[ppb]</th><th class="l">저농도 표준 회수율<br><span class="muted" style="font-weight:400">원래→보정 후</span></th><th>바탕선 오프셋<br>[ppb, 더함]</th><th class="l">이 조성에서 최대 간섭</th></tr></thead>
+      <tbody>${qRows}</tbody></table></div>
+    <div class="note" style="margin-top:8px">
+      <b>바탕선 오프셋</b>: 검정용 blank가 실제 무첨가 시료보다 높게 측정되면 절편이 높게 잡혀 <b>모든 값이 같은 양만큼 낮게</b>(원소가 없는 시료는 음수로) 읽힙니다.
+      그 원소가 <b>없는</b> 측정(조성을 아는 내 샘플, 다른 시료의 음수 판독)의 중앙값으로 이 오프셋을 추정해 더합니다. 근거가 2개 미만이면 0. 칸에 값을 넣으면 수동값을 씁니다.
+      저농도 표준의 회수율이 보정 후 100%에 가까워지면 오프셋이 타당하다는 독립 증거입니다.<br>
+      <b>판정</b>: LoD(3σ) 미만 = 정량 불가 · LoQ(10σ = 3.33×LoD) 미만 = 반정량 · 최저 표준 미만 = 외삽 · 최고 표준 초과 = 상한 초과. 조성 ±는 반복 RSD·오프셋 불확도·blank 잡음(LoD/3)을 전파한 2σ입니다.
+      <details style="margin-top:6px"><summary style="cursor:pointer">간섭 추정 계수 (사중극자 ICP-MS 전형값 — 장비 성능 보고서 값으로 바꿔 넣을 수 있음)</summary>
+        <div class="row" style="margin-top:6px">
+          ${[["fMO", "MO⁺/M⁺ (산화물)"], ["fMOH", "MOH⁺/M⁺"], ["fMH", "MH⁺/M⁺ (수소화물)"], ["fM2", "M²⁺/M⁺ (2가)"], ["fAr", "ArM⁺/M⁺"]].map(([k, t]) =>
+            `<label class="f">${t}<input type="number" step="any" min="0" class="w100 msF" data-k="${k}" value="${ctx.f[k]}"></label>`).join("")}
+        </div>
+        <div class="muted" style="margin-top:4px">겉보기 기여[%] = (n<sub>X</sub>/n<sub>E</sub>)·(a<sub>X</sub>/a<sub>E</sub>)·계수·100 — 같은 원소에서 생기는 것은 표준에도 똑같이 생겨 검정에 포함되므로 제외. KED 모드에서는 다원자 이온이 이보다 작습니다.</div>
+      </details>
+    </div>
+  </div>
+
+  <div class="card"><h3>③ 결과 — lot별 실제 조성 · 수율
+      <span class="hint">at% = 원액 환산 몰수 비 · 수율 = 원액 mmol ÷ (물질량 × 계수)</span></h3>
+    <div class="legend"><span><i style="background:var(--primary)"></i>측정 조성</span><span><i class="tick" style="background:var(--ink2)"></i>목표 조성 (눈금)</span>
+      <span><span class="badge ok">양호</span> <span class="badge warn">주의</span> <span class="badge risk">정량 불가·상한 초과</span></span></div>
+    ${resBlocks}
+    <div class="row right" style="margin-top:10px">
+      <span class="muted" style="margin-right:auto">저장하면 lot마다 ICP 기록 1건(ICP-MS)이 생기고, 희석 표기 규칙·동위원소 선택이 다음 가져오기의 기본값이 됩니다.</span>
+      <button class="btn" id="msCopy">결과 표 복사 (엑셀용)</button>
+      <button class="btn primary" id="msSave" ${res.length ? "" : "disabled"}>ICP 기록으로 저장 (${res.length}건)</button>
+    </div>
+  </div>`;
+
+  const rw = () => {
+    const sx = window.scrollX, sy = window.scrollY;
+    ctx.showAll = !!(root.querySelector("#msOthers") || {}).open;
+    renderMsWizard(root, ctx);
+    window.scrollTo(sx, sy);
+  };
+  const reBase = () => { msRefreshEls(ctx); ctx.base = msBaseline(ctx); msRefreshEls(ctx); };
+  $("#msCancel").onclick = () => { state.msCtx = null; renderView(); };
+  $("#msDate").onchange = e => ctx.date = e.target.value.trim();
+  const setDefDil = (sel, key) => $(sel).onchange = e => {
+    const D = msParseDilInput(e.target.value);
+    if (!D) { toast("희석배수 형식: 500k, 5M, 50000", "warn"); return rw(); }
+    const old = M[key]; M[key] = D; saveSettings();
+    for (const s of ctx.samples) { const p = msParseLabel(s.label, M); if (!p.dTok && (s.D === old || !s.D)) s.D = p.D; }
+    rw();
+  };
+  setDefDil("#msBaseDil", "baseDil"); setDefDil("#msDDil", "dDil");
+  $("#msBaseAuto").onclick = () => { ctx.baseMode = "auto"; reBase(); rw(); };
+  $("#msBaseOff").onclick = () => { ctx.baseMode = "off"; msRefreshEls(ctx); rw(); };
+  root.querySelectorAll(".msInc").forEach(el => el.onchange = () => {
+    const s = ctx.samples[Number(el.dataset.i)]; s.include = el.checked;
+    if (s.include && s.serial === null) { const p = msParseLabel(s.label, M); s.serial = p.serial; }
+    reBase(); rw();
+  });
+  root.querySelectorAll(".msLot").forEach(el => el.onchange = () => {
+    const s = ctx.samples[Number(el.dataset.i)];
+    s.serial = el.value ? Number(el.value) : null; s.userEls = null;
+    if (s.serial !== null) s.include = true;
+    reBase(); rw();
+  });
+  root.querySelectorAll(".msDil").forEach(el => el.onchange = () => {
+    const D = msParseDilInput(el.value);
+    if (!D) { toast("희석배수 형식: 500k, 5M, 50000", "warn"); return rw(); }
+    ctx.samples[Number(el.dataset.i)].D = D; rw();
+  });
+  root.querySelectorAll(".msEl").forEach(b => b.onclick = () => {
+    const s = ctx.samples[Number(b.dataset.i)], el = b.dataset.el;
+    const cur = (s.els || []).slice();
+    const next = cur.includes(el) ? cur.filter(x => x !== el) : cur.concat(el);
+    const key = msGroupKey(s);
+    for (const x of ctx.samples) if (msGroupKey(x) === key) x.userEls = next.slice();
+    reBase(); rw();
+  });
+  root.querySelectorAll(".msOff").forEach(el => el.onchange = () => {
+    const v = el.value.trim() === "" ? null : parseFloat(el.value);
+    if (v === null || !isFinite(v)) delete ctx.offManual[el.dataset.k]; else ctx.offManual[el.dataset.k] = v;
+    msRefreshEls(ctx); rw();
+  });
+  root.querySelectorAll(".msIso").forEach(el => el.onchange = () => { ctx.isoChosen[el.dataset.el] = el.dataset.k; reBase(); rw(); });
+  root.querySelectorAll(".msF").forEach(el => el.onchange = () => { const v = parseFloat(el.value); if (isFinite(v) && v >= 0) ctx.f[el.dataset.k] = v; rw(); });
+  root.querySelectorAll(".msPick").forEach(b => b.onclick = () => {
+    const key = `${b.dataset.g}|${b.dataset.el}`;
+    if (ctx.dilPick[key] === b.dataset.l) delete ctx.dilPick[key]; else ctx.dilPick[key] = b.dataset.l;
+    rw();
+  });
+  $("#msCopy").onclick = () => {
+    const lines = [["Lot", "Label(s)", "Element", "Isotope", "Dilution used", "Corrected [ppb]", "Status", "Stock [mg/L]", "at%", "±2σ", "Target at%", "Yield %"].join("\t")];
+    for (const r of res) for (const el of r.els) {
+      const p = r.per[el]; if (!p || !p.chosen) continue;
+      const y = (r.yields || []).find(x => x.el === el);
+      lines.push([r.lot ? lotLabel(r.lot) : "", r.g.members.map(m => m.label).join(" / "), el, p.k, p.chosen.D, fmtG(p.chosen.c, 5), p.chosen.j.st,
+        fmtG(p.chosen.u / 1000, 5), isNum(r.comp[el]) ? r.comp[el].toFixed(3) : "", isNum(r.compSd[el]) ? (2 * r.compSd[el]).toFixed(3) : "",
+        r.targetComp && isNum(r.targetComp[el]) ? r.targetComp[el].toFixed(3) : "", y && isNum(y.yieldPct) ? y.yieldPct.toFixed(2) : ""].join("\t"));
+    }
+    navigator.clipboard.writeText(lines.join("\n")).then(() => toast("결과 표를 복사했습니다 — 엑셀에 붙여넣기", "ok"));
+  };
+  $("#msSave").onclick = () => saveMs(ctx, res);
+}
+
+function saveMs(ctx, res) {
+  const M = msSettings();
+  let n = 0;
+  for (const r of res) {
+    const lot = r.lot, serial = r.g.serial;
+    const type = lot ? lot.type : "";
+    const icpLot = serial !== null ? `${serial}${type === "Shell" ? "s" : "c"}_MS` : r.g.members[0].label;
+    const els = r.els.filter(el => r.per[el] && r.per[el].chosen);
+    const dils = [...new Set(els.map(el => r.per[el].chosen.D))];
+    const dilLabel = dils.length === 1 ? `×1/${msFmtDil(dils[0])}` : "×1/" + dils.map(D => `${msFmtDil(D)}(${els.filter(el => r.per[el].chosen.D === D).join("·")})`).join(", ");
+    const worstEl = els.map(el => ({ el, j: r.per[el].chosen.j, c: r.per[el].chosen.c })).filter(x => x.j.st !== "ok").sort((a, b) => b.j.rank - a.j.rank)[0];
+    const chosenIso = {}, ppm = {}, dilByEl = {}, status = {};
+    els.forEach(el => { const p = r.per[el]; chosenIso[el] = msIsoLabel(p.k, ctx.model); ppm[el] = p.chosen.c / 1000; dilByEl[el] = p.chosen.D; status[el] = p.chosen.j.st; });
+    const detailRows = r.yields ? r.yields.filter(y => els.includes(y.el)).map(y => Object.assign({}, y, { atSd2: isNum(r.compSd[y.el]) ? 2 * r.compSd[y.el] : null }))
+      : els.map(el => { const p = r.per[el]; return { el, ppm: p.chosen.c / 1000, ppb: p.chosen.c, stockConc: p.chosen.u / 1000, stockMg: null, mmol: null,
+          atPct: r.comp[el] ?? null, atSd2: isNum(r.compSd[el]) ? 2 * r.compSd[el] : null, targetMmol: null, yieldPct: null, iso: p.k, dil: p.chosen.D, status: p.chosen.j.st }; });
+    upsertIcp({
+      id: `${icpLot}@${ctx.date}`, icpLot, serial, type, date: ctx.date,
+      srcSerial: lot && lot.src ? lot.src.serial : null, method: "ICP-MS",
+      elements: els.slice(), dil: Math.min(...dils) / 1000, dilLabel, totalDil: Math.min(...dils),
+      oor: worstEl ? { el: worstEl.el, val: excelRound(worstEl.c, 4), st: worstEl.j.st, msg: worstEl.j.label } : null,
+      values: els.map(el => [el, isNum(r.comp[el]) ? excelRound(r.comp[el], 6) : null]), vtype: "pct",
+      chosenWl: null, chosenIso, ppm, unit: "ppb",
+      prep: { stockMl: lot ? lot.stockVol : null, dilByEl, baseline: ctx.baseMode === "off" ? null : Object.fromEntries(ctx.model.order.map(k => [k, msOffsetOf(ctx, k)])) },
+      quality: status,
+      detail: { rows: detailRows },
+      totalMmol: r.totalMmol, overallYield: r.overallYield,
+      file: ctx.file, labels: r.g.members.map(m => m.label), legacy: false, deleted: false,
+    });
+    n++;
+  }
+  /* 다음 가져오기 기본값: 접두어(가장 많이 포함된 것)·동위원소·계수 */
+  const pre = {}; ctx.samples.filter(s => s.include).forEach(s => { const p = msLabelPrefix(s.label); if (p) pre[p] = (pre[p] || 0) + 1; });
+  const top = Object.entries(pre).sort((a, b) => b[1] - a[1])[0]; if (top) M.prefix = top[0];
+  Object.assign(M.isoPref, ctx.isoChosen); M.f = Object.assign({}, ctx.f);
+  saveSettings();
+  toast(`${n}건의 ICP-MS 기록을 저장했습니다`, "ok");
+  state.msCtx = null;
+  go("icpdb");
+}
+
+
+/* ---------- 공통: 기록의 총 희석 표기 ---------- */
+function icpDilText(r) {
+  if (r.dilLabel) return r.dilLabel;
+  if (isNum(r.totalDil)) return `×1/${fmtN(r.totalDil, 0)}`;
+  return `×1/${fmtN(1000 * (r.dil || 1), 0)}`;
+}
+/* ---------- ICP-OES: 기본 희석배수(실제 aliquot·최종부피) ---------- */
+function oesBaseF(ctx) { return (ctx.prep.aliquotUl > 0) ? ctx.prep.finalMl / (ctx.prep.aliquotUl / 1000) : 1000; }
+/* ---------- ICP-OES: 같은 lot의 여러 희석(기본·d)을 원소별 최적 희석으로 통합 ---------- */
+function oesMergeGroups(ctx) {
+  const g = {};
+  for (const s of ctx.samples) if (s.include && s.serial !== null && lotOf(s.serial)) (g[s.serial] = g[s.serial] || { serial: s.serial, members: [] }).members.push(s);
+  return Object.values(g).filter(x => x.members.length >= 2).sort((a, b) => a.serial - b.serial);
+}
+function oesSaveCount(ctx) {
+  if (!ctx.merge) return ctx.samples.filter(s => s.include).length;
+  const mg = oesMergeGroups(ctx); const ms = new Set(mg.map(m => m.serial));
+  return mg.length + ctx.samples.filter(s => s.include && !(s.serial !== null && ms.has(s.serial))).length;
+}
+function oesMergedCompute(ctx, m) {
+  const lot = lotOf(m.serial), d = lot ? derivedOf(lot.serial) : null;
+  const baseF = oesBaseF(ctx);
+  const comps = m.members.map(s => ({ s, c: sampleComputed(ctx, s) }));
+  const els = [...new Set(comps.flatMap(x => x.c.inc))];
+  const RANK = { ok: 0, low: 2, high: 3, neg: 4, lod: 4 };
+  const per = {};
+  for (const el of els) {
+    const reads = [];
+    for (const { s } of comps) {
+      const cell = s.vals[el] && s.vals[el][ctx.chosen[el]];
+      if (!cell) continue;
+      let v = cell.v, st = "ok", msg = "검정범위 내";
+      if (cell.flagged) { v = cell.fv ?? null; st = cell.tag === "o" ? "high" : "lod"; msg = cell.tag === "o" ? "장비 over-range 플래그" : "장비 플래그(검출한계 미만)"; }
+      if (v === null || v === undefined) continue;
+      const mv = measuredScale(ctx, s, v);
+      if (st === "ok") { const o = oorCheck(mv, ctx.parsed.stdMin, ctx.parsed.stdMax); if (o) { st = o.kind; msg = o.msg; } }
+      const eff = ctx.preDil ? 1 : (s.extra || 1);
+      reads.push({ label: s.label, m: mv, u: v * eff, D: baseF * (s.extra || 1), st, msg, rank: RANK[st] ?? 4 });
+    }
+    if (!reads.length) { per[el] = { el, reads, chosen: null }; continue; }
+    const pick = reads.slice().sort((a, b) => (a.rank - b.rank) || (a.st === "high" ? a.m - b.m : b.m - a.m))[0];
+    const up = ctx.oesPick && ctx.oesPick[`${m.serial}|${el}`];
+    const chosen = (up && reads.find(r => r.label === up)) || pick;
+    const goods = reads.filter(r => r.st === "ok");
+    const agree = goods.length >= 2 ? { dev: (Math.max(...goods.map(r => r.u)) / Math.min(...goods.map(r => r.u)) - 1) * 100, n: goods.length } : null;
+    per[el] = { el, reads, chosen, auto: chosen === pick, agree };
+  }
+  const ppmMap = {}; els.forEach(el => { if (per[el].chosen) ppmMap[el] = Math.max(per[el].chosen.u, 0); });
+  const comp = compositionFromPpm(ppmMap);
+  let targetComp = null, yields = null, overallYield = null, totalMmol = null;
+  if (lot) {
+    const cs = lotCations(lot).filter(c => els.includes(c.el));
+    const csum = cs.reduce((a, c) => a + (c.coeff || 0), 0);
+    if (csum > 0) { targetComp = {}; cs.forEach(c => targetComp[c.el] = (c.coeff || 0) / csum * 100); }
+    if (d && isNum(d.AB) && isNum(lot.stockVol)) {
+      const entries = els.filter(el => per[el].chosen).map(el => { const co = cs.find(c => c.el === el); return { el, ppm: ppmMap[el], targetMmol: co && isNum(co.coeff) ? d.AB * co.coeff : null }; });
+      const rv = icpReverse(entries, { stockMl: lot.stockVol, aliquotUl: ctx.prep.aliquotUl, finalMl: ctx.prep.finalMl, extra: 1 });
+      yields = rv.rows; totalMmol = rv.totalMmol;
+      const tg = entries.reduce((a, e) => a + (isNum(e.targetMmol) ? e.targetMmol : 0), 0);
+      if (tg > 0) overallYield = totalMmol / tg * 100;
+    }
+  }
+  return { lot, d, els, per, comp, targetComp, yields, totalMmol, overallYield };
+}
+function oesMergedCard(ctx) {
+  const groups = oesMergeGroups(ctx);
+  if (!groups.length) return "";
+  const CLS = { ok: "ok", low: "warn", high: "risk", neg: "risk", lod: "risk" };
+  const blocks = groups.map(m => {
+    const r = oesMergedCompute(ctx, m);
+    const rows = r.els.map(el => {
+      const p = r.per[el];
+      if (!p.chosen) return `<tr><td><b>${el}</b></td><td class="l muted" colspan="5">유효 값 없음</td></tr>`;
+      const chips = p.reads.map(rd => `<button class="elchip ${rd === p.chosen ? "sel" : ""} oesPick" data-s="${m.serial}" data-el="${el}" data-l="${esc(rd.label)}" title="${esc(rd.label)} · 측정 ${fmtG(rd.m, 4)} ppm · ${esc(rd.msg)}">×1/${fmtN(rd.D, 0)} <span class="badge ${CLS[rd.st] || "gray"}" style="font-size:9.5px;padding:0 4px">${fmtG(rd.m, 3)}</span></button>`).join(" ");
+      const t = r.targetComp && r.targetComp[el] !== undefined ? r.targetComp[el] : null;
+      const y = (r.yields || []).find(x => x.el === el);
+      return `<tr><td><b>${el}</b></td><td class="l">${chips}${p.auto ? "" : ` <span class="badge info">수동</span>`}</td>
+        <td class="num"><b>${isNum(r.comp[el]) ? fmtN(r.comp[el], 2) : "–"}</b></td><td class="num">${t !== null ? fmtN(t, 2) : "–"}</td>
+        <td>${p.agree ? `<span class="badge ${p.agree.dev <= 10 ? "ok" : p.agree.dev <= 20 ? "warn" : "risk"}" title="검정범위 안 희석 ${p.agree.n}개의 기본액 환산값 최대/최소">${fmtN(p.agree.dev, 1)}%</span>` : `<span class="muted">–</span>`}</td>
+        <td class="num">${y && isNum(y.yieldPct) ? fmtN(y.yieldPct, 1) + "%" : "–"}</td></tr>`;
+    }).join("");
+    return `<div style="border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:8px">
+      <div class="row" style="gap:8px"><b>${lotLabel(r.lot)}</b><span class="muted">${esc(lotFormula(r.lot))} · ${m.members.map(x => esc(x.label)).join(" / ")}</span>
+        <span style="margin-left:auto" class="muted">${r.overallYield !== null ? `수율 <b style="color:var(--ink)">${fmtN(r.overallYield, 1)}%</b>` : ""}</span></div>
+      <div class="tblwrap" style="max-height:none"><table class="tbl"><thead><tr><th>원소</th><th class="l">사용 희석 <span class="muted" style="font-weight:400">(측정 ppm · 클릭해 변경)</span></th><th>측정 at%</th><th>목표 at%</th><th>희석 간 일치</th><th>수율</th></tr></thead>
+      <tbody>${rows}</tbody></table></div></div>`;
+  }).join("");
+  return `<div class="card"><h3>4) lot별 통합 결과 — 희석 자동 선택
+    <span class="hint">같은 lot의 기본·추가희석 측정을 합쳐, 원소마다 검정범위 안에서 신호가 가장 큰 희석의 값을 씁니다</span></h3>${blocks}</div>`;
 }
 
 </script>
@@ -6041,7 +7056,7 @@ function openLotDrawer(serial) {
         <dt>메모</dt><dd>${esc(lot.memo || "–")}</dd>
       </dl></div>
       <div><h4 style="margin-bottom:6px">ICP 기록 (${icps.length})</h4>
-        ${icps.length ? icps.map(r => `<div class="note icpnote" style="margin-bottom:6px;cursor:pointer" data-openicp="${esc(r.id)}" title="ICP 기록 상세"><b>${esc(r.icpLot)}</b> · ${esc(r.date)} · ×1/${1000 * (r.dil || 1)}
+        ${icps.length ? icps.map(r => `<div class="note icpnote" style="margin-bottom:6px;cursor:pointer" data-openicp="${esc(r.id)}" title="ICP 기록 상세"><b>${esc(r.icpLot)}</b> · ${esc(r.date)} · ${esc(icpDilText(r))}${r.method === "ICP-MS" ? " · MS" : ""}
           ${r.oor ? `<span class="badge risk">Out: ${esc(r.oor.el)}</span>` : ""}<br>
           ${(r.values || []).filter(v => v[1] !== null).map(v => `${v[0]} ${fmtN(v[1], 2)}${r.vtype === "pct" ? "%" : r.vtype === "ppm" ? " ppm" : ""}`).join(" · ") || "<span class='muted'>값 없음</span>"}
           ${r.overallYield ? ` · 수율 <b>${fmtN(r.overallYield, 1)}%</b>` : ""}</div>`).join("") : `<div class="muted">아직 없음</div>`}
@@ -6144,7 +7159,7 @@ function renderIcpDb(root) {
       <td style="cursor:pointer" data-lot="${r.serial}">${r.serial ?? "–"}</td>
       <td><span class="badge ${r.type === "Core" ? "core" : r.type === "Shell" ? "shell" : "gray"}">${r.type || "?"}</span></td>
       <td>${esc(r.date)}</td>
-      <td class="l num">×1/${fmtN(1000 * (r.dil || 1), 0)}</td>
+      <td class="l num">${esc(icpDilText(r))}${r.method === "ICP-MS" ? ` <span class="badge info" style="font-size:9.5px;padding:0 4px">MS</span>` : ""}</td>
       <td class="l">${esc((r.elements || []).join(", "))}</td>
       <td>${r.oor ? `<span class="badge risk" title="${esc(String(r.oor.val))}">Out: ${esc(r.oor.el)}</span>` : `<span class="badge ok">OK</span>`}</td>
       <td class="l" style="white-space:normal;max-width:280px">${vals.map(v => `<span class="badge info">${v[0]} ${fmtN(v[1], 2)}${unit}</span>`).join(" ") || "<span class='muted'>–</span>"}
@@ -6185,19 +7200,20 @@ function openIcpDrawer(id) {
   if (!r) return;
   const lot = r.serial !== null ? lotOf(r.serial) : null;
   const detailRows = (r.detail && r.detail.rows || []).map(d => `<tr>
-    <td><b>${d.el}</b></td><td class="num mono">${r.chosenWl && r.chosenWl[d.el] ? Number(r.chosenWl[d.el]).toFixed(3) : "–"}</td>
-    <td class="num">${fmtN(d.ppm, 4)}</td><td class="num">${fmtN(d.stockConc)}</td><td class="num">${fmtN(d.stockMg)}</td>
-    <td class="num">${fmtN(d.mmol)}</td><td class="num"><b>${fmtN(d.atPct, 2)}</b></td>
+    <td><b>${d.el}</b></td><td class="num mono">${r.chosenIso && r.chosenIso[d.el] ? esc(r.chosenIso[d.el]) : r.chosenWl && r.chosenWl[d.el] ? Number(r.chosenWl[d.el]).toFixed(3) : "–"}</td>
+    <td class="num">${r.method === "ICP-MS" && isNum(d.ppb) ? fmtN(d.ppb, 4) + " ppb" : fmtN(d.ppm, 4)}${d.dil ? `<div class="muted" style="font-size:10px">×1/${esc(msFmtDil(d.dil))}${d.status && d.status !== "ok" ? " · " + esc(MS_ST_KO[d.status] || d.status) : ""}</div>` : ""}</td><td class="num">${fmtN(d.stockConc)}</td><td class="num">${fmtN(d.stockMg)}</td>
+    <td class="num">${fmtN(d.mmol)}</td><td class="num"><b>${fmtN(d.atPct, 2)}</b>${isNum(d.atSd2) ? `<span class="muted"> ±${fmtN(d.atSd2, 2)}</span>` : ""}</td>
     <td class="num">${fmtN(d.targetMmol)}</td><td class="num">${d.yieldPct !== null ? fmtN(d.yieldPct, 1) + "%" : "–"}</td></tr>`).join("");
   const ov = h(`<div class="overlay"><div class="drawer">
     <button class="closex">✕</button>
     <h2>ICP ${esc(r.icpLot)} <span class="muted">${esc(r.date)}</span> ${r.legacy ? `<span class="badge gray">구 로그북 이관</span>` : ""}</h2>
     <dl class="kv" style="margin-bottom:10px">
       <dt>Lot</dt><dd>${lot ? `${lotLabel(lot)} · ${esc(lotFormula(lot))} <button class="btn sm" id="icpToLot" style="margin-left:6px">lot 열기</button>` : (r.serial ?? "–")}</dd>
-      <dt>총 희석</dt><dd>×1/${fmtN(1000 * (r.dil || 1), 0)}</dd>
+      <dt>분석법</dt><dd>${esc(r.method || "ICP-OES")}</dd>
+      <dt>총 희석</dt><dd>${esc(icpDilText(r))}</dd>
       <dt>Elements</dt><dd>${esc((r.elements || []).join(", "))}</dd>
       <dt>Out of Range</dt><dd>${r.oor ? `${esc(r.oor.el)} = ${esc(String(r.oor.val))}` : "없음"}</dd>
-      ${r.prep ? `<dt>조건</dt><dd>stock ${fmtN(r.prep.stockMl, 1)} mL · aliquot ${fmtN(r.prep.aliquotUl, 0)} μL → ${fmtN(r.prep.finalMl, 0)} mL · 추가희석 ×${fmtN(r.prep.extra, 0)}${r.prep.preDil ? ` <span class="badge info" title="장비에 희석배율 사전입력 — 결과값에 이미 반영되어 계산에는 ×1 적용">사전입력</span>` : ""}</dd>` : ""}
+      ${r.method === "ICP-MS" && r.prep ? `<dt>조건</dt><dd>stock ${fmtN(r.prep.stockMl, 1)} mL · 원소별 희석 ${esc(icpDilText(r))} · 바탕선 보정 ${r.prep.baseline ? "자동/수동 적용" : "끔"}</dd>` : ""}${r.prep && r.method !== "ICP-MS" ? `<dt>조건</dt><dd>stock ${fmtN(r.prep.stockMl, 1)} mL · aliquot ${fmtN(r.prep.aliquotUl, 0)} μL → ${fmtN(r.prep.finalMl, 0)} mL · 추가희석 ×${fmtN(r.prep.extra, 0)}${r.prep.preDil ? ` <span class="badge info" title="장비에 희석배율 사전입력 — 결과값에 이미 반영되어 계산에는 ×1 적용">사전입력</span>` : ""}</dd>` : ""}
       ${r.file ? `<dt>파일</dt><dd class="mono">${esc(r.file)}</dd>` : ""}
       ${r.totalMmol ? `<dt>측정 총량</dt><dd>${fmtN(r.totalMmol)} mmol</dd>` : ""}
       ${(() => { const y = recordYieldInfo(r); return y ? `<dt>수율</dt><dd><b>${fmtN(y.overall, 1)}%</b>${y.est ? ` <span class="muted">(구 기록 ppm 기반 자동 추정)</span>` : ""}${y.perEl.length ? " · " + y.perEl.map(p => `${p.el} ${fmtN(p.y, 0)}%`).join(" · ") : ""}</dd>` : ""; })()}
@@ -6206,7 +7222,7 @@ function openIcpDrawer(id) {
     <div style="margin:6px 0 12px">${(r.values || []).filter(v => v[1] !== null).map(v => `<span class="badge info" style="margin-right:4px">${v[0]} ${fmtN(v[1], 3)}</span>`).join("") || "<span class='muted'>–</span>"}</div>
     ${detailRows ? `<h4>상세 (선택 파장 · 수율)</h4>
     <div class="tblwrap" style="max-height:300px"><table class="tbl"><thead><tr>
-      <th>El</th><th>λ [nm]</th><th>ppm</th><th>Stock conc<br>[mg/L]</th><th>Stock<br>[mg]</th><th>Stock<br>[mmol]</th><th>at%</th><th>Target<br>[mmol]</th><th>Yield</th></tr></thead>
+      <th>El</th><th>${r.method === "ICP-MS" ? "동위원소" : "λ [nm]"}</th><th>${r.method === "ICP-MS" ? "측정 (보정)" : "ppm"}</th><th>Stock conc<br>[mg/L]</th><th>Stock<br>[mg]</th><th>Stock<br>[mmol]</th><th>at%</th><th>Target<br>[mmol]</th><th>Yield</th></tr></thead>
       <tbody>${detailRows}</tbody></table></div>` : ""}
   </div></div>`);
   document.body.appendChild(ov);
