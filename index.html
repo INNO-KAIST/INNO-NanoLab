@@ -654,7 +654,7 @@ body{word-break:keep-all}
 <div id="app">
   <div id="mainUI">
     <div class="topbar">
-      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.4.0 · deploy</span></div>
+      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.4.1 · deploy</span></div>
       <div class="spacer"></div>
       <button class="chipbtn" id="chipBackup" title="클릭하여 즉시 백업"><span class="dot"></span>백업</button>
       <button class="chipbtn" id="chipSync" title="동기화 설정으로 이동"><span class="dot"></span>로컬 저장</button>
@@ -2319,6 +2319,131 @@ function deleteLot(serial) {
   state.derived = null;
   saveDb(); Sync.push();
 }
+/* LOTFIX-1012 */
+/* ---------- 두 번 눌러 확정 (브라우저 confirm 창이 막혀도 동작) + 되돌리기 ---------- */
+function armBtn(btn, armedText, fn) {
+  if (!btn.dataset.armed) {
+    btn.dataset.armed = "1";
+    const old = btn.innerHTML;
+    btn.textContent = armedText;
+    btn.classList.add("armed");
+    setTimeout(() => { if (btn.isConnected && btn.dataset.armed) { delete btn.dataset.armed; btn.innerHTML = old; btn.classList.remove("armed"); } }, 4000);
+    return;
+  }
+  delete btn.dataset.armed;
+  fn();
+}
+function undoToast(msg, undo) {
+  const box = $("#toasts");
+  const el = h(`<div class="toast ok" style="pointer-events:auto;display:flex;align-items:center;gap:10px">${esc(msg)}<button class="btn sm">되돌리기</button></div>`);
+  el.querySelector("button").onclick = () => { el.remove(); undo(); toast("되돌렸습니다", "ok"); };
+  box.appendChild(el);
+  setTimeout(() => { el.style.opacity = "0"; el.style.transition = "opacity .3s"; setTimeout(() => el.remove(), 350); }, 8000);
+}
+function undeleteLot(serial) {
+  const l = state.db.lots[serial]; if (!l) return;
+  l.deleted = false; l.updatedAt = Date.now();
+  state.dirty.lots.add(String(serial)); state.derived = null;
+  saveDb(); Sync.push();
+}
+function armDeleteLot(btn, serial, after) {
+  const kids = childrenOf(serial);
+  armBtn(btn, kids.length ? `한 번 더 (Lot ${kids.map(k => k.serial).join(", ")}의 source)` : "한 번 더 눌러 삭제", () => {
+    deleteLot(serial);
+    if (after) after();
+    undoToast(`Lot ${serial} 삭제됨`, () => { undeleteLot(serial); if (after) after(); });
+  });
+}
+
+/* ---------- Lot 번호: 사용자가 정한 번호를 그대로 쓴다 ---------- */
+function planTargetSerial(ctx) {
+  const w = Number(ctx.serialWant);
+  if (isFinite(w) && w > 0) return Math.round(w);
+  return ctx.editSerial ?? nextSerial();
+}
+function planSerialClash(ctx) {
+  const t = planTargetSerial(ctx);
+  return (lotOf(t) && t !== ctx.editSerial) ? t : null;
+}
+/* 샘플명에 'WJ-0157c'처럼 번호가 들어 있으면 그 번호를 lot 번호로 (번호를 따로 정하지 않았을 때) */
+function planSerialFromName(ctx, type) {
+  const nm = String(ctx.name || "").trim();
+  const pre = (state.db.settings.lotPrefix ?? "WJ");
+  const re = new RegExp("^\\s*" + pre.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "[-_ ]?0*(\\d{1,6})\\s*[cs]?\\s*$", "i");
+  const m = nm.match(re) || nm.match(/^\s*0*(\d{1,6})\s*[cs]?\s*$/i);
+  if (!m) return;
+  const n = parseInt(m[1], 10);
+  if (!(n > 0)) return;
+  ctx.serialWant = (n === (ctx.editSerial ?? nextSerial())) ? null : n;
+  if (nm === autoLotLabel({ serial: n, type })) ctx.name = "";      // 자동 이름과 같으면 비워 둔다(번호만 바뀌게)
+}
+function planSerialFieldHtml(ctx, id) {
+  const t = planTargetSerial(ctx), clash = planSerialClash(ctx);
+  const ed = ctx.editSerial;
+  const hint = clash ? `<span class="badge risk">이미 있는 번호</span>`
+    : (ed !== null && t !== ed) ? `<span class="badge warn">${ed} → ${t}</span>`
+    : ed !== null ? `<span class="muted" style="font-weight:500">(수정 중)</span>`
+    : (t !== nextSerial()) ? `<span class="muted" style="font-weight:500">(다음 빈 번호 ${nextSerial()})</span>` : `<span class="muted" style="font-weight:500">(다음 빈 번호)</span>`;
+  return `<label class="f"><span>Lot 번호 ${hint}</span><input type="number" min="1" step="1" class="w80" id="${id}" value="${t}"
+    title="이 계획이 저장될 lot 번호입니다. 비어 있는 번호면 그대로 쓰고, 수정 중에 바꾸면 기존 lot이 새 번호로 옮겨집니다(ICP 기록·Shell source 연결 포함)."></label>`;
+}
+function bindPlanSerialField(ctx, id, rr) {
+  const el = $("#" + id); if (!el) return;
+  el.onchange = () => {
+    const v = parseInt(el.value, 10);
+    ctx.serialWant = (v > 0 && v !== (ctx.editSerial ?? nextSerial())) ? v : null;
+    rr();
+  };
+}
+/* 다른 lot·ICP 기록이 가리키는 번호를 옮긴다 */
+function renumberLotRefs(oldS, newS) {
+  const now = Date.now();
+  for (const l of Object.values(state.db.lots)) {
+    if (l.deleted || !l.src || Number(l.src.serial) !== Number(oldS)) continue;
+    l.src = Object.assign({}, l.src, { serial: newS }); l.updatedAt = now; state.dirty.lots.add(String(l.serial));
+  }
+  for (const r of Object.values(state.db.icp).slice()) {
+    if (r.deleted) continue;
+    if (r.srcSerial !== null && r.srcSerial !== undefined && Number(r.srcSerial) === Number(oldS)) { r.srcSerial = newS; r.updatedAt = now; state.dirty.icp.add(r.id); }
+    if (r.serial === null || r.serial === undefined || Number(r.serial) !== Number(oldS)) continue;
+    const icpLot = String(r.icpLot || "").replace(new RegExp("^" + oldS + "(?=[cs_]|$)"), String(newS));
+    const oldLot = String(r.icpLot || "");
+    const id = (oldLot && String(r.id).includes(oldLot)) ? String(r.id).replace(oldLot, icpLot) : `${icpLot}@${r.date}`;
+    const nr = Object.assign({}, r, { serial: newS, icpLot, id, updatedAt: now, deleted: false });
+    state.db.icp[id] = nr; state.dirty.icp.add(id);
+    if (id !== r.id) { r.deleted = true; r.movedTo = id; r.updatedAt = now; state.dirty.icp.add(r.id); }
+  }
+}
+/* 저장: 번호 결정 → 겹침 검사 → (수정이면) 기존 값 위에 덮어쓰기(TEM 반지름 등 계획창에 없는 값 보존) → 번호가 바뀌면 이동 */
+function commitLotSave(ctx, fields) {
+  const target = planTargetSerial(ctx);
+  const ed = ctx.editSerial;
+  if (planSerialClash(ctx) !== null) {
+    toast(`Lot ${target}은(는) 이미 있습니다 — 다른 번호를 쓰거나, 그 lot을 합성 기록에서 [수정]으로 여세요`, "err");
+    return null;
+  }
+  const old = (ed !== null && state.db.lots[ed] && !state.db.lots[ed].deleted) ? state.db.lots[ed] : null;
+  const lot = Object.assign({}, old || {}, fields, { serial: target, deleted: false });
+  delete lot.renumberedTo;
+  /* 프로토콜 스냅샷: 수정 중 프로토콜을 바꾸지 않았으면 원래 것을 유지, 바꿨으면 새로 찍음 */
+  if (!old || (ctx.protoIdAtLoad !== undefined && (state.db.settings.activeProtocolId || null) !== ctx.protoIdAtLoad)) delete lot.protocol;
+  upsertLot(lot);
+  if (old && ed !== target) {
+    old.deleted = true; old.renumberedTo = target; old.updatedAt = Date.now();
+    state.dirty.lots.add(String(ed));
+    renumberLotRefs(ed, target);
+    state.derived = null; saveDb(); Sync.push();
+  }
+  return target;
+}
+/* 레시피·새 프로세스 마법사를 적용해도 '지금 수정 중인 lot'과 입력한 번호·이름·날짜는 유지 */
+function carryPlanIdentity(prev, next) {
+  if (!prev || prev.mode !== next.mode) return next;
+  for (const k of ["editSerial", "serialWant", "name", "date", "stockVol", "heat", "memo", "protoIdAtLoad"])
+    if (prev[k] !== undefined) next[k] = prev[k];
+  if (next.mode === "shell" && prev.src !== undefined) next.src = prev.src;
+  return next;
+}
 function upsertIcp(rec) {
   rec.updatedAt = Date.now();
   state.db.icp[rec.id] = rec;
@@ -3348,7 +3473,7 @@ function renderPlannerCore(root, ctx) {
         <button class="btn sm cDn" data-ci="${i}" title="아래로" ${i === comps.length - 1 ? "disabled" : ""}>↓</button>
         <button class="btn sm cDel" data-ci="${i}" title="행 삭제">✕</button></span></td></tr>`;
   }).join("");
-  const preview = { serial: ctx.editSerial ?? nextSerial(), type: "Core", tgtMmol: ctx.tgtMmol,
+  const preview = { serial: planTargetSerial(ctx), type: "Core", tgtMmol: ctx.tgtMmol,
     stoich: plannerStoich(ctx), cardEdits: ctx.cardEdits, name: ctx.name || "" };
   const autoGroup = layerElems(preview);
 
@@ -3436,6 +3561,7 @@ function renderPlannerCore(root, ctx) {
       <h3>Core 합성 계획 <span class="hint">목표 mmol 기준</span></h3>
       ${planLocalBarHtml(ctx)}
       <div class="row" style="margin-bottom:10px">
+        ${planSerialFieldHtml(ctx, "pSerial")}
         <label class="f"><span>Lot 접두사</span><input type="text" class="w80" id="pLotPre" value="${esc(state.db.settings.lotPrefix ?? "WJ")}"
           title="lot 번호 앞에 붙는 표기입니다 — 고치면 기록·ICP 라벨에 모두 반영되고 다음 계획에도 이어집니다"></label>
         <label class="f" style="min-width:190px"><span>샘플명 <span class="muted" style="font-weight:500">(비우면 자동 ${esc(autoLotLabel(preview))})</span></span>
@@ -3485,7 +3611,7 @@ function renderPlannerCore(root, ctx) {
     <button class="btn" id="pEditProto">전체 프로세스 편집…</button>
     <button class="btn" id="pReset">Reset</button>
     <button class="btn" id="pPrint">Print</button>
-    <button class="btn primary" id="pSave">${ctx.editSerial !== null ? `Save Changes (Lot ${ctx.editSerial})` : `Save as Lot ${preview.serial}`}</button>
+    <button class="btn primary" id="pSave">${ctx.editSerial !== null ? `Save Changes (Lot ${ctx.editSerial}${preview.serial !== ctx.editSerial ? ` → ${preview.serial}` : ""})` : `Save as Lot ${preview.serial}`}</button>
   </div>`;
   /* 카드 제목(샘플명)은 cardEdits가 아니라 ctx.name으로 — 계획창 입력칸과 같은 값 */
   /* 절차 편집기 — 접힌 상태로 그리면 블록 배치 계산이 어긋나므로 열려 있을 때만 그린다 */
@@ -3499,7 +3625,7 @@ function renderPlannerCore(root, ctx) {
   if (secOpen("planProc", false)) drawProc();
   bindSecs(root, k => { if (k === "planProc") drawProc(); });
   bindCardEditing($("#cardPrev"), (k, v) => {
-    if (k === "title") { ctx.name = (v === autoLotLabel(preview)) ? "" : v; const f = $("#pName"); if (f) f.value = ctx.name; return; }
+    if (k === "title") { ctx.name = (v === autoLotLabel(preview)) ? "" : v; planSerialFromName(ctx, "Core"); const f = $("#pName"); if (f) f.value = ctx.name; return; }
     ctx.cardEdits[k] = v;
   });
   $("#pCardReset").onclick = () => { ctx.cardEdits = {}; ctx.name = ""; renderPlannerCore(root, ctx); };
@@ -3510,7 +3636,8 @@ function renderPlannerCore(root, ctx) {
     const handler = () => { try { const step = ((_proto.steps && _proto.steps.core) || [])[w.bi]; if (!step || !step.bind || !step.bind.solv || !step.bind.solv[w.si]) return; let v = el.value; if (w.num) v = parseFloat(v); step.bind.solv[w.si][w.field] = v; persistProto(); rr(); } catch (e) {} };
     if (el.tagName === "SELECT") el.onchange = handler; else el.onchange = handler; });
   $("#pTgt").onchange = e => { ctx.tgtMmol = parseFloat(e.target.value) || 0; rr(); };
-  $("#pName").onchange = e => { ctx.name = e.target.value.trim(); rr(); };
+  $("#pName").onchange = e => { ctx.name = e.target.value.trim(); planSerialFromName(ctx, "Core"); rr(); };
+  bindPlanSerialField(ctx, "pSerial", rr);
   /* 시약 조건 — 계획창에서 고친 값은 이 계획에만. 기본값으로 쓰려면 '기본값으로 저장' */
   bindPlanLocalBar(root, ctx, rr);
   const bindCond = (sel, path, positive) => {
@@ -3584,10 +3711,9 @@ function renderPlannerCore(root, ctx) {
   $("#pSave").onclick = () => {
     if (!sumOk) { if (!confirm("Dopant 계수 합이 1이 아닙니다. 그대로 저장할까요?")) return; }
     else if (state._planCheck && state._planCheck.problem && !confirm(`검증에 문제가 있습니다 — ${state._planCheck.text}\n그대로 저장할까요?`)) return;
-    const serial = ctx.editSerial !== null ? ctx.editSerial : nextSerial();
     const precs = {};
     for (const r of plannerRecipeRows(ctx)) if (r.el && r.prec) precs[r.el] = r.prec;
-    upsertLot({ serial, type: "Core", date: ctx.date, stockVol: ctx.stockVol, tgtMmol: ctx.tgtMmol,
+    const serial = commitLotSave(ctx, { type: "Core", date: ctx.date, stockVol: ctx.stockVol, tgtMmol: ctx.tgtMmol,
       src: null, radius: null, thick: null, stoich: plannerStoich(ctx), name: (ctx.name || "").trim(),
       components: ensureComponents(ctx).filter(c => c && c.el).map(c =>
         ({ role: c.role, el: c.el, coeff: c.coeff, excess: c.excess, mode: amountModeOf(c), ref: c.ref || null,
@@ -3595,7 +3721,8 @@ function renderPlannerCore(root, ctx) {
         .map((c, i, arr) => { if (c.mode === "multiple" && c.ref) { const t = ensureComponents(ctx).find(x => x.id === c.ref); c.ref = t ? t.el : null; } return c; }),
       heat: ctx.heat, memo: ctx.memo, precursors: precs,
       naExcessUsed: ctx.naExcess, fExcessUsed: ctx.fExcess, reagentsUsed: reagentsNow(), cardEdits: ctx.cardEdits, deleted: false });
-    toast(`Lot ${serial} 저장 완료`, "ok");
+    if (serial === null) return;
+    toast(ctx.editSerial !== null && serial !== ctx.editSerial ? `Lot ${ctx.editSerial} → ${serial} 번호 변경·저장 완료` : `Lot ${serial} 저장 완료`, "ok");
     if (state.plannerDrafts) delete state.plannerDrafts.core;
     state.plannerCtx = defaultPlannerCtx("core");
     go("log");
@@ -3614,7 +3741,7 @@ function renderPlannerShell(root, ctx) {
   const I = (srcD && isNum(srcD.D) && isNum(E) && E > 0 && isNum(ctx.volMl)) ? srcD.D * ctx.volMl / E : null;
 
   if (!isNum(ctx.solTfaMmol)) ctx.solTfaMmol = S.shellSol.tfaConcM * (ctx.solVolMl || S.shellSol.volMl);
-  const preview = { serial: ctx.editSerial ?? nextSerial(), type: "Shell", date: ctx.date, stockVol: ctx.stockVol,
+  const preview = { serial: planTargetSerial(ctx), type: "Shell", date: ctx.date, stockVol: ctx.stockVol,
     src: { serial: ctx.src, volMl: ctx.volMl }, radius: ctx.radius, thick: ctx.thick, oaMl: ctx.oaMl, odeMl: ctx.odeMl,
     stoich: shellStoich(ctx), cardEdits: ctx.cardEdits, name: ctx.name || "" };
   // derived preview (uses live DB + this preview lot)
@@ -3685,6 +3812,7 @@ function renderPlannerShell(root, ctx) {
       <h3>Shell 성장 계획 <span class="hint">기하(R·T) 기준 — 필요량이 계산되어 나옵니다</span></h3>
       ${planLocalBarHtml(ctx)}
       <div class="row" style="margin-bottom:10px">
+        ${planSerialFieldHtml(ctx, "sSerial")}
         <label class="f"><span>Lot 접두사</span><input type="text" class="w80" id="sLotPre" value="${esc(S.lotPrefix ?? "WJ")}"
           title="lot 번호 앞에 붙는 표기입니다 — 고치면 기록·ICP 라벨에 모두 반영되고 다음 계획에도 이어집니다"></label>
         <label class="f" style="min-width:180px"><span>샘플명 <span class="muted" style="font-weight:500">(비우면 자동 ${esc(autoLotLabel(preview))})</span></span>
@@ -3773,7 +3901,7 @@ function renderPlannerShell(root, ctx) {
     <button class="btn" id="sEditProto">전체 프로세스 편집…</button>
     <button class="btn" id="sReset">Reset</button>
     <button class="btn" id="sPrint">Print</button>
-    <button class="btn primary" id="sSave" ${srcLot ? "" : "disabled"}>${ctx.editSerial !== null ? `Save Changes (Lot ${ctx.editSerial})` : `Save as Lot ${preview.serial}`}</button>
+    <button class="btn primary" id="sSave" ${srcLot ? "" : "disabled"}>${ctx.editSerial !== null ? `Save Changes (Lot ${ctx.editSerial}${preview.serial !== ctx.editSerial ? ` → ${preview.serial}` : ""})` : `Save as Lot ${preview.serial}`}</button>
   </div>`;
   /* 절차 편집기 — 접힌 상태로 그리면 블록 배치 계산이 어긋나므로 열려 있을 때만 */
   const drawProcS = () => {
@@ -3789,7 +3917,7 @@ function renderPlannerShell(root, ctx) {
   if (secOpen("planProcS", false)) drawProcS();
   bindSecs(root, k => { if (k === "planProcS") drawProcS(); });
   bindCardEditing($("#cardPrevS"), (k, v) => {
-    if (k === "title") { ctx.name = (v === autoLotLabel(preview)) ? "" : v; const f = $("#sName"); if (f) f.value = ctx.name; return; }
+    if (k === "title") { ctx.name = (v === autoLotLabel(preview)) ? "" : v; planSerialFromName(ctx, "Shell"); const f = $("#sName"); if (f) f.value = ctx.name; return; }
     ctx.cardEdits[k] = v;
   });
   bindCardEditing($("#cardPrevSol"), (k, v) => { (ctx.solCardEdits = ctx.solCardEdits || {})[k] = v; });
@@ -3807,7 +3935,8 @@ function renderPlannerShell(root, ctx) {
   $("#sVol").onchange = e => { const v = parseFloat(e.target.value) || 0; ctx.volMl = v; setPlanLocal("shellSyn.aliquotMl", v); rr(); };
   $("#sOa").onchange = e => { const v = parseFloat(e.target.value) || 0; ctx.oaMl = v; setPlanLocal("shellSyn.oaMl", v); rr(); };
   $("#sOde").onchange = e => { const v = parseFloat(e.target.value) || 0; ctx.odeMl = v; setPlanLocal("shellSyn.odeMl", v); rr(); };
-  $("#sName").onchange = e => { ctx.name = e.target.value.trim(); rr(); };
+  $("#sName").onchange = e => { ctx.name = e.target.value.trim(); planSerialFromName(ctx, "Shell"); rr(); };
+  bindPlanSerialField(ctx, "sSerial", rr);
   $("#sLotPre").onchange = e => { const p = e.target.value.trim(); setLotPrefix(p); setShared("lotPrefix", p); rr(); };
   /* '배분' 버튼: 입력한 총 몰수를 조성비대로 각 행에 나눠 넣는 도우미.
      실제 값은 언제나 행의 합이며, 주입량·농도·카드 모두 그 값을 쓴다. */
@@ -3887,8 +4016,7 @@ function renderPlannerShell(root, ctx) {
   $("#sPrint").onclick = () => printCards([shellCardHtml(preview, calc, lotFormula(preview))]);
   $("#sSave").onclick = () => {
     if (state._planCheck && state._planCheck.problem && !confirm(`검증에 문제가 있습니다 — ${state._planCheck.text}\n그대로 저장할까요?`)) return;
-    const serial = ctx.editSerial !== null ? ctx.editSerial : nextSerial();
-    upsertLot({ serial, type: "Shell", date: ctx.date, stockVol: ctx.stockVol, tgtMmol: null,
+    const serial = commitLotSave(ctx, { type: "Shell", date: ctx.date, stockVol: ctx.stockVol, tgtMmol: null,
       src: { serial: Number(ctx.src), volMl: ctx.volMl }, radius: ctx.radius, thick: ctx.thick, oaMl: ctx.oaMl, odeMl: ctx.odeMl,
       stoich: shellStoich(ctx), heat: ctx.heat ?? null, memo: ctx.memo, name: (ctx.name || "").trim(),
       components: ensureComponents(ctx).filter(c => c && c.el).map(c =>
@@ -3896,7 +4024,8 @@ function renderPlannerShell(root, ctx) {
       solLnMmol: solLnActual, solVolMl: ctx.solVolMl, solTfaMmol: ctx.solTfaMmol, inj: ctx.inj.slice(),
       solPrecs: (ctx.solPrecs || []).map(r => ({ name: r.name, mmol: r.mmol, kind: r.kind || "solute" })),
       cardEdits: ctx.cardEdits, solCardEdits: ctx.solCardEdits || {}, deleted: false });
-    toast(`Lot ${serial} 저장 완료`, "ok");
+    if (serial === null) return;
+    toast(ctx.editSerial !== null && serial !== ctx.editSerial ? `Lot ${ctx.editSerial} → ${serial} 번호 변경·저장 완료` : `Lot ${serial} 저장 완료`, "ok");
     if (state.plannerDrafts) delete state.plannerDrafts.shell;
     state.plannerCtx = defaultPlannerCtx("shell");
     go("log");
@@ -3982,7 +4111,7 @@ function applyRecipe(rec) {
   if (!rec || !Array.isArray(rec.components)) return toast("레시피 형식이 올바르지 않습니다", "err");
   if (!plannerDiscardOK()) return;
   if (rec.kind === "shell") {
-    const c2 = defaultPlannerCtx("shell");
+    const c2 = carryPlanIdentity(state.plannerCtx, defaultPlannerCtx("shell"));
     c2.components = rec.components.map(c => ({ id: newCompId(), role: c.role || "dopant", el: c.el,
       coeff: c.coeff, excess: isNum(c.excess) ? c.excess : 1, prec: c.prec || "" }));
     const sh = rec.shell || {};
@@ -3999,7 +4128,7 @@ function applyRecipe(rec) {
     S2.activeRecipeId = rec.id; saveSettings();
     return;
   }
-  const ctx = defaultPlannerCtx("core");
+  const ctx = carryPlanIdentity(state.plannerCtx, defaultPlannerCtx("core"));
   ctx.tgtMmol = isNum(rec.tgtMmol) ? rec.tgtMmol : ctx.tgtMmol;
   ctx.components = rec.components.map(c => ({ id: newCompId(), role: c.role || "dopant", el: c.el,
     coeff: c.coeff, excess: isNum(c.excess) ? c.excess : 1, mode: c.mode || "ratio",
@@ -4318,7 +4447,7 @@ function mapCompositionToPlan(list) {
 }
 function finishWizard(ov) {
   const W = _wiz, list = W.parsed.list, map = mapCompositionToPlan(list);
-  const ctx = defaultPlannerCtx("core");
+  const ctx = carryPlanIdentity(state.plannerCtx, defaultPlannerCtx("core"));
   ctx.tgtMmol = W.tgtMmol;
   /* 성분표에 그대로 옮긴다 — 개수·역할 제한이 없으므로 조성을 있는 그대로 표현 */
   ctx.components = list.map((x, i) => ({ id: newCompId(), role: guessRole(x.el, i, list),
@@ -4390,6 +4519,7 @@ function editLotInPlanner(serial) {
   if (lot.type === "Core") {
     const ctx = defaultPlannerCtx("core");
     ctx.editSerial = lot.serial; ctx.tgtMmol = lot.tgtMmol ?? 0.1; ctx.stockVol = lot.stockVol;
+    ctx.protoIdAtLoad = S.activeProtocolId || null;
     ctx.name = lot.name || "";
     ctx.date = lot.date; ctx.heat = (typeof lot.heat === "number") ? lot.heat : null; ctx.memo = lot.memo || "";
     ctx.naExcess = lot.naExcessUsed ?? S.naExcess;
@@ -4423,6 +4553,7 @@ function editLotInPlanner(serial) {
   } else {
     const ctx = defaultPlannerCtx("shell");
     ctx.editSerial = lot.serial; ctx.src = lot.src ? lot.src.serial : null;
+    ctx.protoIdAtLoad = S.activeProtocolId || null;
     ctx.volMl = lot.src ? lot.src.volMl : 1; ctx.radius = lot.radius; ctx.thick = lot.thick;
     ctx.stockVol = lot.stockVol; ctx.date = lot.date; ctx.memo = lot.memo || "";
     ctx.heat = (typeof lot.heat === "number") ? lot.heat : null;
@@ -7002,13 +7133,7 @@ function renderLog(root) {
   root.querySelectorAll("[data-open]").forEach(el => el.onclick = () => openLotDrawer(Number(el.dataset.open)));
   root.querySelectorAll("[data-card]").forEach(b => b.onclick = () => openCardModal(Number(b.dataset.card)));
   root.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => editLotInPlanner(Number(b.dataset.edit)));
-  root.querySelectorAll("[data-del]").forEach(b => b.onclick = () => {
-    const s = Number(b.dataset.del);
-    const kids = childrenOf(s);
-    if (kids.length && !confirm(`Lot ${s}는 ${kids.map(k => k.serial).join(", ")}의 source입니다. 그래도 삭제할까요?`)) return;
-    if (!confirm(`Lot ${s}를 삭제할까요?`)) return;
-    deleteLot(s); renderLog(root);
-  });
+  root.querySelectorAll("[data-del]").forEach(b => b.onclick = ev => { ev.stopPropagation(); armDeleteLot(b, Number(b.dataset.del), () => renderLog(root)); });
 }
 
 /* lot detail drawer */
@@ -7072,6 +7197,7 @@ function openLotDrawer(serial) {
         <button class="btn" id="dImport">ICP 결과 가져오기</button>
       </div>
       <div class="row right" style="margin-top:10px">
+        <button class="btn danger" id="dDel" style="margin-right:auto">삭제</button>
         <button class="btn" id="dCard">합성 카드</button>
         <button class="btn primary" id="dEdit">플래너에서 수정</button>
       </div>
@@ -7110,6 +7236,7 @@ function openLotDrawer(serial) {
     icpSub = "reco"; go("icp");
   };
   ov.querySelector("#dImport").onclick = () => { ov.remove(); shareIcpLot(); icpSub = "import"; go("icp"); };
+  { const dd = ov.querySelector("#dDel"); if (dd) dd.onclick = () => armDeleteLot(dd, serial, () => { ov.remove(); renderView(); }); }
   ov.querySelector("#dShell").onclick = () => {
     if (!plannerDiscardOK()) return;
     ov.remove();
@@ -7192,7 +7319,8 @@ function renderIcpDb(root) {
   root.querySelectorAll("[data-lot]").forEach(el => el.onclick = () => { if (el.dataset.lot !== "null") openLotDrawer(Number(el.dataset.lot)); });
   root.querySelectorAll("[data-detail]").forEach(b => b.onclick = () => openIcpDrawer(b.dataset.detail));
   root.querySelectorAll("[data-idel]").forEach(b => b.onclick = () => {
-    if (confirm("이 ICP 기록을 삭제할까요?")) { deleteIcp(b.dataset.idel); renderIcpDb(root); }
+    armBtn(b, "한 번 더", () => { const id = b.dataset.idel; deleteIcp(id); renderIcpDb(root);
+      undoToast("ICP 기록 삭제됨", () => { const r = state.db.icp[id]; if (r) { r.deleted = false; r.updatedAt = Date.now(); state.dirty.icp.add(id); saveDb(); Sync.push(); } renderIcpDb(root); }); });
   });
 }
 function openIcpDrawer(id) {
