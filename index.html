@@ -654,7 +654,7 @@ body{word-break:keep-all}
 <div id="app">
   <div id="mainUI">
     <div class="topbar">
-      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.4.4 · deploy</span></div>
+      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.4.5 · deploy</span></div>
       <div class="spacer"></div>
       <button class="chipbtn" id="chipBackup" title="클릭하여 즉시 백업"><span class="dot"></span>백업</button>
       <button class="chipbtn" id="chipSync" title="동기화 설정으로 이동"><span class="dot"></span>로컬 저장</button>
@@ -2997,7 +2997,9 @@ function planEnsureProto(ctx) {
   if (!ctx.proto || !ctx.proto.steps || ctx.proto.srcId !== key) ctx.proto = snapshotProcedures();   // 프로토콜을 바꾸면 그 절차로
   return ctx.proto;
 }
-function planProtoCopy(ctx) { const p = planEnsureProto(ctx); return { steps: JSON.parse(JSON.stringify(p.steps)), cardText: JSON.parse(JSON.stringify(p.cardText || {})) }; }
+function planProtoCopy(ctx) { const p = planEnsureProto(ctx); const ap = withProto(null, () => activeProtocol(APP_DATA.constants)) || {};
+  return { steps: JSON.parse(JSON.stringify(p.steps)), cardText: JSON.parse(JSON.stringify(p.cardText || {})),
+    reagents: Array.isArray(ap.reagents) ? JSON.parse(JSON.stringify(ap.reagents)) : null, protoName: ap.name || "", basis: ap.basis || "" }; }
 function planLotProtocol(ctx) {
   const base = withProto(null, () => JSON.parse(JSON.stringify(activeProtocol(APP_DATA.constants))));
   const c = planProtoCopy(ctx);
@@ -4234,9 +4236,22 @@ function planRecipeNoteHtml() {
   return `<span class="badge gray" title="이 lot은 레시피 기록 없이 저장되었습니다(이전 버전). 수정 내용은 이 lot의 값 그대로입니다">Lot ${c.editSerial}: 레시피 기록 없음</span>`;
 }
 
+/* 레시피가 가리키는 프로토콜이 지워졌으면 레시피에 담긴 시약 정의로 되살린다 */
+function ensureRecipeProtocol(rec) {
+  const S = state.db.settings;
+  if (!rec || !rec.protocolId || rec.protocolId === "lab_naln") return;
+  if (S.protocols && S.protocols[rec.protocolId]) return;
+  const pr = rec.proto || {};
+  if (!Array.isArray(pr.reagents)) return;
+  if (!S.protocols) S.protocols = {};
+  S.protocols[rec.protocolId] = { id: rec.protocolId, name: (pr.protoName || rec.name || "프로토콜") + " (레시피에서 복원)", basis: pr.basis || "solvothermal",
+    reagents: JSON.parse(JSON.stringify(pr.reagents)), steps: JSON.parse(JSON.stringify(pr.steps || {})) };
+  state.dirty.settings = true;
+}
 function applyRecipe(rec) {
   if (!rec || !Array.isArray(rec.components)) return toast("레시피 형식이 올바르지 않습니다", "err");
   if (!plannerDiscardOK()) return;
+  ensureRecipeProtocol(rec);
   if (rec.kind === "shell") {
     const c2 = carryPlanIdentity(state.plannerCtx, defaultPlannerCtx("shell"));
     c2.components = rec.components.map(c => ({ id: newCompId(), role: c.role || "dopant", el: c.el,
