@@ -359,6 +359,7 @@ body.printing .overlay{display:none !important}
 .synCard2 .c2badge.vac{background:#dbeafe;color:#1e40af} .synCard2 .c2badge.n2{background:#fee2e2;color:#991b1b} .synCard2 .c2badge.inj{background:#dcfce7;color:#166534} .synCard2 .c2badge.addp{background:#fef3c7;color:#92400e}
 .synCard2 .c2full{padding:8px 11px}
 .synCard2 .stp.stpA{padding:4px 5px}
+.synCard2 .srg{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;column-gap:6px;font-size:9.5px;line-height:1.35;color:#334155;margin-top:1px} .synCard2 .srg .nm{flex:1 1 64px;min-width:0;word-break:keep-all;overflow-wrap:break-word;font-weight:600} .synCard2 .srg b{white-space:nowrap;margin-left:auto;font-variant-numeric:tabular-nums;font-size:10px}
 .synCard2 .c2rt{display:inline-block;font-size:9px;font-weight:700;color:#334155;background:#eef2f7;padding:1px 6px;border-radius:3px;margin:0 0 2px 3px;vertical-align:middle}
 @media print{ .synCard2{box-shadow:none} }
 
@@ -656,7 +657,7 @@ body{word-break:keep-all}
 <div id="app">
   <div id="mainUI">
     <div class="topbar">
-      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.5.0 · deploy</span></div>
+      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.6.0 · deploy</span></div>
       <div class="spacer"></div>
       <button class="chipbtn" id="chipBackup" title="클릭하여 즉시 백업"><span class="dot"></span>백업</button>
       <button class="chipbtn" id="chipSync" title="동기화 설정으로 이동"><span class="dot"></span>로컬 저장</button>
@@ -2457,7 +2458,7 @@ function commitLotSave(ctx, fields) {
   /* 카드에서 손으로 고친 전구체 숫자는 성분·목표량이 바뀌면 낡은 값이 되므로 버린다 */
   if (old && (old.tgtMmol !== lot.tgtMmol || compKey(old.components) !== compKey(lot.components))) {
     const ce = Object.assign({}, lot.cardEdits || {}); let dropped = 0;
-    for (const k of Object.keys(ce)) if (/^prec\d+\./.test(k)) { delete ce[k]; dropped++; }
+    for (const k of Object.keys(ce)) if (/^(prec\d+|pe\.[A-Za-z]+(_\d+)?)\./.test(k)) { delete ce[k]; dropped++; }
     lot.cardEdits = ce;
     if (dropped) toast(`성분·목표량이 바뀌어 카드에서 손으로 고친 전구체 값 ${dropped}개를 지웠습니다`, "warn");
   }
@@ -2981,7 +2982,7 @@ function modBadges(m){
   const bs = Array.isArray(m.badges) ? m.badges : K.badges;
   return (bs||[]).map(b=>`<span class="c2badge ${b[0]}">${b[1]}</span>`).join("");
 }
-function modStp(m, ov){
+function modStp(m, ov, pos){
   ov = ov || {};
   const K = MOD_KINDS[m.k] || MOD_KINDS.heat;
   const useT = K.f.indexOf("temp")>=0, useM = K.f.indexOf("time")>=0, useN = K.f.indexOf("note")>=0;
@@ -2992,10 +2993,280 @@ function modStp(m, ov){
   let stt=""; if(hasT&&hasM) stt = cT+" · "+cM; else if(hasT) stt = cT; else if(hasM) stt = cM;
   const snt = (useN && _sv(m.note)!=="") ? `<div class="snt">${ced(ov, m.id+".note", _sv(m.note), "cin")}</div>` : "";
   const cw=Math.max(1,Math.min(3,m.gw||3)), chh=Math.max(1,Math.min(6,m.gh||1));
-  const gc = (m.gx!=null&&m.gy!=null) ? `grid-column:${Math.max(1,Math.min(4-cw,m.gx))} / span ${cw};grid-row:${Math.max(1,m.gy)} / span ${chh}` : `grid-column:span ${cw};grid-row:span ${chh}`;
-  return `<div class="stp" style="${gc}">${badges}${stt?`<div class="stt">${stt}</div>`:""}${snt}</div>`;
+  const P = pos || ((m.gx!=null&&m.gy!=null) ? {gx:m.gx, gy:m.gy} : null);
+  const gc = P ? `grid-column:${Math.max(1,Math.min(4-cw,P.gx))} / span ${cw};grid-row:${Math.max(1,P.gy)} / span ${chh}` : `grid-column:span ${cw};grid-row:span ${chh}`;
+  return `<div class="stp" style="${gc}">${badges}${stt?`<div class="stt">${stt}</div>`:""}${snt}${modExtraHtml(m)}</div>`;
 }
-function renderMods(group, ov){ return '<div class="c2pg">'+procMods(group).map(m=>modStp(m, ov||{})).join("")+'</div>'; }
+function renderMods(group, ov){ const a=procMods(group)||[], L=resolveLayout(a); return '<div class="c2pg">'+a.map(m=>modStp(m, ov||{}, L[m.id])).join("")+'</div>'; }
+/* DIRECTRG-1013 */
+/* ===== 시약은 절차 블록에 mL로 직접 적는다 — 계산기는 필요할 때만 여는 도구 =====
+ * 블록: m.rg = [{n:"Oleic acid", ml:2}]  (이 단계에서 넣는 양)
+ *       m.pr = ["Ln","Na","F"]          (이 단계에 넣는 전구체 — 체크하면 카드 칸에 이름·mg 표시)
+ * 절차(proto)에 direct:true 가 있으면 '직접 입력' 방식. 예전 방식(공식 계산·용매 묶음)으로 저장된
+ * lot 기록은 그대로 두고, 계획창에 불러올 때만 계산값을 블록에 옮겨 넣는다. */
+const RG_NAMES = ["Oleic acid", "1-Octadecene", "Oleyl amine", "Methanol"];
+const PR_ROLES = [["Ln", "Ln (도펀트·호스트)"], ["Na", "Na (알칼리)"], ["F", "음이온 (F·Cl…)"]];
+const PR_LABEL = { Ln: "Ln", Na: "Na", F: "음이온" };
+let _cardCtx = null;            // 카드를 그리는 동안의 전구체 행 {rows}
+function protoDirectNow() { return !!(_protoOverride && _protoOverride.direct); }
+function rgLines(m) { return (m && Array.isArray(m.rg)) ? m.rg.filter(x => x && String(x.n || "").trim()) : []; }
+function fmtMl(v) { if (!isNum(v)) return "–"; return String(Math.round(v * 1000) / 1000); }
+function precRowsForRole(role, rows) {
+  return (rows || []).filter(r => {
+    if (!r || !r.el) return false;
+    const alk = ["Na", "Li", "K"].indexOf(r.el) >= 0;
+    if (role === "Ln") return r.role !== "anion" && r.role !== "alkali" && !alk;
+    if (role === "Na") return r.role === "alkali" || alk;
+    if (role === "F") return r.role === "anion" || r.el === "F" || r.el === "Cl";
+    return r.el === role;
+  });
+}
+function precDot(r) { return (r.role === "anion") ? "cF" : (["Na", "Li", "K"].indexOf(r.el) >= 0 ? "cNa" : "cLn"); }
+/* 블록 안에 들어가는 전구체·시약 줄 */
+function modExtraHtml(m) {
+  let h = "";
+  const pr = Array.isArray(m.pr) ? m.pr : [];
+  if (pr.length) {
+    if (_cardCtx && _cardCtx.rows) {
+      const rows = [];
+      pr.forEach(role => precRowsForRole(role, _cardCtx.rows).forEach(r => { if (rows.indexOf(r) < 0) rows.push(r); }));
+      h += rows.map(r => `<div class="srg"><span class="nm"><span class="c2dot ${precDot(r)}"></span>${esc(r.prec || r.el)}</span><b>${fmtFix(r.wprecMg, 2)} mg</b></div>`).join("")
+        || `<div class="srg"><span class="nm" style="color:#94a3b8">${pr.map(x => esc(PR_LABEL[x] || x)).join(" + ")} 전구체 없음</span></div>`;
+    } else h += `<div class="srg"><span class="nm"><span class="c2dot cLn"></span>${pr.map(x => esc(PR_LABEL[x] || x)).join(" + ")} 전구체</span></div>`;
+  }
+  rgLines(m).forEach(x => { h += `<div class="srg"><span class="nm"><span class="c2dot cRg"></span>${esc(x.n)}</span><b>${isNum(x.ml) ? fmtMl(x.ml) + " mL" : "–"}</b></div>`; });
+  return h;
+}
+function layoutOrder(arr) {
+  const a = (arr || []).filter(Boolean).slice(), L = resolveLayout(a);
+  return a.sort((x, y) => { const p = L[x.id] || { gy: 0, gx: 0 }, q = L[y.id] || { gy: 0, gx: 0 }; return (p.gy - q.gy) || (p.gx - q.gx); });
+}
+/* 카드 왼쪽 '시약' 표 — 절차 순서대로, 합치지 않음 (Oleic acid 2 → Methanol → Oleic acid 3) */
+function directRgRowsHtml(group, ov) {
+  const out = [];
+  layoutOrder(procMods(group)).forEach(m => rgLines(m).forEach((x, i) => {
+    const key = `rg.${m.id}.${i}`;
+    out.push(`<tr><td class="nm"><span class="c2dot cRg"></span>${ced(ov, key + ".n", esc(x.n), "cin")}</td><td class="r" colspan="2"><b>${ced(ov, key + ".v", isNum(x.ml) ? fmtMl(x.ml) + " mL" : "–", "cin")}</b></td></tr>`);
+  }));
+  return out.join("");
+}
+function directRgSummary(steps) {
+  const bits = [];
+  layoutOrder(steps || []).forEach(m => rgLines(m).forEach(x => bits.push(`${x.n} ${isNum(x.ml) ? fmtMl(x.ml) : "?"}`)));
+  return esc(bits.length ? bits.join(" → ") + " mL" : "시약 없음");
+}
+/* 겹침 검사 (skipId 블록 제외) */
+function layoutBusy(arr, x, y, w, h, skipId) {
+  return (arr || []).some(z => z && z.id !== skipId && z.gx != null && z.gy != null
+    && z.gx < x + w && z.gx + posW(z.gw) > x && z.gy < y + h && z.gy + posH(z.gh) > y);
+}
+/* 모든 블록에 칸 좌표를 확정하고, 칸 밖·겹침만 바로잡는다(다른 블록 크기는 건드리지 않음) — true=변경 */
+function normalizeLayout(arr) {
+  if (!arr || !arr.length) return false;
+  let ch = ensurePositions(arr);
+  arr.forEach(m => {
+    const w = posW(m.gw), x = Math.max(1, Math.min(4 - w, m.gx || 1)), y = Math.max(1, m.gy || 1);
+    if (x !== m.gx || y !== m.gy) { m.gx = x; m.gy = y; ch = true; }
+  });
+  for (let i = 1; i < arr.length; i++) {
+    const m = arr[i], prev = arr.slice(0, i);
+    if (layoutBusy(prev, m.gx, m.gy, posW(m.gw), posH(m.gh), m.id)) {
+      let y = m.gy; while (layoutBusy(prev, m.gx, y, posW(m.gw), posH(m.gh), m.id) && y < 999) y++;
+      m.gy = y; ch = true;
+    }
+  }
+  return ch;
+}
+/* 레시피 비교용: 좌표를 확정한 절차(표시가 같으면 같은 절차) */
+function stepsNorm(arr) {
+  if (!Array.isArray(arr)) return arr || null;
+  const L = resolveLayout(arr);
+  return layoutOrder(arr).map(m => Object.assign({}, m, L[m.id] || {}, { gw: posW(m.gw), gh: posH(m.gh) }));
+}
+
+/* ---- 예전 방식 → 직접 입력 변환 ---- */
+const _RG_MEOH = /methanol|메탄올|MeOH/i;
+const _F_STEP = /NH4F|NH₄F|MeOH|메탄올|methanol|불소|fluor/i;
+function protoStepsToDirect(steps, rgDefs, vals, ctxR) {
+  const st = JSON.parse(JSON.stringify(steps || {}));
+  const core = Array.isArray(st.core) ? st.core : [];
+  let placed = false;
+  const hasBind = core.some(m => m && m.bind && ((m.bind.solv && m.bind.solv.length) || m.bind.prec));
+  if (hasBind) {
+    const seq = coreSequence({ steps: { core } }, ctxR || { tgt: null, rows: [] }), byId = {};
+    seq.forEach(s => { byId[s.id] = s; });
+    core.forEach(m => {
+      if (!m || !m.bind) return;
+      if (m.bind.prec) m.pr = [m.bind.prec];
+      const s = byId[m.id];
+      const lines = (s ? s.solv : []).map(sv => ({ n: solvName(sv), ml: isNum(sv.ml) ? sv.ml : null })).filter(x => x.ml === null || x.ml > 0);
+      if (lines.length) { m.rg = (m.rg || []).concat(lines); placed = true; }
+      delete m.bind;
+    });
+  } else {
+    const lines = (rgDefs || []).map(rg => ({ id: rg.id, n: rg.name || rg.id, ml: vals ? vals[rg.id] : null })).filter(x => isNum(x.ml) && x.ml > 0);
+    if (lines.length && core.length) {
+      const ord = layoutOrder(core), first = ord[0];
+      const fBlk = ord.find(m => m !== first && (m.k === "add" || _F_STEP.test(_sv(m.note)))) || null;
+      lines.forEach(x => { const t = ((x.id === "mtoh" || _RG_MEOH.test(x.n)) && fBlk) ? fBlk : first; t.rg = (t.rg || []).concat([{ n: x.n, ml: x.ml }]); });
+      placed = true;
+    }
+  }
+  ["shell", "sol"].forEach(g => (Array.isArray(st[g]) ? st[g] : []).forEach(m => { if (m && m.bind) delete m.bind; }));
+  st.core = core;
+  return { steps: st, placed };
+}
+/* 계획 절차가 예전 방식이면 이 계획의 계산값을 블록에 옮겨 넣고 직접 입력 방식으로 바꾼다 */
+function planToDirect(ctx) {
+  const p = ctx && ctx.proto; if (!p || !p.steps || p.direct) return false;
+  let info = { defs: [], vals: {}, rows: [] };
+  if (ctx.mode !== "shell") {
+    try {
+      syncConstants();
+      const ov = { steps: p.steps, cardText: p.cardText, reagents: p.reagents === undefined ? "builtin" : p.reagents };
+      info = withProto(ov, () => { const ap = activeProtocol(APP_DATA.constants) || {};
+        const rr = coreRecipe({ tgtMmol: ctx.tgtMmol, components: plannerComponents(ctx) });
+        return { defs: ap.reagents || [], vals: rr.reagents || {}, rows: rr.rows }; });
+    } catch (e) { console.warn("planToDirect", e); }
+  }
+  const r = protoStepsToDirect(p.steps, info.defs, info.vals, { tgt: ctx.tgtMmol, rows: info.rows });
+  p.steps = r.steps; p.reagents = []; p.direct = true;
+  if (ctx.local) { REAGENT_KEYS.forEach(k => { delete ctx.local[k]; }); syncConstants(); }
+  if (r.placed && p.fromLot != null) ctx._rgPlacedNote = true;   // 저장된 lot을 열 때만 안내 (새 계획은 기본값 그대로)
+  return true;
+}
+/* 레시피 성분 → 계산 엔진 입력 */
+function recipeCompsForEngine(rec) {
+  const list = (rec.components || []).filter(c => c && c.el);
+  return list.map((c, i) => ({ id: "rc" + i, role: c.role, el: c.el, prec: c.prec || ((Materials.defaultPrec(c.el) || {}).name) || "",
+    amount: { mode: c.mode || "ratio", value: c.coeff, excess: isNum(c.excess) ? c.excess : 1,
+      ref: c.ref ? ("rc" + list.findIndex(x => x.el === c.ref)) : null } }));
+}
+/* 예전 방식 레시피의 직접 입력 사본 (저장된 레시피는 바꾸지 않음 — [저장]할 때 새 방식으로 기록) */
+function recipeToDirect(rec, planCtx) {
+  if (!rec || !rec.proto || !rec.proto.steps || rec.proto.direct) return rec;
+  const out = JSON.parse(JSON.stringify(rec)), p = out.proto;
+  let info = { defs: [], vals: {}, rows: [], tgt: null };
+  if ((rec.kind || "core") === "core") {
+    const useCtx = rec.procOnly && planCtx && planCtx.mode !== "shell";
+    if (!rec.procOnly || useCtx) try {
+      const ov = { steps: p.steps, cardText: p.cardText, reagents: recipeReagents(rec) };
+      info = withReagents(useCtx ? null : rec.reagents, () => withProto(ov, () => {
+        const ap = activeProtocol(APP_DATA.constants) || {};
+        const tgt = useCtx ? planCtx.tgtMmol : rec.tgtMmol;
+        const rr = coreRecipe({ tgtMmol: tgt, components: useCtx ? plannerComponents(planCtx) : recipeCompsForEngine(rec) });
+        return { defs: ap.reagents || [], vals: rr.reagents || {}, rows: rr.rows, tgt };
+      }));
+    } catch (e) { console.warn("recipeToDirect", e); }
+  }
+  const r = protoStepsToDirect(p.steps, info.defs, info.vals, { tgt: info.tgt, rows: info.rows });
+  p.steps = r.steps; p.reagents = []; p.direct = true;
+  delete out.reagents; out.protocolId = null;
+  return out;
+}
+/* 레시피 절차를 계획에 넣을 사본 */
+function planProtoFromRecipe(rec, planCtx) {
+  const rd = recipeToDirect(rec, planCtx);
+  if (!rd || !rd.proto || !rd.proto.steps) return null;
+  if (planCtx && rd !== rec && JSON.stringify(rd.proto.steps.core||[]).indexOf('"rg"') >= 0) planCtx._rgPlacedNote = true;
+  const o = JSON.parse(JSON.stringify(rd.proto));
+  o.reagents = []; o.direct = true; o.srcId = null; o.fromRecipe = rec.name || "";
+  if (!o.cardText) o.cardText = snapshotProcedures().cardText;
+  for (const g of ["core", "shell", "sol"]) if (!Array.isArray(o.steps[g])) o.steps[g] = JSON.parse(JSON.stringify(withProto(null, () => procMods(g)) || []));
+  return o;
+}
+
+/* ---- 프로토콜 → 레시피 흡수 (한 번만, 기기 사이 중복 없음: id 고정) ---- */
+function absorbProtocols() {
+  const S = state.db && state.db.settings; if (!S) return 0;
+  const P = (S.protocols && typeof S.protocols === "object") ? S.protocols : {};
+  const store = recipeStore(); let n = 0, ch = false;
+  for (const [id, p] of Object.entries(P)) {
+    if (!p || id === "lab_naln") continue;
+    const rid = "rp_" + fsId(id);
+    if (store[rid]) continue;                       // 이미 옮김 (지운 것도 되살리지 않음)
+    const steps = {};
+    withProto(null, () => { ["core", "shell", "sol"].forEach(g => { steps[g] = JSON.parse(JSON.stringify((p.steps && Array.isArray(p.steps[g])) ? p.steps[g] : globalMods(g))); }); });
+    const cardText = withProto(null, () => snapshotProcedures().cardText);
+    store[rid] = { fmt: RECIPE_FMT, id: rid, name: "[절차] " + (p.name || id), kind: "core", procOnly: true, components: [], tgtMmol: null,
+      protocolId: id, fromProtocol: id, updatedAt: Date.now(), deleted: false,
+      proto: { steps, cardText, reagents: Array.isArray(p.reagents) ? JSON.parse(JSON.stringify(p.reagents)) : "builtin", protoName: p.name || "", basis: p.basis || "" } };
+    if (state.dirty && state.dirty.recipes) state.dirty.recipes.add(rid);
+    n++;
+  }
+  if (!S.protocolsAbsorbed) {
+    S.protocolsAbsorbed = true;
+    const dp = S.defaultProtocolId || S.activeProtocolId;
+    if (dp && dp !== "lab_naln" && store["rp_" + fsId(dp)] && !S.defaultProcRecipeId) S.defaultProcRecipeId = "rp_" + fsId(dp);
+    state.dirty.settings = true; ch = true;
+  }
+  if (n || ch) { try { saveDb(); if (typeof Sync !== "undefined" && Sync.push) Sync.push(); } catch (e) {} }
+  return n;
+}
+
+/* ---- 시약 계산기 (필요할 때만) ---- */
+function openRgCalc(ctx, preferBlockId, onDone) {
+  if (!ctx || ctx.mode === "shell" || !ctx.proto || !ctx.proto.steps) return toast("Core 계획에서 쓸 수 있습니다", "warn");
+  const core = ctx.proto.steps.core = Array.isArray(ctx.proto.steps.core) ? ctx.proto.steps.core : [];
+  syncConstants();
+  const C0 = APP_DATA.constants;
+  const rec = withProto({ steps: ctx.proto.steps, reagents: [], direct: true }, () => coreRecipe({ tgtMmol: ctx.tgtMmol, components: plannerComponents(ctx) }));
+  const fRows = precRowsForRole("F", rec.rows);
+  const P = { oaPer: C0.oaPerMmol, odeTot: ctx.tgtMmol <= 1 ? C0.odeTotalSmall : C0.odeTotalLarge, oamEq: C0.oamEq > 0 ? C0.oamEq : 1.5,
+    oamMw: C0.oamMw, oamDens: C0.oamDens, mtoh: C0.mtohPerMgF };
+  const ord = layoutOrder(core);
+  const blkName = (m, i) => `${i + 1}. ${(MOD_KINDS[m.k] || MOD_KINDS.heat).label}${_sv(m.temp) ? " · " + _sv(m.temp) : ""}${_sv(m.note) ? " · " + _sv(m.note).slice(0, 14) : ""}`;
+  const firstId = ord[0] ? ord[0].id : "";
+  const fBlk = ord.find(m => m.id !== firstId && (m.k === "add" || _F_STEP.test(_sv(m.note) + " " + rgLines(m).map(x => x.n).join(" "))));
+  const defBlk = key => (preferBlockId && ord.some(m => m.id === preferBlockId)) ? preferBlockId : (key === "mtoh" && fBlk ? fBlk.id : firstId);
+  const ov = h(`<div class="overlay center"><div class="modal" style="max-width:760px"><button class="closex">✕</button>
+    <h2>시약 계산기 <span class="hint" style="font-size:12px;font-weight:500">계산값을 원하는 블록에 mL로 넣습니다 — 넣은 뒤에는 블록 값이 기준입니다</span></h2>
+    <div class="note" style="margin-bottom:8px">Target <b>${fmtN(ctx.tgtMmol, 3)} mmol</b> · 음이온 전구체 ${fRows.length ? `<b>${esc(fRows.map(r => r.prec || r.el).join(", "))} ${fmtN(fRows.reduce((a, r) => a + (isNum(r.wprecMg) ? r.wprecMg : 0), 0), 2)} mg</b>` : "<span class='muted'>없음</span>"}</div>
+    <div class="tblwrap"><table class="tbl"><thead><tr><th class="l">시약</th><th class="l">계산식</th><th>결과</th><th class="l">넣을 블록</th><th></th></tr></thead><tbody id="rcBody"></tbody></table></div>
+    <div class="row" style="margin-top:10px;gap:8px"><button class="btn primary" id="rcAll">모두 넣기</button><span class="muted" style="font-size:11.5px">같은 블록에 같은 이름의 시약이 있으면 값만 바꿉니다. 0 mL는 넣지 않습니다.</span></div>
+  </div></div>`);
+  document.body.appendChild(ov);
+  const close = () => { ov.remove(); };
+  ov.querySelector(".closex").onclick = close;
+  const DEF = [
+    { key: "oa", name: "Oleic acid", inputs: [["oaPer", "mL/mmol × tgt"]] },
+    { key: "ode", name: "1-Octadecene", inputs: [["odeTot", "mL 총량 − OA"]] },
+    { key: "oam", name: "Oleyl amine", inputs: [["oamEq", "eq"], ["oamMw", "g/mol"], ["oamDens", "g/mL"]] },
+    { key: "mtoh", name: "Methanol", inputs: [["mtoh", "mL/mg 음이온 전구체 (올림)"]] },
+  ];
+  const calc = () => {
+    const Cp = Object.assign({}, C0, { oaPerMmol: P.oaPer, odeTotalSmall: P.odeTot, odeTotalLarge: P.odeTot, oamEq: P.oamEq, oamMw: P.oamMw, oamDens: P.oamDens, mtohPerMgF: P.mtoh });
+    const d = defaultProtocol(Cp); d.reagents.forEach(rg => { if (rg.id === "mtoh") rg.calc.ref = { element: "__anion__" }; });
+    const rows = rec.rows.map(r => r ? Object.assign({}, r, { el: fRows.indexOf(r) >= 0 ? "__anion__" : r.el }) : r);
+    return computeReagents(d, { tgt: ctx.tgtMmol, rows });
+  };
+  const sel = {};
+  const draw = () => {
+    const v = calc();
+    ov.querySelector("#rcBody").innerHTML = DEF.map(d => `<tr><td class="l"><b>${esc(d.name)}</b></td>
+      <td class="l">${d.inputs.map(([k, u]) => `<input type="number" step="any" class="slim w60" data-p="${k}" value="${P[k]}"> <span class="muted" style="font-size:11px">${esc(u)}</span>`).join(" ")}</td>
+      <td class="num"><b>${v[d.key] == null ? "–" : fmtMl(v[d.key]) + " mL"}</b></td>
+      <td class="l"><select class="slim" data-b="${d.key}" style="max-width:210px">${ord.map((m, i) => `<option value="${esc(m.id)}" ${m.id === (sel[d.key] || defBlk(d.key)) ? "selected" : ""}>${esc(blkName(m, i))}</option>`).join("") || "<option value=''>(블록 없음)</option>"}</select></td>
+      <td><button class="btn sm" data-ins="${d.key}" ${isNum(v[d.key]) && v[d.key] > 0 && ord.length ? "" : "disabled"}>넣기</button></td></tr>`).join("");
+    ov.querySelectorAll("[data-p]").forEach(el => el.onchange = () => { const x = parseFloat(el.value); if (isFinite(x) && x >= 0) P[el.dataset.p] = x; draw(); });
+    ov.querySelectorAll("[data-b]").forEach(el => el.onchange = () => { sel[el.dataset.b] = el.value; });
+    ov.querySelectorAll("[data-ins]").forEach(b => b.onclick = () => { if (insert(b.dataset.ins, v)) { toast(`${DEF.find(d => d.key === b.dataset.ins).name} ${fmtMl(v[b.dataset.ins])} mL를 넣었습니다`, "ok"); if (onDone) onDone(); } });
+  };
+  const insert = (key, v) => {
+    const d = DEF.find(x => x.key === key), ml = v[key];
+    if (!d || !isNum(ml) || ml <= 0) return false;
+    const bid = sel[key] || defBlk(key), m = core.find(z => z.id === bid);
+    if (!m) { toast("넣을 블록이 없습니다 — 합성 프로세스에 블록을 먼저 추가하세요", "warn"); return false; }
+    m.rg = Array.isArray(m.rg) ? m.rg : [];
+    const ex = m.rg.find(x => x && String(x.n || "").trim().toLowerCase() === d.name.toLowerCase());
+    if (ex) ex.ml = ml; else m.rg.push({ n: d.name, ml });
+    return true;
+  };
+  ov.querySelector("#rcAll").onclick = () => { const v = calc(); let n = 0; DEF.forEach(d => { if (insert(d.key, v)) n++; }); toast(n ? `시약 ${n}개를 블록에 넣었습니다` : "넣을 값이 없습니다", n ? "ok" : "warn"); if (n && onDone) onDone(); if (n) close(); };
+  draw();
+}
+/* ===== /DIRECTRG-1013 ===== */
+
 /* PROTOSNAP-1012 */
 /* ===== 절차 스냅샷: lot·레시피·계획이 각자 자기 절차(온도·시간·문구)를 가진다 =====
  * 전에는 저장된 lot 카드도 '현재 활성 프로토콜'의 절차로 그려져, 한 곳에서 온도를 바꾸면
@@ -3018,6 +3289,7 @@ function snapshotProcedures() {
 /* PLANREAG-1013 */
 /* 레시피의 시약 정의 결정: 내장 기본 프로토콜이었으면 'builtin', 아니면 레시피에 담긴 정의 → 없으면 그 프로토콜의 현재 정의 */
 function recipeReagents(rec) {
+  if (rec && rec.proto && rec.proto.direct) return [];
   const pid = rec && rec.protocolId, S = state.db.settings;
   if (!pid || pid === "lab_naln") return "builtin";
   if (rec.proto && Array.isArray(rec.proto.reagents)) return JSON.parse(JSON.stringify(rec.proto.reagents));
@@ -3030,7 +3302,7 @@ function curProtoName() { const id = curProtoKey(), S = state.db.settings; retur
 function lotProtoOverride(lot) {
   const p = lot && lot.protocol;
   if (!p || !p.steps || typeof p.steps !== "object") return null;
-  return { steps: p.steps, cardText: p.cardText || null, reagents: Array.isArray(p.reagents) ? p.reagents : null };
+  return { steps: p.steps, cardText: p.cardText || null, reagents: p.direct ? [] : (Array.isArray(p.reagents) ? p.reagents : null), direct: !!p.direct };
 }
 /* lot 기록의 절차를 계획으로 (없는 그룹은 현재 값으로 채움) */
 function protoFromLot(lot) {
@@ -3039,23 +3311,29 @@ function protoFromLot(lot) {
   const snap = snapshotProcedures();
   for (const g of ["core", "shell", "sol"]) if (Array.isArray(p.steps[g])) snap.steps[g] = JSON.parse(JSON.stringify(p.steps[g]));
   if (p.cardText) for (const g of ["core", "shell", "sol"]) if (p.cardText[g]) snap.cardText[g] = JSON.parse(JSON.stringify(p.cardText[g]));
-  if (!p.id || p.id === "lab_naln") snap.reagents = "builtin"; else if (Array.isArray(p.reagents)) snap.reagents = JSON.parse(JSON.stringify(p.reagents));
+  if (p.direct) { snap.reagents = []; snap.direct = true; }
+  else if (!p.id || p.id === "lab_naln") snap.reagents = "builtin"; else if (Array.isArray(p.reagents)) snap.reagents = JSON.parse(JSON.stringify(p.reagents));
   if (p.id) snap.srcId = p.id;
   snap.fromLot = lot.serial;
   return snap;
 }
 function planEnsureProto(ctx) {
   const key = curProtoKey();
-  if (!ctx.proto || !ctx.proto.steps) ctx.proto = snapshotProcedures();   // 처음 한 번만 — 이후엔 사용자가 직접 프로토콜을 바꿀 때만(planAdoptActiveProto)
+  if (!ctx.proto || !ctx.proto.steps) {   // 처음 한 번만 — '새 계획 기본 절차' 레시피가 있으면 그 절차로
+    let dp = null; try { const dr = recipeById(state.db.settings.defaultProcRecipeId); if (dr) dp = planProtoFromRecipe(dr, ctx); } catch (e) {}
+    ctx.proto = dp || snapshotProcedures();
+  }
   return ctx.proto;
 }
 function planProtoCopy(ctx) { const p = planEnsureProto(ctx); const ap = withProto(null, () => activeProtocol(APP_DATA.constants)) || {};
   const rg = (p.reagents === undefined) ? snapshotProcedures().reagents : p.reagents;
   const srcP = (p.srcId && p.srcId !== "lab_naln" && state.db.settings.protocols) ? state.db.settings.protocols[p.srcId] : null;
-  return { steps: JSON.parse(JSON.stringify(p.steps)), cardText: JSON.parse(JSON.stringify(p.cardText || {})),
-    reagents: Array.isArray(rg) ? JSON.parse(JSON.stringify(rg)) : "builtin", protoName: (srcP && srcP.name) || ap.name || "", basis: (srcP && srcP.basis) || ap.basis || "" }; }
-function planProtoId(ctx) { const p = planEnsureProto(ctx); return (p.srcId && p.srcId !== "lab_naln") ? p.srcId : null; }
+  return { direct: !!p.direct, steps: JSON.parse(JSON.stringify(p.steps)), cardText: JSON.parse(JSON.stringify(p.cardText || {})),
+    reagents: p.direct ? [] : Array.isArray(rg) ? JSON.parse(JSON.stringify(rg)) : "builtin", protoName: (srcP && srcP.name) || ap.name || "", basis: (srcP && srcP.basis) || ap.basis || "" }; }
+function planProtoId(ctx) { const p = planEnsureProto(ctx); return (!p.direct && p.srcId && p.srcId !== "lab_naln") ? p.srcId : null; }
 function planLotProtocol(ctx, old) {
+  if (ctx.proto && ctx.proto.direct) { const c = planProtoCopy(ctx), rr = recipeById(ctx.recipeId);
+    return { id: "direct", name: rr ? rr.name : "", basis: "solvothermal", version: 2, direct: true, reagents: [], steps: c.steps, cardText: c.cardText }; }
   if (old && old.protocol && ctx.proto && ctx.proto.fromLot === old.serial) {
     const c0 = planProtoCopy(ctx), base0 = JSON.parse(JSON.stringify(old.protocol));
     base0.steps = c0.steps; base0.cardText = c0.cardText;
@@ -3105,18 +3383,19 @@ function recipeSig(r, reag) {
   const rg = Object.assign({}, r.reagents || {}); for (const x of Object.keys(rg)) if (!isNum(rg[x])) delete rg[x];
   return {
     comp: JSON.stringify(comps),
-    cond: JSON.stringify(k === "shell" ? (r.shell || {}) : { t: r.tgtMmol, rg: Object.keys(rg).sort().map(x => [x, rg[x]]) }),
-    steps: JSON.stringify(k === "shell" ? [st.shell || [], st.sol || []] : [st.core || []]),
+    cond: JSON.stringify(k === "shell" ? (r.shell || {}) : (p.direct ? { t: r.tgtMmol } : { t: r.tgtMmol, rg: Object.keys(rg).sort().map(x => [x, rg[x]]) })),
+    steps: JSON.stringify(k === "shell" ? [stepsNorm(st.shell || []), stepsNorm(st.sol || [])] : [stepsNorm(st.core || [])]),
     text: JSON.stringify(k === "shell" ? [ct.shell || {}, ct.sol || {}] : [ct.core || {}]),
     reag: JSON.stringify(reag === undefined ? null : reag),
   };
 }
 function planRecipeDirty(ctx) {
-  const r = recipeById(ctx.recipeId); if (!r) return null;
-  if (!r.proto || !r.proto.steps) return "절차가 들어 있지 않은 옛 레시피";
-  let mine; try { mine = recipeFromPlanner(ctx, r.name); } catch (e) { return null; }
-  const a = recipeSig(mine, (mine.proto || {}).reagents), b = recipeSig(r, recipeReagents(r));
-  const L = { comp: "성분", cond: ctx.mode === "shell" ? "부피·주입 조건" : "목표량·시약 조건", steps: "절차", text: "카드 문구", reag: "시약 구성" };
+  const r0 = recipeById(ctx.recipeId); if (!r0) return null;
+  if (!r0.proto || !r0.proto.steps) return "절차가 들어 있지 않은 옛 레시피";
+  let mine, r; try { mine = recipeFromPlanner(ctx, r0.name); r = recipeToDirect(r0, ctx); } catch (e) { return null; }
+  if (r0.procOnly) { mine.kind = "core"; if (ctx.mode === "shell") { const k2 = x => ({ shell: (x.proto.steps || {}).shell, sol: (x.proto.steps || {}).sol }); return JSON.stringify([stepsNorm(k2(mine).shell||[]), stepsNorm(k2(mine).sol||[])]) === JSON.stringify([stepsNorm(k2(r).shell||[]), stepsNorm(k2(r).sol||[])]) ? "" : "절차"; } }
+  const a = recipeSig(mine, []), b = recipeSig(r, []);
+  const L = r0.procOnly ? { steps: "절차", text: "카드 문구" } : { comp: "성분", cond: ctx.mode === "shell" ? "부피·주입 조건" : "목표량", steps: "절차", text: "카드 문구" };
   const diffs = Object.keys(L).filter(k => a[k] !== b[k]).map(k => L[k]);
   return diffs.length ? diffs.join("·") : "";
 }
@@ -3130,6 +3409,12 @@ function planProtoBarHtml(ctx) {
   return d ? `<div class="note warn" style="margin:-4px 0 10px;font-size:12px">레시피 '${esc(r.name)}'과 다른 점: <b>${esc(d)}</b> — 위의 <b>[저장]</b>을 누르면 지금 보이는 그대로 레시피에 덮어씁니다. (lot 저장은 레시피와 별개)</div>` : "";
 }
 function bindPlanProtoBar(ctx) {}
+/* 블록을 고칠 때마다 '레시피와 다른 점' 안내·[저장] 강조를 다시 계산 */
+function refreshPlanDirtyUi() {
+  const c = state.plannerCtx; if (!c || state.view !== "plan") return;
+  try { const hst = $("#planProtoBarHost"); if (hst) hst.innerHTML = planProtoBarHtml(c);
+    const b = $("#rcSave"); if (b) b.classList.toggle("primary", !/^lab:/.test(c.recipeId || "") && (c.editSerial === null || c.editSerial === undefined) && !!planRecipeDirty(c)); } catch (e) {}
+}
 /* ===== /P3 engine ===== */
 
 function coreCardHtml(lot, recipe) {
@@ -3138,23 +3423,27 @@ function coreCardHtml(lot, recipe) {
   const proto = (typeof activeProtocol === "function") ? activeProtocol(APP_DATA.constants) : { reagents: [] };
   const rgVals = recipe.reagents || {};
   const grp = lot.group || "";
+  /* 카드 수정값은 원소 기준 키(pe.Lu) — 예전 lot의 행 번호 키(prec0)는 그대로 읽는다 */
+  const _legacyPk = Object.keys(ov).some(k => /^prec\d+\./.test(k)), _seenEl = {};
   const precRows = recipe.rows.filter(r => r && r.el).map((r, i) => {
     const kind = (r.role === "anion") ? "cF" : (["Na","Li","K"].includes(r.el) ? "cNa" : "cLn");
-    return `<tr><td class="nm"><span class="c2dot ${kind}"></span>${ced(ov, "prec"+i+".n", esc(r.prec || r.el), "cin")}</td><td class="r">${ced(ov, "prec"+i+".mmol", fmtFix(r.precMmol, 3), "cin")}</td><td class="r"><b>${ced(ov, "prec"+i+".mg", fmtFix(r.wprecMg, 2), "cin")}</b></td></tr>`;
+    const nEl = (_seenEl[r.el] = (_seenEl[r.el] || 0) + 1), pk = _legacyPk ? "prec" + i : "pe." + r.el + (nEl > 1 ? "_" + nEl : "");
+    return `<tr><td class="nm"><span class="c2dot ${kind}"></span>${ced(ov, pk+".n", esc(r.prec || r.el), "cin")}</td><td class="r">${ced(ov, pk+".mmol", fmtFix(r.precMmol, 3), "cin")}</td><td class="r"><b>${ced(ov, pk+".mg", fmtFix(r.wprecMg, 2), "cin")}</b></td></tr>`;
   }).join("");
+  const _direct = protoDirectNow();
   const _anyRg = Object.values(rgVals).some(v => v != null);
-  const rgRows = (proto.reagents || []).filter(rg => rgVals[rg.id] !== 0 && !(_anyRg && rgVals[rg.id] == null)).map(rg => {
+  const rgRows = _direct ? directRgRowsHtml("core", ov) : (proto.reagents || []).filter(rg => rgVals[rg.id] !== 0 && !(_anyRg && rgVals[rg.id] == null)).map(rg => {
     const v = rgVals[rg.id];
     const dg = (rg.round && rg.round.digits != null) ? rg.round.digits : 1;
     const vs = (v == null ? "-" : fmtN(v, dg)) + (rg.unit ? " " + rg.unit : "");
     return `<tr><td class="nm"><span class="c2dot cRg"></span>${ced(ov, rg.id+".n", esc(rg.name || rg.id), "cin")}</td><td class="r" colspan="2"><b>${ced(ov, rg.id+".v", vs, "cin")}</b></td></tr>`;
   }).join("");
-  const stepRows = renderMods("core", ov);
+  const stepRows = (() => { const prev = _cardCtx; _cardCtx = { rows: recipe.rows }; try { return renderMods("core", ov); } finally { _cardCtx = prev; } })();
   const hd = `<div class="c2hd"><span class="c2ti">Core Synthesis</span><span class="c2lot">${ced(ov, "title", esc(label), "cin")}</span></div>`;
   const meta = `<div class="c2meta"><span class="c2grp">${esc(grp)}</span></div>`;
   const stir = `<div class="c2stir">교반 <b>${ced(ov, "stir", cs("core","stir").replace(/<br\s*\/?>/gi, " · "), "cin")}</b></div>`;
   const warn = `<div class="c2warn">${ced(ov, "warn", cs("core","warn").replace(/<br\s*\/?>/gi, " "), "cin")}</div>`;
-  if (protoHasBind(proto)) {
+  if (!_direct && protoHasBind(proto)) {
     /* 절차-only 전체폭 카드: 각 Add precursor 블록에 계획된 전구체+용매를 자동 기입 */
     const ctxR = { tgt: recipe.tgtMmol, rows: recipe.rows };
     const seq = coreSequence(proto, ctxR); const seqById = {}; seq.forEach(s => { seqById[s.id] = s; });
@@ -3190,7 +3479,7 @@ function coreCardHtml(lot, recipe) {
     return `<div class="synCard2">${hd}${meta}${stir}<div class="c2col c2full"><div class="c2pg">${blocksHtml}${uncBlock}</div></div>${warn}</div>`;
   }
   /* 비-바인딩(기본/레거시): 전구체 왼쪽 / 절차 오른쪽 2열 유지 */
-  const leftCol = `<div class="c2col c2l"><div class="c2sec">전구체</div><table class="c2tb"><thead><tr><th class="lft">전구체</th><th>mmol</th><th>mg</th></tr></thead><tbody>${precRows}</tbody></table><div class="c2sec c2mt">시약</div><table class="c2tb"><thead><tr><th class="lft">시약</th><th colspan="2">부피</th></tr></thead><tbody>${rgRows}</tbody></table></div>`;
+  const leftCol = `<div class="c2col c2l"><div class="c2sec">전구체</div><table class="c2tb"><thead><tr><th class="lft">전구체</th><th>mmol</th><th>mg</th></tr></thead><tbody>${precRows}</tbody></table>${rgRows ? `<div class="c2sec c2mt">시약${_direct ? " <span style=\"font-weight:500\">(넣는 순서)</span>" : ""}</div><table class="c2tb"><thead><tr><th class="lft">시약</th><th colspan="2">부피</th></tr></thead><tbody>${rgRows}</tbody></table>` : ""}</div>`;
   return `<div class="synCard2">${hd}${meta}${stir}<div class="c2cols">${leftCol}<div class="c2col"><div class="c2sec">절차</div>${stepRows}</div></div>${warn}</div>`;
 }
 
@@ -3676,81 +3965,24 @@ function renderPlannerCore(root, ctx) {
   const autoGroup = layerElems(preview);
 
 
-  /* P5: 시퀀스 기반 용매 자동 입력 (바인딩 프로토콜) — 아니면 종전 6타일 */
-  const _C = APP_DATA.constants, _proto = activeProtocol(_C), _bound = protoHasBind(_proto);
+  /* DIRECTRG-1013: 시약은 절차 블록에 mL로 직접 — 여기서는 절차 순서대로 보여 주고, 계산기는 필요할 때만 */
+  const _C = APP_DATA.constants, _proto = activeProtocol(_C), _bound = false;
   const _ctxR = { tgt: ctx.tgtMmol, rows: recipe.rows };
   const _solvWire = [];
-  let solvSection;
-  if (_bound) {
-    const seq = coreSequence(_proto, _ctxR), RL = ROLE_LABEL;
-    const coreSteps = (_proto.steps && _proto.steps.core) || [];
-    const grpHtml = seq.map((s, gi) => {
-      const bi = coreSteps.findIndex(m => m.id === s.id);
-      const agg = precAgg(s.prec, _ctxR);
-      const precLine = s.prec
-        ? `<b>${RL[s.prec]||s.prec}</b>${agg?` <span class="muted" style="font-weight:500">${esc(agg.names.slice(0,2).join(", "))}${agg.n>2?" 외":""} · ${fmtN(agg.mmol,4)} mmol · ${fmtN(agg.mg,2)} mg</span>`:` <span class="muted" style="font-weight:500">— 계획에서 미검출</span>`}`
-        : `<span class="muted">전구체 없음 (용매만)</span>`;
-      const svHtml = s.solv.map((sv, si) => {
-        const nm = esc(solvName(sv));
-        const volTxt = (sv.ml==null?"–":fmtN(sv.ml, sv.dig!=null?sv.dig:2)) + " mL";
-        let ctrl;
-        if (sv.mode === "directMl") {
-          if (sv.auto) { ctrl = `<span class="muted" style="font-size:11px">자동 = ${_ctxR.tgt<=1?(planEff().odeTotalSmall||10):(planEff().odeTotalLarge||20)} − OA</span>`; }
-          else { const id=`sv_${gi}_${si}`; _solvWire.push({id, bi, si, field:"val", num:true}); ctrl = `직접 <input type="number" step="any" id="${id}" class="slim w80" value="${sv.val!=null?sv.val:""}"> mL`; }
-        } else {
-          const id=`sv_${gi}_${si}`; _solvWire.push({id, bi, si, field:"val", num:true});
-          const rid=`svr_${gi}_${si}`; _solvWire.push({id:rid, bi, si, field:"ref", num:false});
-          ctrl = `<input type="number" step="any" id="${id}" class="slim w80" value="${sv.val!=null?sv.val:""}"> mL/mmol · 기준 <select id="${rid}" class="slim" style="width:96px">${REF_ROLES.map(o=>`<option value="${o[0]}" ${o[0]===(sv.ref||"Ln")?"selected":""}>${o[1]}</option>`).join("")}</select>`;
-        }
-        const cap = (sv.key==="oam" && sv.ml!=null) ? ` <span class="muted" style="font-size:10.5px">≈ ${fmtN(solvActualMmol(sv, sv.ml),3)} mmol(70%)</span>` : "";
-        return `<div class="row" style="gap:6px;align-items:center;margin:3px 0;flex-wrap:wrap"><span style="min-width:118px;font-weight:600;font-size:12px">${nm}</span>${ctrl}<span style="margin-left:auto;font-variant-numeric:tabular-nums"><b>${volTxt}</b></span>${cap}</div>`;
-      }).join("");
-      return `<div style="border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin-bottom:8px;background:var(--card)"><div style="font-weight:700;font-size:12.5px;margin-bottom:4px">${gi+1}. ${precLine}</div>${svHtml||'<span class="muted" style="font-size:12px">용매 없음</span>'}</div>`;
-    }).join("");
-    solvSection = `<div id="pSeqSolv">${grpHtml||'<div class="note">합성 프로세스에서 <b>첨가/주입</b> 블록에 전구체·용매를 묶으면 여기에 입력칸이 자동으로 나타납니다.</div>'}</div>
-      <div class="tiles" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr));margin-top:4px">
-        <div class="tile"><div class="v">${fmtN(recipe.mw,2)}</div><div class="k">M.W. [g/mol]</div><div class="s">투입비 기준</div></div>
-        <div class="tile"><div class="v">${fmtN(recipe.targetMg,2)}<span style="font-size:13px"> mg</span></div><div class="k">Target amount</div><div class="s">${ctx.tgtMmol} mmol</div></div>
-      </div>`;
-  } else {
-    /* 시약 조건을 계획 화면에서 직접 입력 — 값을 고치면 아래 결과 타일이 즉시 갱신되고,
-       설정 탭의 같은 항목과 하나의 값으로 유지된다(setShared). */
-    const _S = planEff();
-    const _odeKey = (ctx.tgtMmol <= 1) ? "odeTotalSmall" : "odeTotalLarge";
-    const _useOam = _S.oamEq > 0;
-    const _cg = (title, body, extra) => `<div style="border:1px solid var(--line2);border-radius:9px;padding:6px 9px 7px;background:var(--card);min-width:0">
-        <div style="font-size:11.5px;font-weight:700;color:var(--ink2);margin-bottom:4px;white-space:nowrap;display:flex;align-items:center;gap:5px">${title}</div>
-        <div class="row" style="gap:6px;align-items:center">${body}</div>${extra || ""}</div>`;
-    const _u = t => `<span class="muted" style="font-size:11px">${t}</span>`;
-    const condRow = `<div style="margin-bottom:11px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--chip)">
-        <div style="font-size:11.5px;font-weight:700;color:var(--sub);margin-bottom:7px">투입 조건 <span class="muted" style="font-weight:500">— 고치면 이 계획에만 적용됩니다</span></div>
-        <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:flex-start">
-        ${_cg("Oleic acid",
-            `<input type="number" step="0.5" min="0" class="slim w80" id="rgOaPer" value="${_S.oaPerMmol}">${_u("mL/mmol × tgt")}`)}
-        ${_cg("1-Octadecene",
-            `<input type="number" step="1" min="0" class="slim w80" id="rgOdeTot" value="${_S[_odeKey]}"
-               title="target ${ctx.tgtMmol <= 1 ? "≤ 1" : "> 1"} mmol 기준 총 부피">${_u(`mL 총량 − OA　(tgt ${ctx.tgtMmol <= 1 ? "≤ 1" : "> 1"} mmol)`)}`)}
-        ${_cg(`<label class="row" style="gap:5px;margin:0;font-weight:700;cursor:pointer"
-                 title="해제하면 당량 0으로 저장되고 결과·출력 카드에서 Oleyl amine 항목이 사라집니다">
-                 <input type="checkbox" id="rgOamUse" ${_useOam ? "checked" : ""}>Oleyl amine</label>`,
-            _useOam
-              ? `<input type="number" step="0.1" min="0" class="slim w60" id="rgOamEq" value="${_S.oamEq}">${_u("eq/tgt")}
-                 <input type="number" step="0.01" min="0" class="slim w80" id="rgOamMw" value="${_S.oamMw}">${_u("g/mol")}
-                 <input type="number" step="0.001" min="0" class="slim w80" id="rgOamDens" value="${_S.oamDens}">${_u("g/mL")}`
-              : `<span class="badge warn">미사용 — 결과에서 제외</span>`)}
-        ${_cg("Methanol",
-            `<input type="number" step="0.005" min="0" class="slim w80" id="rgMtoh" value="${_S.mtohPerMgF}">${_u("mL/mg NH₄F")}`)}
-        </div>
-      </div>`;
-    solvSection = condRow + `<div class="tiles" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">
-        <div class="tile"><div class="v">${fmtN(recipe.oaMl, 1)}<span style="font-size:13px"> mL</span></div><div class="k">Oleic acid</div><div class="s">= ROUND(tgt × ${_S.oaPerMmol}, 1)</div></div>
-        <div class="tile"><div class="v">${fmtN(recipe.odeMl, 1)}<span style="font-size:13px"> mL</span></div><div class="k">1-Octadecene</div><div class="s">= ${_S[_odeKey]} − Oleic acid</div></div>
-        ${recipe.oamMl === 0 ? "" : `<div class="tile"><div class="v">${fmtN(recipe.oamMl, 2)}<span style="font-size:13px"> mL</span></div><div class="k">Oleyl amine</div><div class="s">= tgt×${_S.oamEq} eq → 순액 부피</div></div>`}
-        <div class="tile"><div class="v">${recipe.mtohMl === null ? "–" : fmtN(recipe.mtohMl, 0)}<span style="font-size:13px"> mL</span></div><div class="k">Methanol (NH₄F 분산)</div><div class="s">= ROUNDUP(W<sub>NH4F</sub>×${_S.mtohPerMgF})</div></div>
+  const rgListHtml = () => {
+    const ord = layoutOrder(procMods("core") || []); const rows = [];
+    ord.forEach((m, bi) => rgLines(m).forEach(x => rows.push(`<tr><td class="muted">${bi + 1}</td><td class="l">${esc((MOD_KINDS[m.k] || MOD_KINDS.heat).label)}${_sv(m.temp) ? " · " + esc(_sv(m.temp)) : ""}</td><td class="l"><b>${esc(x.n)}</b></td><td class="num"><b>${isNum(x.ml) ? fmtMl(x.ml) : "–"}</b> mL</td></tr>`)));
+    return rows.length ? `<table class="tbl"><thead><tr><th>단계</th><th class="l">블록</th><th class="l">시약</th><th>부피</th></tr></thead><tbody>${rows.join("")}</tbody></table>`
+      : `<div class="note">아직 시약이 없습니다 — <b>합성 프로세스</b>에서 블록을 클릭해 <b>시약</b> 칸에 이름과 mL를 적거나, 아래 계산기로 채우세요.</div>`;
+  };
+  let solvSection = `${ctx._rgPlacedNote ? `<div class="note warn" style="margin:0 0 8px;font-size:12px">예전 방식(공식 계산)의 시약 값을 이 계획의 블록에 옮겨 넣었습니다 — <b>합성 프로세스</b>에서 넣은 위치가 맞는지 확인하세요.</div>` : ""}
+      <div class="note" style="margin:0 0 8px;font-size:12px">시약(용매)은 <b>합성 프로세스</b>의 각 블록에 <b>mL로 직접</b> 적습니다. 공식으로 계산하고 싶을 때만 계산기를 여세요.</div>
+      <div id="pRgList">${rgListHtml()}</div>
+      <div class="row" style="margin-top:8px"><button class="btn sm" id="pRgCalc" title="OA·ODE·OAm·MeOH를 공식으로 계산해 원하는 블록에 넣습니다">🧮 시약 계산기</button></div>
+      <div class="tiles" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr));margin-top:8px">
         <div class="tile"><div class="v">${fmtN(recipe.mw, 2)}</div><div class="k">M.W. [g/mol]</div><div class="s">투입비 기준</div></div>
         <div class="tile"><div class="v">${fmtN(recipe.targetMg, 2)}<span style="font-size:13px"> mg</span></div><div class="k">Target amount</div><div class="s">${ctx.tgtMmol} mmol</div></div>
       </div>`;
-  }
 
   root.innerHTML = `
   <div class="plan2">
@@ -3788,9 +4020,9 @@ function renderPlannerCore(root, ctx) {
       hint: "여기서 바로 편집 — 오른쪽 카드에 즉시 반영",
       summary: procSummary(["core"]),
       body: `<div id="procInline"></div>` })}
-    ${secHtml({ key: "planSolv", open: false, title: "용매 / 시약 및 조건",
-      hint: _bound ? "시퀀스 기반 · 자동 계산" : "고치면 다음 계획의 기본값이 됩니다",
-      summary: solvSummary(recipe.reagents || { oa: recipe.oaMl, ode: recipe.odeMl, oam: recipe.oamMl, mtoh: recipe.mtohMl }),
+    ${secHtml({ key: "planSolv", open: false, title: "시약 (절차 순서)",
+      hint: "블록에 mL로 직접 입력 · 계산기는 필요할 때만",
+      summary: directRgSummary(procMods("core")),
       body: solvSection })}
    </div>
    <div class="planside">
@@ -3817,7 +4049,7 @@ function renderPlannerCore(root, ctx) {
     const host = $("#procInline"); if (!host) return;
     try {
       renderProcedurePanel(host, { inline: true, bare: true, groups: ["core"],
-        onChange: () => { const pv = $("#cardPrev"); if (pv) pv.innerHTML = coreCardHtml(preview, recipe); } });
+        onChange: () => { const pv = $("#cardPrev"); if (pv) pv.innerHTML = coreCardHtml(preview, recipe); const rl = $("#pRgList"); if (rl) rl.innerHTML = rgListHtml(); refreshPlanDirtyUi(); } });
     } catch (e) { console.warn("proc inline", e); }
   };
   if (secOpen("planProc", false)) drawProc();
@@ -3905,6 +4137,7 @@ function renderPlannerCore(root, ctx) {
   $("#pAddComp").onclick = () => { comps.push({ id: newCompId(), role: "dopant", el: "", coeff: 0, excess: 1 }); rr(); };
   $("#pReset").onclick = () => { if (!plannerDiscardOK()) return; state.plannerCtx = defaultPlannerCtx("core"); renderView(); };
   $("#pEditProto").onclick = openProtocolEditor;
+  { const cb = $("#pRgCalc"); if (cb) cb.onclick = () => openRgCalc(ctx, null, () => rr()); }
   $("#pPrint").onclick = () => printCards([coreCardHtml(Object.assign({}, preview, { name: ctx.name || "", serial: planTargetSerial(ctx), cardEdits: ctx.cardEdits }), recipe)]);
   $("#pSave").onclick = () => {
     if (!sumOk) { if (!confirm("Dopant 계수 합이 1이 아닙니다. 그대로 저장할까요?")) return; }
@@ -4113,6 +4346,7 @@ function renderPlannerShell(root, ctx) {
         onChange: () => {
           const a = $("#cardPrevS"); if (a) a.innerHTML = shellCardHtml(preview, calc, lotFormula(preview));
           const b2 = $("#cardPrevSol"); if (b2) b2.innerHTML = shellSolutionCardHtml(lotFormula(preview) + " solution", sol, ctx.solCardEdits);
+          refreshPlanDirtyUi();
         } });
     } catch (e) { console.warn("proc inline shell", e); }
   };
@@ -4302,6 +4536,7 @@ function recipeFromPlanner(ctx, name) {
       protocolId: planProtoId(ctx), proto: planProtoCopy(ctx),
     };
   }
+  const _dir = !!(planEnsureProto(ctx).direct);
   return {
     fmt: RECIPE_FMT, id: "r" + Date.now().toString(36) + Math.floor(Math.random() * 1e4),
     name: name || "새 레시피", kind: "core", updatedAt: Date.now(),
@@ -4310,7 +4545,7 @@ function recipeFromPlanner(ctx, name) {
       role: c.role, el: c.el, coeff: c.coeff, excess: isNum(c.excess) ? c.excess : 1,
       mode: amountModeOf(c), prec: compPrec(ctx, c),
       ref: (c.ref && (ensureComponents(ctx).find(x => x.id === c.ref) || {}).el) || null })),
-    reagents: Object.assign({ oaPerMmol: S.oaPerMmol, odeTotalSmall: S.odeTotalSmall, odeTotalLarge: S.odeTotalLarge,
+    reagents: _dir ? undefined : Object.assign({ oaPerMmol: S.oaPerMmol, odeTotalSmall: S.odeTotalSmall, odeTotalLarge: S.odeTotalLarge,
                 oamEq: S.oamEq, oamMw: S.oamMw, oamDens: S.oamDens, mtohPerMgF: S.mtohPerMgF }, reagentsNow()),
     protocolId: planProtoId(ctx), proto: planProtoCopy(ctx),
   };
@@ -4363,7 +4598,12 @@ function ensureRecipeProtocol(rec) {
 function applyRecipe(rec) {
   if (!rec || !Array.isArray(rec.components)) return toast("레시피 형식이 올바르지 않습니다", "err");
   if (!plannerDiscardOK()) return;
-  ensureRecipeProtocol(rec);
+  if (rec.procOnly) {   /* 절차만 담긴 레시피(예전 프로토콜) — 성분은 그대로, 절차만 바꾼다 */
+    const c0 = state.plannerCtx; if (!c0) return;
+    delete c0._rgPlacedNote; const pp = planProtoFromRecipe(rec, c0); if (!pp) return toast("이 레시피에는 절차가 없습니다", "warn");
+    c0.proto = pp; PLAN_RC.id = rec.id;
+    return true;
+  }
   if (rec.kind === "shell") {
     const c2 = carryPlanIdentity(state.plannerCtx, defaultPlannerCtx("shell"));
     c2.components = rec.components.map(c => ({ id: newCompId(), role: c.role || "dopant", el: c.el,
@@ -4378,7 +4618,7 @@ function applyRecipe(rec) {
     }
     state.plannerCtx = c2;
     const S2 = state.db.settings;
-    c2.proto = (rec.proto && rec.proto.steps) ? Object.assign(JSON.parse(JSON.stringify(rec.proto)), { srcId: rec.protocolId || "lab_naln", fromRecipe: rec.name || "", reagents: recipeReagents(rec) }) : null;
+    c2.proto = planProtoFromRecipe(rec, c2);
     PLAN_RC.id = rec.id;
     return true;
   }
@@ -4397,10 +4637,9 @@ function applyRecipe(rec) {
   ctx.components.forEach(c => { if (c.el && c.prec) ctx.precs[c.el] = c.prec; });
   state.plannerCtx = ctx;
   const rg = rec.reagents || {};
-  for (const k of ["oaPerMmol", "odeTotalSmall", "odeTotalLarge", "oamEq", "oamMw", "oamDens", "mtohPerMgF"])
+  ctx.proto = planProtoFromRecipe(rec, ctx);
+  if (!ctx.proto) for (const k of ["oaPerMmol", "odeTotalSmall", "odeTotalLarge", "oamEq", "oamMw", "oamDens", "mtohPerMgF"])   // 절차 없는 옛 레시피: 계산 조건만 계획에
     if (isNum(rg[k])) setPlanLocal(k, rg[k]);
-  const S = state.db.settings;
-  ctx.proto = (rec.proto && rec.proto.steps) ? Object.assign(JSON.parse(JSON.stringify(rec.proto)), { srcId: rec.protocolId || "lab_naln", fromRecipe: rec.name || "", reagents: recipeReagents(rec) }) : null;
   PLAN_RC.id = rec.id;
   return true;
 }
@@ -4427,6 +4666,7 @@ function recipeBarHtml(kind) {
     </select>
     <button class="btn sm${(!isLab && state.plannerCtx && (state.plannerCtx.editSerial === null || state.plannerCtx.editSerial === undefined) && planRecipeDirty(state.plannerCtx)) ? " primary" : ""}" id="rcSave" ${isLab ? "disabled" : ""} title="${isLab ? "랩 공용 레시피는 직접 못 고칩니다 — [내 것으로 복사] 후 편집하세요" : "현재 계획을 선택된 레시피에 덮어씁니다"}">저장</button>
     <button class="btn sm" id="rcSaveAs" title="현재 계획을 새 이름으로 내 레시피에 저장">새 이름으로</button>
+    <button class="btn sm${sel && S.defaultProcRecipeId === sel ? " primary" : ""}" id="rcDefProc" ${sel ? "" : "disabled"} title="${sel && S.defaultProcRecipeId === sel ? "새 계획이 이 레시피의 절차로 시작합니다 — 다시 누르면 해제" : "새 계획을 시작할 때 이 레시피의 절차(블록 구성)로 시작합니다"}">${sel && S.defaultProcRecipeId === sel ? "★ 기본 절차" : "☆ 기본 절차로"}</button>
     <button class="btn sm" id="rcHist" ${(!isLab && sel) ? "" : "disabled"} title="이 레시피를 저장할 때마다 남은 이전 버전 보기·불러오기">버전</button>
     <button class="btn sm" id="rcDel" ${isLab ? "disabled" : ""} title="선택된 레시피 삭제">삭제</button>
     ${isLab ? `<button class="btn sm primary" id="rcFork" title="랩 공용 레시피를 내 레시피로 복사해 자유롭게 고칩니다">내 것으로 복사</button>` : ""}
@@ -4455,7 +4695,7 @@ function bindRecipeBar(rerender) {
     if (!r) return rerender();
     if (applyRecipe(JSON.parse(JSON.stringify(r))) !== true) return rerender();   // 취소·실패면 선택도 그대로
     PLAN_RC.id = id;
-    toast(`레시피 '${r.name}' 적용`, "ok");
+    toast(r.procOnly ? `'${r.name}'의 절차를 불러왔습니다 (성분은 그대로)` : `레시피 '${r.name}' 적용`, "ok");
     renderView();
   };
   $("#rcSave").onclick = () => {
@@ -4468,6 +4708,8 @@ function bindRecipeBar(rerender) {
     toast(`'${c.name}' 저장 완료`, "ok"); rerender();
   };
   { const hb = $("#rcHist"); if (hb) hb.onclick = () => { const c = cur(); if (c) openRecipeHistory(c); }; }
+  { const db = $("#rcDefProc"); if (db) db.onclick = () => { const id = PLAN_RC.id; if (!id) return; const on = S.defaultProcRecipeId === id; S.defaultProcRecipeId = on ? null : id; saveSettings();
+      toast(on ? "기본 절차를 해제했습니다 — 새 계획은 기본값 절차로 시작합니다" : "새 계획은 이 레시피의 절차로 시작합니다", "ok"); rerender(); }; }
   $("#rcSaveAs").onclick = () => {
     const ctx = state.plannerCtx; if (!ctx) return;
     const name = prompt("레시피 이름", (cur() && cur().name + " 복사") || "내 레시피");
@@ -4656,7 +4898,7 @@ function openSynthWizard() {
       $("#wzOamE").onchange = e => _wiz.rg.oamEq = parseFloat(e.target.value) || 0;
       $("#wzOamU").onchange = e => { _wiz.rg.useOam = e.target.checked; $("#wzOamE").disabled = !e.target.checked; };
     } else {
-      const protos = Object.entries((state.db.settings.protocols) || {});
+      const protos = Object.values(activeRecipes()).filter(r => r && r.proto && r.proto.steps && (r.kind || "core") === "core").map(r => [r.id, { name: r.name }]);
       const list = _wiz.parsed.list;
       const map = mapCompositionToPlan(list);
       body.innerHTML = `<div class="note">마지막입니다. <b>합성 절차</b>는 어디서 가져올까요?</div>
@@ -4726,10 +4968,8 @@ function finishWizard(ov) {
   if (host) setPlanLocal("naExcess", ctx.naExcess);
   if (anion) setPlanLocal("fExcess", ctx.fExcess);
   /* 절차 복사 */
-  if (W.procFrom && state.db.settings.protocols && state.db.settings.protocols[W.procFrom]) {
-    state.db.settings.activeProtocolId = W.procFrom;
-    saveSettings();
-    ctx.proto = snapshotProcedures();
+  if (W.procFrom && recipeById(W.procFrom)) {
+    ctx.proto = planProtoFromRecipe(recipeById(W.procFrom), ctx);
   } else if (_prevCtx && _prevCtx.mode === "core" && _prevCtx.proto) ctx.proto = JSON.parse(JSON.stringify(_prevCtx.proto));   // '현재 절차' = 이 계획이 보던 절차
   if (W.saveRecipe) {
     const nm = (W.rcName || W.formula || "새 레시피").trim();
@@ -4743,25 +4983,28 @@ function finishWizard(ov) {
 }
 
 /* ---- 작성 중인 계획 보호 (2026-09-29) ---- */
-function plannerFp(c) { try { return JSON.stringify(c, (k, v) => k === "_base" ? undefined : v); } catch (e) { return ""; } }
+function plannerFp(c) { try { return JSON.stringify(c, (k, v) => (k === "_base" || k === "_rgPlacedNote") ? undefined : v); } catch (e) { return ""; } }
 function plannerDirty() { const c = state.plannerCtx; return !!(c && c._base !== undefined && plannerFp(c) !== c._base); }
 function plannerDiscardOK() {
   if (!plannerDirty()) return true;
   return confirm("작성 중인 계획에 저장하지 않은 변경이 있습니다.\n버리고 계속할까요?");
 }
-window.addEventListener("beforeunload", e => { if (plannerDirty()) { e.preventDefault(); e.returnValue = ""; } });
+function plannerDraftDirty() { const D = state.plannerDrafts || {}; return Object.keys(D).some(k => { const c = D[k]; return c && c !== state.plannerCtx && c._base !== undefined && plannerFp(c) !== c._base; }); }
+window.addEventListener("beforeunload", e => { if (plannerDirty() || plannerDraftDirty()) { e.preventDefault(); e.returnValue = ""; } });
 function renderPlanner(root) {
   if (!state.plannerCtx) state.plannerCtx = defaultPlannerCtx("core");
   const ctx = state.plannerCtx;
+  try { absorbProtocols(); } catch (e) { console.warn("absorb", e); }
   planEnsureProto(ctx);
   if (ctx.proto.reagents === undefined) ctx.proto.reagents = snapshotProcedures().reagents;
-  _protoOverride = { steps: ctx.proto.steps, cardText: ctx.proto.cardText, reagents: ctx.proto.reagents };
+  planToDirect(ctx);
+  _protoOverride = { steps: ctx.proto.steps, cardText: ctx.proto.cardText, reagents: ctx.proto.reagents, direct: !!ctx.proto.direct };
   root.innerHTML = `<div class="row" style="margin-bottom:12px">
     <div class="seg"><button id="segCore" class="${ctx.mode === "core" ? "active" : ""}">Core 합성</button><button id="segShell" class="${ctx.mode === "shell" ? "active" : ""}">Shell 성장</button></div>
     ${ctx.editSerial !== null ? `<span class="badge warn">Lot ${ctx.editSerial} 수정 중</span><button class="btn sm" id="segCancelEdit">수정 취소</button>` : ""}
     <span style="flex:1"></span>
     <button class="btn sm" id="segWizard" title="조성식만 적으면 성분표·역할·검증 기준까지 만들어 드립니다">✨ 새 합성 프로세스 만들기</button>
-  </div>${recipeBarHtml(ctx.mode)}${planProtoBarHtml(ctx)}<div id="plannerBody"></div>`;
+  </div>${recipeBarHtml(ctx.mode)}<div id="planProtoBarHost">${planProtoBarHtml(ctx)}</div><div id="plannerBody"></div>`;
   const drafts = state.plannerDrafts || (state.plannerDrafts = {});
   const switchMode = m => { if (ctx.mode === m) return; drafts[ctx.mode] = ctx; state.plannerCtx = drafts[m] || defaultPlannerCtx(m); renderView(); };
   $("#segCore").onclick = () => switchMode("core");
@@ -7748,12 +7991,12 @@ var _protoEditorModal = null;
 function openProtocolEditor(){
   const ov = h(`<div class="overlay center"><div class="modal" style="max-width:960px;width:96vw;max-height:90vh;overflow:auto">
     <button class="closex">✕</button>
-    <h2>합성 프로세스 편집 <span class="hint" style="font-weight:500;font-size:12px;color:var(--muted)">시약·절차 프로토콜 — 드롭다운으로 전환·복제</span></h2>
+    <h2>합성 프로세스 편집 <span class="hint" style="font-weight:500;font-size:12px;color:var(--muted)">이 계획의 절차 — 레시피 [저장]으로 레시피에 남습니다</span></h2>
     <div id="protoEditBody"></div>
   </div></div>`);
   document.body.appendChild(ov);
   const body = ov.querySelector("#protoEditBody");
-  const redraw = () => { body.innerHTML=""; try{ renderProtocolPanel(body); }catch(e){ console.warn("proto",e); } try{ renderProcedurePanel(body); }catch(e){ console.warn("proc",e); } };
+  const redraw = () => { body.innerHTML=""; try{ renderProcedurePanel(body); }catch(e){ console.warn("proc",e); } };
   _protoEditorModal = { redraw };
   redraw();
   const close = () => { _protoEditorModal = null; ov.remove(); render(); };
@@ -7788,10 +8031,10 @@ function renderProcedurePanel(root, opts){
   }
   const nt=document.createElement("div"); nt.className="note"; nt.style.margin="4px 0 8px";
   nt.innerHTML = opts.inline
-    ? "블록을 <b>클릭</b>하면 왼쪽에서 상세값을 고치고, <b>드래그</b>로 배치·<b>모서리 손잡이</b>로 크기를 바꿉니다. <b>Ctrl+C / Ctrl+D / Ctrl+V</b>로 복사·복제·붙여넣기 (그룹 간 이동 가능)."
+    ? "블록을 <b>클릭</b>하면 왼쪽에서 온도·시간·<b>시약(mL)</b>·전구체 표시·칸 위치를 고칩니다. <b>드래그</b>로 빈칸에 배치, <b>모서리 손잡이</b>로 크기 — 다른 블록은 움직이지 않습니다. <b>Ctrl+C / Ctrl+D / Ctrl+V</b>로 복사·복제·붙여넣기."
     : "오른쪽 <b>카드(출력 영역)</b>에서 블록을 <b>드래그</b>해 원하는 칸에 자유 배치(<b>빈칸 허용</b>)하고 <b>모서리 손잡이</b>를 끌어 가로 1~3칸·세로 1~6칸를 조절합니다. 블록을 <b>클릭</b>하면 왼쪽에 상세 입력칸이 나타나고, <b>카드 밖으로</b> 드래그하면 삭제됩니다.<br>블록 <b>복사·복제·붙여넣기</b>는 왼쪽 상세창의 버튼 또는 <b>Ctrl+C / Ctrl+D / Ctrl+V</b> — 복사한 블록은 Core·Shell·용액 조제 사이에서도 붙여넣을 수 있습니다.";
   card.appendChild(nt);
-  if(!opts.inline){ const apid=S.activeProtocolId; const apName=(apid&&apid!=="lab_naln"&&S.protocols&&S.protocols[apid])?S.protocols[apid].name:"기본값"; const apLine=document.createElement("div"); apLine.style.cssText="font-size:12px;margin:2px 0 9px;padding:6px 10px;background:var(--chip);border-radius:6px;color:var(--ink2)"; apLine.innerHTML=(_protoOverride && state.view==="plan") ? "편집 대상: <b>이 계획의 절차</b> <span style=\"color:var(--muted)\">— 여기서 고친 내용은 이 계획(과 [저장]한 레시피·lot)에만 반영됩니다. 프로토콜 원본은 바뀌지 않습니다.</span>" : "편집 대상 프로토콜: <b>"+esc(apName)+"</b>"+((apid&&apid!=="lab_naln")?" <span style=\"color:var(--muted)\">— 이 프로토콜 전용 절차</span>":" <span style=\"color:var(--muted)\">— 전역. 상단 \u2018화학물질 개요\u2019에서 + 새 프로토콜을 만들면 전용 절차가 됩니다.</span>"); card.appendChild(apLine); }
+  if(!opts.inline){ const apid=S.activeProtocolId; const apName=(apid&&apid!=="lab_naln"&&S.protocols&&S.protocols[apid])?S.protocols[apid].name:"기본값"; const apLine=document.createElement("div"); apLine.style.cssText="font-size:12px;margin:2px 0 9px;padding:6px 10px;background:var(--chip);border-radius:6px;color:var(--ink2)"; apLine.innerHTML=(_protoOverride && state.view==="plan") ? "편집 대상: <b>이 계획의 절차</b> <span style=\"color:var(--muted)\">— 블록 구성·시약(mL)·전구체 표시까지 이 계획에만 반영됩니다. 레시피에 남기려면 레시피 칸의 [저장]/[새 이름으로].</span>" : (_protoOverride && state.view==="plan") ? "편집 대상: <b>이 계획의 절차</b> <span style=\"color:var(--muted)\">— 여기서 고친 내용은 이 계획(과 [저장]한 레시피·lot)에만 반영됩니다. 프로토콜 원본은 바뀌지 않습니다.</span>" : "편집 대상 프로토콜: <b>"+esc(apName)+"</b>"+((apid&&apid!=="lab_naln")?" <span style=\"color:var(--muted)\">— 이 프로토콜 전용 절차</span>":" <span style=\"color:var(--muted)\">— 전역. 상단 \u2018화학물질 개요\u2019에서 + 새 프로토콜을 만들면 전용 절차가 됩니다.</span>"); card.appendChild(apLine); }
   const tabs=document.createElement("div"); tabs.className="row"; tabs.style.cssText="gap:6px;flex-wrap:wrap;margin-bottom:8px"; card.appendChild(tabs);
   const split=document.createElement("div"); split.style.cssText="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap"; card.appendChild(split);
   const leftP=document.createElement("div"); leftP.style.cssText="flex:0 0 236px;max-width:236px;min-width:206px"; split.appendChild(leftP);
@@ -7850,44 +8093,55 @@ function renderProcedurePanel(root, opts){
     const kl=document.createElement("div"); kl.style.cssText="font-size:11px;color:var(--muted);margin-top:6px"; kl.textContent="종류"; box.appendChild(kl);
     const ksel=document.createElement("select"); ksel.style.cssText="width:100%;padding:5px 7px;border:1px solid var(--line2);border-radius:6px;font-size:12px;margin-top:2px";
     MOD_KIND_ORDER.forEach(k=>{ const o=document.createElement("option"); o.value=k; o.textContent=SHORT[k]; if(k===m.k)o.selected=true; ksel.appendChild(o); });
-    ksel.onchange=()=>{ m.k=ksel.value; delete m.badges; persist(); redraw(); }; box.appendChild(ksel);
+    ksel.onchange=()=>{ m.k=ksel.value; delete m.badges; if(m.k!=="add"&&m.k!=="inject") delete m.pr; persist(); redraw(); }; box.appendChild(ksel);
     K.f.forEach(f=>{ const lab=(f==="temp")?"온도":(f==="time")?"시간/조건":"비고"; box.appendChild(insField(lab,_sv(m[f]),v=>{ m[f]=v; persist(); drawCanvas(); })); });
+    /* DIRECTRG-1013: 전구체(간단 선택) · 시약 mL 직접 입력 · 칸 배치 */
+    const secT=(t,hint)=>{ const d=document.createElement("div"); d.style.cssText="margin-top:12px;border-top:1px dashed var(--line2);padding-top:9px"; const b=document.createElement("div"); b.style.cssText="font-weight:700;font-size:12px;color:var(--ink)"; b.textContent=t; d.appendChild(b); if(hint){ const hh=document.createElement("div"); hh.style.cssText="font-size:10.5px;color:var(--muted);line-height:1.4;margin:2px 0 5px"; hh.textContent=hint; d.appendChild(hh); } return d; };
     if(m.k==="add" || m.k==="inject"){
-      m.bind = m.bind || {prec:"", solv:[]};
-      const bwrap=document.createElement("div"); bwrap.style.cssText="margin-top:12px;border-top:1px dashed #e2e8f0;padding-top:9px";
-      const bt=document.createElement("div"); bt.style.cssText="font-weight:700;font-size:12px;color:var(--ink);margin-bottom:2px"; bt.textContent="이 단계 투입물 (묶음)"; bwrap.appendChild(bt);
-      const bh=document.createElement("div"); bh.style.cssText="font-size:10.5px;color:var(--muted);line-height:1.4;margin-bottom:6px"; bh.textContent="이 시퀀스에 함께 넣는 전구체와 유기용매를 지정하면 계획창·카드에 자동 반영됩니다."; bwrap.appendChild(bh);
-      const pl=document.createElement("div"); pl.style.cssText="font-size:11px;color:var(--muted)"; pl.textContent="전구체"; bwrap.appendChild(pl);
-      const psel=document.createElement("select"); psel.style.cssText="width:100%;padding:5px 7px;border:1px solid var(--line2);border-radius:6px;font-size:12px;margin-top:2px";
-      [["","(없음)"],["Ln","Dopant"],["Na","Host Cation"],["F","Host Anion"]].forEach(o=>{ const op=document.createElement("option"); op.value=o[0]; op.textContent=o[1]; if(o[0]===(m.bind.prec||""))op.selected=true; psel.appendChild(op); });
-      psel.onchange=()=>{ m.bind.prec=psel.value; persist(); drawCanvas(); }; bwrap.appendChild(psel);
-      const sl=document.createElement("div"); sl.style.cssText="font-size:11px;color:var(--muted);margin-top:9px"; sl.textContent="유기용매"; bwrap.appendChild(sl);
-      (m.bind.solv||[]).forEach((sv,si)=>{
-        const sb=document.createElement("div"); sb.style.cssText="border:1px solid var(--line);border-radius:7px;padding:6px 7px;margin-top:5px;background:var(--chip)";
-        const sh=document.createElement("div"); sh.style.cssText="display:flex;justify-content:space-between;align-items:center;gap:4px";
-        const snm=document.createElement("b"); snm.style.fontSize="11.5px"; snm.textContent=solvName(sv);
-        const sx=document.createElement("button"); sx.className="btn sm"; sx.textContent="✕"; sx.style.cssText="padding:0 7px;font-size:11px"; sx.onclick=()=>{ m.bind.solv.splice(si,1); persist(); redraw(); };
-        sh.append(snm,sx); sb.appendChild(sh);
-        const mrow=document.createElement("div"); mrow.style.cssText="display:flex;gap:4px;align-items:center;margin-top:5px;font-size:11px;flex-wrap:wrap";
-        if(sv.mode==="directMl"){
-          const autoLab=document.createElement("label"); autoLab.style.cssText="display:flex;gap:3px;align-items:center;font-size:11px";
-          const acb=document.createElement("input"); acb.type="checkbox"; acb.checked=!!sv.auto; acb.onchange=()=>{ sv.auto=acb.checked; persist(); redraw(); };
-          autoLab.append(acb,document.createTextNode("자동(총량−OA)")); mrow.appendChild(autoLab);
-          if(!sv.auto){ const vin=document.createElement("input"); vin.type="number"; vin.step="any"; vin.value=(sv.val!=null?sv.val:""); vin.placeholder="mL"; vin.style.cssText="width:60px;padding:3px 5px;border:1px solid var(--line2);border-radius:5px;font-size:11px"; vin.oninput=()=>{ sv.val=parseFloat(vin.value); persist(); drawCanvas(); }; mrow.append(document.createTextNode("부피"),vin,document.createTextNode("mL")); }
-        } else {
-          const vin=document.createElement("input"); vin.type="number"; vin.step="any"; vin.value=(sv.val!=null?sv.val:""); vin.style.cssText="width:56px;padding:3px 5px;border:1px solid var(--line2);border-radius:5px;font-size:11px"; vin.oninput=()=>{ sv.val=parseFloat(vin.value); persist(); drawCanvas(); };
-          const rsel=document.createElement("select"); rsel.style.cssText="padding:3px 5px;border:1px solid var(--line2);border-radius:5px;font-size:11px";
-          REF_ROLES.forEach(o=>{ const op=document.createElement("option"); op.value=o[0]; op.textContent=o[1]; if(o[0]===(sv.ref||"Ln"))op.selected=true; rsel.appendChild(op); });
-          rsel.onchange=()=>{ sv.ref=rsel.value; persist(); drawCanvas(); };
-          mrow.append(document.createTextNode("mL/mmol"),vin,document.createTextNode("기준"),rsel);
-        }
-        sb.appendChild(mrow); bwrap.appendChild(sb);
-      });
-      const addRow=document.createElement("div"); addRow.style.cssText="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px";
-      SOLV_ORDER.forEach(k=>{ const ab=document.createElement("button"); ab.type="button"; ab.textContent="＋ "+(SOLV_INFO[k]?SOLV_INFO[k].name:k); ab.style.cssText="border:1px solid var(--line2);background:var(--card);border-radius:12px;padding:2px 9px;font-size:11px;cursor:pointer"; ab.onclick=()=>{ m.bind.solv=m.bind.solv||[]; m.bind.solv.push(solvDefault(k)); persist(); redraw(); }; addRow.appendChild(ab); });
-      bwrap.appendChild(addRow); box.appendChild(bwrap);
+      const pw=secT("함께 넣는 전구체","체크하면 카드의 이 칸에 전구체 이름·mg가 나옵니다.");
+      PR_ROLES.forEach(([k,lab])=>{ const l=document.createElement("label"); l.style.cssText="display:flex;gap:6px;align-items:center;font-size:12px;cursor:pointer;margin:2px 0";
+        const cb=document.createElement("input"); cb.type="checkbox"; cb.dataset.pr=k; cb.checked=Array.isArray(m.pr)&&m.pr.indexOf(k)>=0;
+        cb.onchange=()=>{ const s0=new Set(Array.isArray(m.pr)?m.pr:[]); if(cb.checked) s0.add(k); else s0.delete(k); const arr=PR_ROLES.map(x=>x[0]).filter(x=>s0.has(x)); if(arr.length) m.pr=arr; else delete m.pr; persist(); drawCanvas(); };
+        l.append(cb, document.createTextNode(lab)); pw.appendChild(l); });
+      box.appendChild(pw);
     }
-    const wh=document.createElement("div"); wh.style.cssText="font-size:11px;color:var(--muted);margin-top:11px;line-height:1.45"; wh.textContent="크기는 오른쪽 카드에서 블록 모서리 손잡이를 끌어 조절합니다(가로 1~3칸·세로 1~6칸)."; box.appendChild(wh);
+    const rw=secT("시약 (이 단계에서 넣는 양)","이름과 mL를 직접 적습니다. 카드 왼쪽 '시약' 표에 절차 순서대로 나옵니다.");
+    const dlId="rgNames_"+Math.random().toString(36).slice(2,8); const dl=document.createElement("datalist"); dl.id=dlId;
+    const known=new Set(RG_NAMES); ["core","shell","sol"].forEach(g=>{ try{ (protoSteps(g,false)||[]).forEach(z=>rgLines(z).forEach(x=>known.add(String(x.n).trim()))); }catch(e){} });
+    known.forEach(n=>{ const o=document.createElement("option"); o.value=n; dl.appendChild(o); }); rw.appendChild(dl);
+    (Array.isArray(m.rg)?m.rg:[]).forEach((x,i)=>{
+      const r=document.createElement("div"); r.style.cssText="display:flex;gap:4px;align-items:center;margin-top:4px";
+      const ni=document.createElement("input"); ni.type="text"; ni.className="rgN"; ni.setAttribute("list",dlId); ni.placeholder="시약 이름"; ni.value=x.n||""; ni.style.cssText="flex:1;min-width:0;padding:4px 6px;border:1px solid var(--line2);border-radius:6px;font-size:12px";
+      const mi=document.createElement("input"); mi.type="number"; mi.step="any"; mi.min="0"; mi.className="rgV"; mi.placeholder="mL"; mi.value=isNum(x.ml)?x.ml:""; mi.style.cssText="width:62px;padding:4px 5px;border:1px solid var(--line2);border-radius:6px;font-size:12px;text-align:right";
+      const u=document.createElement("span"); u.className="muted"; u.style.fontSize="11px"; u.textContent="mL";
+      const xb=document.createElement("button"); xb.className="btn sm"; xb.textContent="✕"; xb.title="이 줄 삭제"; xb.style.cssText="padding:0 7px;font-size:11px";
+      ni.oninput=()=>{ x.n=ni.value; persist(); drawCanvas(); };
+      mi.oninput=()=>{ const v=parseFloat(mi.value); x.ml=isFinite(v)?v:null; persist(); drawCanvas(); };
+      xb.onclick=()=>{ m.rg.splice(i,1); if(!m.rg.length) delete m.rg; persist(); redraw(); };
+      r.append(ni,mi,u,xb); rw.appendChild(r);
+    });
+    const addR=document.createElement("div"); addR.style.cssText="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px";
+    const addLine=(nm)=>{ m.rg=Array.isArray(m.rg)?m.rg:[]; m.rg.push({n:nm||"",ml:null}); persist(); redraw(); setTimeout(()=>{ const q=leftP.querySelectorAll(nm?".rgV":".rgN"); if(q.length) q[q.length-1].focus(); },0); };
+    const ab0=document.createElement("button"); ab0.type="button"; ab0.className="btn sm"; ab0.textContent="+ 시약"; ab0.onclick=()=>addLine(""); addR.appendChild(ab0);
+    RG_NAMES.forEach(nm=>{ const ab=document.createElement("button"); ab.type="button"; ab.textContent="+ "+nm; ab.style.cssText="border:1px solid var(--line2);background:var(--card);border-radius:12px;padding:2px 8px;font-size:10.5px;cursor:pointer"; ab.onclick=()=>addLine(nm); addR.appendChild(ab); });
+    rw.appendChild(addR);
+    if(group==="core" && state.view==="plan" && state.plannerCtx && state.plannerCtx.mode==="core" && _protoOverride){
+      const cb2=document.createElement("button"); cb2.type="button"; cb2.className="btn sm"; cb2.style.marginTop="6px"; cb2.textContent="🧮 계산기로 채우기"; cb2.title="OA·ODE·OAm·MeOH를 공식으로 계산해 이 블록에 넣습니다 (필요할 때만)";
+      cb2.onclick=()=>openRgCalc(state.plannerCtx, m.id, ()=>{ persist(); redraw(); }); rw.appendChild(cb2);
+    }
+    box.appendChild(rw);
+    { const Lall=resolveLayout(mods()), P0=Lall[m.id]||{gx:1,gy:1};
+      let maxR=1; Object.values(Lall).forEach(p=>{ maxR=Math.max(maxR,p.gy+p.gh); });
+      const zw=secT("칸 배치","절차 칸은 가로 3칸 격자입니다. 다른 블록과 겹치는 위치·크기는 적용되지 않으며, 다른 블록은 움직이지 않습니다.");
+      const zr=document.createElement("div"); zr.style.cssText="display:grid;grid-template-columns:auto 1fr auto 1fr;gap:4px 6px;align-items:center;font-size:11.5px";
+      const mk=(lab,val,max,key)=>{ const s0=document.createElement("select"); s0.className="slim"; s0.dataset.pos=key; for(let i=1;i<=max;i++){ const o=document.createElement("option"); o.value=i; o.textContent=i; if(i===val) o.selected=true; s0.appendChild(o); } const l=document.createElement("span"); l.className="muted"; l.textContent=lab; zr.append(l,s0); return s0; };
+      const sx=mk("열",P0.gx,3,"x"), sy=mk("행",P0.gy,Math.max(maxR,P0.gy+1),"y"), sw=mk("가로",posW(m.gw),3,"w"), sh=mk("세로",posH(m.gh),6,"h");
+      const apply=()=>{ const w=+sw.value, hh=+sh.value, y=+sy.value; let x=+sx.value; if(x+w>4) x=4-w; const a=mods(); normalizeLayout(a);
+        if(layoutBusy(a,x,y,w,hh,m.id)){ toast("그 칸은 다른 블록과 겹칩니다 — 다른 위치나 크기를 고르세요","warn"); drawInspector(); return; }
+        m.gx=x; m.gy=y; m.gw=w; m.gh=hh; sortByLayout(a); persist(); redraw(); };
+      [sx,sy,sw,sh].forEach(s0=>s0.onchange=apply);
+      zw.appendChild(zr); box.appendChild(zw); }
+    const wh=document.createElement("div"); wh.style.cssText="font-size:11px;color:var(--muted);margin-top:9px;line-height:1.45"; wh.textContent="카드에서 블록을 끌어 빈칸에 놓거나, 오른쪽 아래 손잡이로 크기를 바꿀 수도 있습니다."; box.appendChild(wh);
     const cprow=document.createElement("div"); cprow.style.cssText="display:flex;gap:5px;flex-wrap:wrap;margin-top:11px";
     const bCopy=document.createElement("button"); bCopy.className="btn sm"; bCopy.textContent="복사"; bCopy.title="이 블록을 클립보드에 복사 (Ctrl+C)";
     bCopy.onclick=()=>{ modClipCopy(m); toast("블록을 복사했습니다 — 붙여넣기로 추가할 수 있습니다","ok"); redraw(); };
@@ -7905,7 +8159,7 @@ function renderProcedurePanel(root, opts){
   function addMod(src){
     const a=mods(); ensurePositions(a);
     const nm=JSON.parse(JSON.stringify(src));
-    nm.id=modClipNewId(); nm.gx=Math.max(1,Math.min(3,nm.gx||1)); nm.gy=bottomRow(a);
+    nm.id=modClipNewId(); nm.gx=Math.max(1,Math.min(4-posW(nm.gw),nm.gx||1)); nm.gy=bottomRow(a);
     a.push(nm); setSel(nm.id); persist(); redraw();
     return nm;
   }
@@ -7926,88 +8180,80 @@ function renderProcedurePanel(root, opts){
   function pgEl(){ return canvasWrap.querySelector(".c2pg"); }
   function frameEl(){ return canvasWrap.querySelector(".synCard2"); }
   function outsideFrame(x,y){ const el=frameEl(); if(!el) return false; const r=el.getBoundingClientRect(); return x<r.left-10||x>r.right+10||y<r.top-10||y>r.bottom+10; }
-  /* 포인터 → 목표 셀(gx,gy) : gx는 포인터 X로 열, gy는 끌리는 블록 상단을 렌더된 행선에 스냅 */
-  function targetCell(blkTopPx, px, gw, dragId){
-    const pg=pgEl(); if(!pg) return {gx:1,gy:1};
-    const pr=pg.getBoundingClientRect(); const cs=getComputedStyle(pg);
-    const colGap=parseFloat(cs.columnGap)||6, rowGap=parseFloat(cs.rowGap)||6;
-    const padL=parseFloat(cs.paddingLeft)||0, padR=parseFloat(cs.paddingRight)||0, padT=parseFloat(cs.paddingTop)||0;
-    const innerW=pr.width-padL-padR, colW=(innerW-colGap*2)/3;
-    let gx=Math.floor((px-(pr.left+padL))/(colW+colGap))+1; gx=Math.max(1,Math.min(4-gw,gx));
-    const L=resolveLayout(mods()); const lines={}; let pitchSum=0,pitchN=0;
-    pg.querySelectorAll(".stp").forEach(el=>{ const id=el.dataset.mid; if(!id||id===dragId) return; const p=L[id]; if(!p) return; const r=el.getBoundingClientRect();
-      const rowH=(r.height-(p.gh-1)*rowGap)/p.gh;
-      for(let k=0;k<p.gh;k++){ const row=p.gy+k, y=r.top+k*(rowH+rowGap); lines[row]=(lines[row]==null)?y:Math.min(lines[row],y); }
-      const bot=p.gy+p.gh; lines[bot]=(lines[bot]==null)?(r.bottom+rowGap):Math.min(lines[bot],r.bottom+rowGap);
-      pitchSum+=rowH+rowGap; pitchN++; });
-    const pitch=pitchN?pitchSum/pitchN:30, topLine=(lines[1]!=null)?lines[1]:(pr.top+padT);
-    const known=Object.keys(lines).map(Number); const maxRow=known.length?Math.max.apply(null,known):1;
-    let best=1,bestD=Infinity;
-    for(let row=1; row<=maxRow+1; row++){ const y=(lines[row]!=null)?lines[row]:(topLine+(row-1)*pitch); const d=Math.abs(blkTopPx-y); if(d<bestD){bestD=d;best=row;} }
-    return {gx:gx, gy:Math.max(1,best)};
-  }
-  /* 자유 배치 드래그: 끌리는 블록을 목표 셀로, 나머지는 원위치에서 충돌만 아래로 밀어냄(비면 복귀) */
+  /* GRIDED-1013: 칸(셀) 단위 배치 — 놓을 자리·크기만 바뀌고 다른 블록은 절대 밀리거나 크기가 바뀌지 않는다 */
+  function cellAt(px,py){ let best=null,bd=Infinity; canvasWrap.querySelectorAll(".gcell").forEach(c=>{ const r=c.getBoundingClientRect(); const dx=px<r.left?r.left-px:(px>r.right?px-r.right:0), dy=py<r.top?r.top-py:(py>r.bottom?py-r.bottom:0), d=dx*dx+dy*dy; if(d<bd){bd=d;best=c;} }); return best?{x:+best.dataset.x,y:+best.dataset.y}:null; }
+  let ghost=null;
+  function showGhost(x,y,w,h,ok){ const pg=pgEl(); if(!pg) return; if(!ghost){ ghost=document.createElement("div"); ghost.className="gghost"; }
+    ghost.style.cssText="grid-column:"+x+" / span "+w+";grid-row:"+y+" / span "+h+";border:2px dashed "+(ok?"#2563eb":"#ef4444")+";background:"+(ok?"rgba(37,99,235,.10)":"rgba(239,68,68,.12)")+";border-radius:6px;pointer-events:none;z-index:3;min-height:30px";
+    if(ghost.parentNode!==pg) pg.appendChild(ghost); }
+  function hideGhost(){ if(ghost&&ghost.parentNode) ghost.parentNode.removeChild(ghost); ghost=null; }
   function startBlockDrag(mId, downEv){
-    const srcEl=downEv.currentTarget; const startX=downEv.clientX, startY=downEv.clientY;
-    let dragging=false, clone=null, off={x:0,y:0}, orig={};
+    const srcEl=downEv.currentTarget, sx=downEv.clientX, sy=downEv.clientY;
+    const a=mods(), m=a.filter(z=>z.id===mId)[0]; if(!m) return;
+    let dragging=false, clone=null, off={x:0,y:0}, anc={dx:0,dy:0}, tgt=null;
     const onMove=ev=>{
-      if(!dragging){ if(Math.abs(ev.clientX-startX)<5 && Math.abs(ev.clientY-startY)<5) return;
+      if(!dragging){ if(Math.abs(ev.clientX-sx)<5 && Math.abs(ev.clientY-sy)<5) return;
         dragging=true; _draggingId=mId; setSel(mId);
-        if(ensurePositions(mods())) persist();
-        orig={}; mods().forEach(z=>{ orig[z.id]={gx:z.gx,gy:z.gy}; });
-        const r=srcEl.getBoundingClientRect(); off={x:startX-r.left,y:startY-r.top};
+        const c0=cellAt(sx,sy)||{x:m.gx,y:m.gy}; anc={dx:Math.max(0,Math.min(posW(m.gw)-1,c0.x-m.gx)), dy:Math.max(0,Math.min(posH(m.gh)-1,c0.y-m.gy))};
+        const r=srcEl.getBoundingClientRect(); off={x:sx-r.left,y:sy-r.top};
         clone=srcEl.cloneNode(true); const cs=clone.style; cs.position="fixed"; cs.left="0"; cs.top="0"; cs.margin="0";
         cs.width=r.width+"px"; cs.height=r.height+"px"; cs.pointerEvents="none"; cs.zIndex="9999"; cs.opacity=".95";
-        cs.boxShadow="0 10px 24px rgba(0,0,0,.28)"; cs.outline="2px solid #2563eb"; cs.background="var(--card)";
+        cs.boxShadow="0 10px 24px rgba(0,0,0,.28)"; cs.outline="2px solid #2563eb"; cs.background="#fff";
         cs.transform="translate("+r.left+"px,"+r.top+"px)"; document.body.appendChild(clone);
-        drawCanvas(); }
+        srcEl.style.opacity=".35"; srcEl.style.borderStyle="dashed"; }
       clone.style.transform="translate("+(ev.clientX-off.x)+"px,"+(ev.clientY-off.y)+"px)";
       const out=outsideFrame(ev.clientX,ev.clientY);
       clone.style.opacity=out?".45":".95"; clone.style.filter=out?"grayscale(1)":"none"; clone.style.outline=out?"2px dashed #ef4444":"2px solid #2563eb";
-      if(out) return;
-      const a=mods(); a.forEach(z=>{ if(orig[z.id]){ z.gx=orig[z.id].gx; z.gy=orig[z.id].gy; } });
-      const dm=a.filter(z=>z.id===mId)[0]; if(!dm) return;
-      const t=targetCell(ev.clientY-off.y, ev.clientX, posW(dm.gw), mId);
-      dm.gx=t.gx; dm.gy=t.gy; resolveCollisions(a, mId); drawCanvas();
+      if(out){ tgt=null; hideGhost(); return; }
+      const c=cellAt(ev.clientX,ev.clientY); if(!c) return;
+      const w=posW(m.gw), hh=posH(m.gh), nx=Math.max(1,Math.min(4-w,c.x-anc.dx)), ny=Math.max(1,c.y-anc.dy);
+      tgt={x:nx,y:ny,ok:!layoutBusy(a,nx,ny,w,hh,mId)}; showGhost(nx,ny,w,hh,tgt.ok);
     };
     const onUp=ev=>{
       document.removeEventListener("pointermove",onMove); document.removeEventListener("pointerup",onUp);
-      if(clone){ clone.remove(); clone=null; }
-      const wasDragging=dragging; dragging=false; _draggingId=null;
-      if(!wasDragging){ setSel(mId); redraw(); return; }
-      const a=mods();
-      if(outsideFrame(ev.clientX,ev.clientY)){ a.forEach(z=>{ if(orig[z.id]){ z.gx=orig[z.id].gx; z.gy=orig[z.id].gy; } }); const idx=a.map(z=>z.id).indexOf(mId); if(idx>=0){ a.splice(idx,1); if(selId===mId) setSel(null); } }
+      if(clone){ clone.remove(); clone=null; } hideGhost();
+      const was=dragging; dragging=false; _draggingId=null;
+      if(!was){ setSel(mId); redraw(); return; }
+      if(outsideFrame(ev.clientX,ev.clientY)){
+        const idx=a.indexOf(m); if(idx>=0){ a.splice(idx,1); if(selId===mId) setSel(null);
+          undoToast("블록을 삭제했습니다", ()=>{ if(a.indexOf(m)<0){ a.splice(Math.min(idx,a.length),0,m); persist(); try{ if(document.body.contains(card)) redraw(); }catch(e){} } }); }
+      } else if(tgt && tgt.ok){ m.gx=tgt.x; m.gy=tgt.y; }
+      else if(tgt) toast("그 자리는 다른 블록과 겹칩니다 — 빈칸에 놓으세요","warn");
       sortByLayout(a); persist(); redraw();
     };
     document.addEventListener("pointermove",onMove); document.addEventListener("pointerup",onUp);
   }
 
-
   function drawCanvas(){
-    canvasWrap.innerHTML="";
+    canvasWrap.innerHTML=""; ghost=null;
     const frame=document.createElement("div"); frame.className="synCard2"; frame.style.cssText="width:100%;max-width:430px";
     const colc=document.createElement("div"); colc.className="c2col"; colc.style.padding="8px 9px";
     const sec=document.createElement("div"); sec.className="c2sec"; sec.textContent="절차 (출력 미리보기 · 편집)";
-    const pg=document.createElement("div"); pg.className="c2pg"; pg.style.rowGap="6px"; pg.style.columnGap="6px";
+    const pg=document.createElement("div"); pg.className="c2pg"; pg.style.rowGap="6px"; pg.style.columnGap="6px"; pg.style.gridAutoRows="minmax(36px,auto)"; pg.style.gridAutoFlow="row";
     colc.append(sec,pg); frame.appendChild(colc); canvasWrap.appendChild(frame);
-    const chint=document.createElement("div"); chint.className="muted"; chint.style.cssText="font-size:10.5px;margin-top:6px;color:var(--muted);line-height:1.5"; chint.innerHTML="블록을 <b>드래그</b>해 원하는 칸에 <b>자유 배치</b>(빈칸 허용) · <b>오른쪽 아래 손잡이</b>로 가로 1~3칸·세로 1~6칸 크기 조절 · 블록을 <b>카드 밖으로</b> 드래그하면 삭제"; canvasWrap.appendChild(chint);
+    const chint=document.createElement("div"); chint.className="muted"; chint.style.cssText="font-size:10.5px;margin-top:6px;color:var(--muted);line-height:1.5"; chint.innerHTML="점선 칸 = 놓을 수 있는 자리. 블록을 <b>끌어 빈칸에</b> 놓고 <b>오른쪽 아래 손잡이</b>로 가로 1~3칸·세로 1~6칸 크기를 바꿉니다 — <b>다른 블록은 그대로</b>입니다. 겹치는 자리는 빨갛게 표시되고 놓이지 않습니다. 카드 밖으로 끌면 삭제."; canvasWrap.appendChild(chint);
     const arr=mods();
-    if(!arr.length){ const e=document.createElement("div"); e.style.cssText="grid-column:1/-1;font-size:11px;color:var(--muted);padding:10px 2px"; e.textContent="위 팔레트에서 블록을 추가하세요."; pg.appendChild(e); return; }
-    arr.forEach((m,i)=>{
-      const tmp=document.createElement("div"); tmp.innerHTML=modStp(m,{}); const stp=tmp.firstChild;
+    if(normalizeLayout(arr)){ sortByLayout(arr); persist(); }
+    let maxR=0; arr.forEach(z=>{ maxR=Math.max(maxR,(z.gy||1)+posH(z.gh)-1); });
+    for(let y=1;y<=maxR+2;y++) for(let x=1;x<=3;x++){ const c=document.createElement("div"); c.className="gcell"; c.dataset.x=x; c.dataset.y=y;
+      c.style.cssText="grid-column:"+x+";grid-row:"+y+";border:1px dashed #cbd5e1;border-radius:5px;min-height:30px;opacity:.75"; pg.appendChild(c); }
+    if(!arr.length){ const e=document.createElement("div"); e.style.cssText="grid-column:1/-1;grid-row:1;font-size:11px;color:var(--muted);padding:10px 6px;z-index:1"; e.textContent="위 팔레트에서 블록을 추가하세요."; pg.appendChild(e); return; }
+    arr.forEach(m=>{
+      const tmp=document.createElement("div"); tmp.innerHTML=modStp(m,{},{gx:m.gx,gy:m.gy}); const stp=tmp.firstChild;
       stp.dataset.mid=m.id;
-      stp.style.position="relative"; stp.style.cursor="grab"; stp.style.border="1px solid "+(COL[m.k]||"#cbd5e1")+"66"; stp.style.borderRadius="6px"; stp.style.padding="4px 8px"; stp.style.touchAction="none";
-      const selq=(m.id===selId);
-      if(selq){ stp.style.outline="2px solid #2563eb"; stp.style.outlineOffset="1px"; stp.style.borderRadius="4px"; stp.style.background="var(--primary-soft)"; }
-      if(m.id===_draggingId){ stp.style.opacity=".35"; stp.style.borderStyle="dashed"; stp.style.background="var(--chip)"; }
+      stp.style.position="relative"; stp.style.zIndex="1"; stp.style.background="#fff"; stp.style.cursor="grab"; stp.style.border="1px solid "+(COL[m.k]||"#cbd5e1")+"88"; stp.style.borderRadius="6px"; stp.style.padding="4px 8px"; stp.style.touchAction="none";
+      if(m.id===selId){ stp.style.outline="2px solid #2563eb"; stp.style.outlineOffset="1px"; stp.style.background="#eff6ff"; }
       stp.onpointerdown=e=>{ if(e.button!=null&&e.button!==0) return; if(e.target&&e.target.dataset&&e.target.dataset.rh) return; e.preventDefault(); startBlockDrag(m.id, e); };
-      const rh=document.createElement("div"); rh.dataset.rh="1"; rh.title="드래그해서 크기 조절 (가로·세로)";
+      const rh=document.createElement("div"); rh.dataset.rh="1"; rh.title="드래그해서 크기 조절 — 다른 블록과 겹치는 크기는 안 됩니다";
       rh.style.cssText="position:absolute;right:0;bottom:0;width:16px;height:16px;cursor:nwse-resize;border-radius:5px 0 6px 0;background:"+(COL[m.k]||"#94a3b8")+"26;display:flex;align-items:flex-end;justify-content:flex-end;touch-action:none";
       const grip=document.createElement("div"); grip.dataset.rh="1"; grip.style.cssText="width:7px;height:7px;margin:0 3px 3px 0;border-right:2px solid "+(COL[m.k]||"#64748b")+"aa;border-bottom:2px solid "+(COL[m.k]||"#64748b")+"aa"; rh.appendChild(grip);
-      rh.onpointerdown=ev0=>{ ev0.preventDefault(); ev0.stopPropagation();
-        const rect=stp.getBoundingClientRect(); const pg2=pgEl()||pg; const colStep=((pg2.clientWidth-10)/3)+5; const rowUnit=30;
-        const move=ev=>{ const gw=Math.max(1,Math.min(3,Math.round((ev.clientX-rect.left)/colStep))); const gh=Math.max(1,Math.min(6,Math.round((ev.clientY-rect.top)/rowUnit))); stp.style.gridColumn="span "+gw; stp.style.gridRow="span "+gh; stp.dataset.lw=String(gw); stp.dataset.lh=String(gh); };
-        const up=()=>{ document.removeEventListener("pointermove",move); document.removeEventListener("pointerup",up); m.gw=parseInt(stp.dataset.lw||String(Math.max(1,Math.min(3,m.gw||3)))); m.gh=parseInt(stp.dataset.lh||String(Math.max(1,Math.min(6,m.gh||1)))); ensurePositions(mods()); resolveCollisions(mods(), m.id); persist(); redraw(); };
+      rh.onpointerdown=ev0=>{ ev0.preventDefault(); ev0.stopPropagation(); setSel(m.id);
+        let last={w:posW(m.gw),h:posH(m.gh)};
+        const move=ev=>{ const c=cellAt(ev.clientX,ev.clientY); if(!c) return;
+          const w=Math.max(1,Math.min(4-m.gx,c.x-m.gx+1)), hh=Math.max(1,Math.min(6,c.y-m.gy+1)), ok=!layoutBusy(arr,m.gx,m.gy,w,hh,m.id);
+          if(ok) last={w:w,h:hh}; showGhost(m.gx,m.gy,w,hh,ok); };
+        const up=()=>{ document.removeEventListener("pointermove",move); document.removeEventListener("pointerup",up); hideGhost();
+          if(last.w!==posW(m.gw)||last.h!==posH(m.gh)){ m.gw=last.w; m.gh=last.h; persist(); } redraw(); };
         document.addEventListener("pointermove",move); document.addEventListener("pointerup",up);
       };
       stp.appendChild(rh);
