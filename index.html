@@ -654,7 +654,7 @@ body{word-break:keep-all}
 <div id="app">
   <div id="mainUI">
     <div class="topbar">
-      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.4.2 · deploy</span></div>
+      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.4.3 · deploy</span></div>
       <div class="spacer"></div>
       <button class="chipbtn" id="chipBackup" title="클릭하여 즉시 백업"><span class="dot"></span>백업</button>
       <button class="chipbtn" id="chipSync" title="동기화 설정으로 이동"><span class="dot"></span>로컬 저장</button>
@@ -2428,6 +2428,7 @@ function commitLotSave(ctx, fields) {
   delete lot.renumberedTo;
   /* 프로토콜 스냅샷: 수정 중 프로토콜을 바꾸지 않았으면 원래 것을 유지, 바꿨으면 새로 찍음 */
   lot.protocol = planLotProtocol(ctx);
+  { const rid = ctx.recipeId || null, rr = recipeById(rid); lot.recipeId = rid; lot.recipeName = rr ? rr.name : (rid ? (ctx.recipeName || "") : ""); }
   upsertLot(lot);
   if (old && ed !== target) {
     old.deleted = true; old.renumberedTo = target; old.updatedAt = Date.now();
@@ -4183,6 +4184,41 @@ function recipeFromPlanner(ctx, name) {
     protocolId: S.activeProtocolId || null, proto: planProtoCopy(ctx),
   };
 }
+/* RECIPEPERPLAN-1013 */
+/* 레시피 선택은 '이 계획'의 것 — 전역(마지막 사용) 값이 아니다. lot을 수정으로 열면 그 lot에 쓴 레시피가 보인다. */
+const PLAN_RC = {
+  get id() { const c = state.plannerCtx; return c ? (c.recipeId ?? null) : null; },
+  set id(v) { const c = state.plannerCtx; if (c) { c.recipeId = v || null; c.recipeGuess = false; } },
+};
+function recipeById(id) {
+  if (!id) return null;
+  if (/^lab:/.test(id)) return activeLabRecipes()[String(id).slice(4)] || null;
+  return activeRecipes()[id] || null;
+}
+function compKey(list) {
+  return JSON.stringify((list || []).filter(c => c && c.el).map(c => [c.role || "", c.el, Number(c.coeff) || 0, isNum(c.excess) ? c.excess : 1, c.prec || ""])
+    .sort((a, b) => (a[1] + a[0]).localeCompare(b[1] + b[0])));
+}
+/* 옛 lot(레시피 기록 없음): 성분이 같고 절차(있으면)도 같은 레시피가 딱 하나면 그것으로 추정 */
+function guessRecipeForLot(lot) {
+  const kind = lot.type === "Shell" ? "shell" : "core";
+  const ck = compKey(lot.components);
+  const lotSteps = lot.protocol && lot.protocol.steps ? JSON.stringify(lot.protocol.steps[kind === "core" ? "core" : "shell"] || null) : null;
+  const all = Object.values(activeRecipes()).map(r => ({ id: r.id, r })).concat(Object.values(activeLabRecipes()).map(r => ({ id: "lab:" + r.id, r })));
+  const hits = all.filter(({ r }) => (r.kind || "core") === kind && compKey(r.components) === ck
+    && (!lotSteps || !r.proto || !r.proto.steps || JSON.stringify(r.proto.steps[kind === "core" ? "core" : "shell"] || null) === lotSteps)
+    && (!lotSteps || (r.proto && r.proto.steps)));
+  return hits.length === 1 ? hits[0].id : null;
+}
+function planRecipeNoteHtml() {
+  const c = state.plannerCtx; if (!c || c.editSerial === null || c.editSerial === undefined) return "";
+  if (c.recipeId) {
+    const r = recipeById(c.recipeId);
+    return `<span class="badge ${c.recipeGuess ? "warn" : "info"}" title="${c.recipeGuess ? "이 lot에는 레시피 기록이 없어, 성분·절차가 같은 레시피로 추정했습니다" : "이 lot을 만들 때 쓴 레시피"}">Lot ${c.editSerial}: ${r ? esc(r.name) : esc(c.recipeName || "삭제된 레시피")}${c.recipeGuess ? " (추정)" : ""}</span>`;
+  }
+  return `<span class="badge gray" title="이 lot은 레시피 기록 없이 저장되었습니다(이전 버전). 수정 내용은 이 lot의 값 그대로입니다">Lot ${c.editSerial}: 레시피 기록 없음</span>`;
+}
+
 function applyRecipe(rec) {
   if (!rec || !Array.isArray(rec.components)) return toast("레시피 형식이 올바르지 않습니다", "err");
   if (!plannerDiscardOK()) return;
@@ -4202,7 +4238,7 @@ function applyRecipe(rec) {
     const S2 = state.db.settings;
     if (rec.protocolId && S2.protocols && S2.protocols[rec.protocolId]) { S2.activeProtocolId = rec.protocolId; }
     c2.proto = (rec.proto && rec.proto.steps) ? Object.assign(JSON.parse(JSON.stringify(rec.proto)), { srcId: curProtoKey(), fromRecipe: rec.name || "" }) : null;
-    S2.activeRecipeId = rec.id; saveSettings();
+    PLAN_RC.id = rec.id; saveSettings();
     return;
   }
   const ctx = carryPlanIdentity(state.plannerCtx, defaultPlannerCtx("core"));
@@ -4225,7 +4261,7 @@ function applyRecipe(rec) {
   const S = state.db.settings;
   if (rec.protocolId && S.protocols && S.protocols[rec.protocolId]) { S.activeProtocolId = rec.protocolId; saveSettings(); }
   ctx.proto = (rec.proto && rec.proto.steps) ? Object.assign(JSON.parse(JSON.stringify(rec.proto)), { srcId: curProtoKey(), fromRecipe: rec.name || "" }) : null;
-  S.activeRecipeId = rec.id;
+  PLAN_RC.id = rec.id;
   saveSettings();
 }
 function recipeBarHtml(kind) {
@@ -4233,7 +4269,7 @@ function recipeBarHtml(kind) {
   const byTime = (a, b) => (b.updatedAt || 0) - (a.updatedAt || 0);
   const mine = Object.values(activeRecipes()).filter(r => (r.kind || "core") === K).sort(byTime);
   const lab  = Object.values(activeLabRecipes()).filter(r => (r.kind || "core") === K).sort(byTime);
-  const sel = S.activeRecipeId || "";
+  const sel = PLAN_RC.id || "";
   const isLab = /^lab:/.test(sel);
   const labOn = !!(S.firebase && S.firebase.labId);
   const online = typeof Sync !== "undefined" && Sync.labReady && Sync.labReady();
@@ -4242,6 +4278,7 @@ function recipeBarHtml(kind) {
   const opt = (v, nm, extra) => `<option value="${esc(v)}" ${v === sel ? "selected" : ""}>${esc(nm)}${extra || ""}</option>`;
   return `<div class="row" style="gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--chip)">
     <span style="font-weight:700;font-size:12px;color:var(--sub)">레시피</span>
+    ${planRecipeNoteHtml()}
     <select id="rcSel" class="slim" style="min-width:190px;max-width:300px">
       <option value="">— 선택 안 함 —</option>
       ${mine.length ? `<optgroup label="내 레시피">${mine.map(r => opt(r.id, r.name)).join("")}</optgroup>` : ""}
@@ -4266,17 +4303,17 @@ function recipeBarHtml(kind) {
 function bindRecipeBar(rerender) {
   const S = state.db.settings;
   const store = recipeStore();
-  const isLab = () => /^lab:/.test(S.activeRecipeId || "");
-  const cur = () => isLab() ? activeLabRecipes()[String(S.activeRecipeId).slice(4)] : store[S.activeRecipeId];
+  const isLab = () => /^lab:/.test(PLAN_RC.id || "");
+  const cur = () => isLab() ? activeLabRecipes()[String(PLAN_RC.id).slice(4)] : store[PLAN_RC.id];
   const uniqName = nm => { const names = Object.values(activeRecipes()).map(x => x.name);
     let n = nm; while (names.includes(n)) n += " (2)"; return n; };
   $("#rcSel").onchange = e => {
     const id = e.target.value;
-    if (!id) { S.activeRecipeId = null; saveSettings(); return rerender(); }
+    if (!id) { PLAN_RC.id = null; saveSettings(); return rerender(); }
     const r = /^lab:/.test(id) ? activeLabRecipes()[id.slice(4)] : store[id];
     if (!r) return;
     applyRecipe(JSON.parse(JSON.stringify(r)));
-    S.activeRecipeId = id; saveSettings();          // applyRecipe가 rec.id로 덮으므로 뒤에서 다시 지정
+    PLAN_RC.id = id; saveSettings();          // applyRecipe가 rec.id로 덮으므로 뒤에서 다시 지정
     toast(`레시피 '${r.name}' 적용`, "ok");
     renderView();
   };
@@ -4294,14 +4331,14 @@ function bindRecipeBar(rerender) {
     const name = prompt("레시피 이름", (cur() && cur().name + " 복사") || "내 레시피");
     if (!name) return;
     const n = recipeFromPlanner(ctx, uniqName(name.trim()));
-    saveRecipe(n); S.activeRecipeId = n.id; saveSettings();
+    saveRecipe(n); PLAN_RC.id = n.id; saveSettings();
     toast(`'${n.name}' 저장 완료`, "ok"); rerender();
   };
   $("#rcDel").onclick = () => {
     if (isLab()) return toast("랩 공용 레시피는 [랩에서 내리기]로 처리하세요", "warn");
     const c = cur(); if (!c) return toast("선택된 레시피가 없습니다", "warn");
     if (!confirm(`레시피 '${c.name}'을(를) 삭제할까요?`)) return;
-    deleteRecipe(c.id); S.activeRecipeId = null; saveSettings();
+    deleteRecipe(c.id); PLAN_RC.id = null; saveSettings();
     toast("삭제했습니다", "ok"); rerender();
   };
   const fork = $("#rcFork");
@@ -4311,7 +4348,7 @@ function bindRecipeBar(rerender) {
     n.id = "r" + Date.now().toString(36) + Math.floor(Math.random() * 1e4);
     n.name = uniqName(c.name);
     delete n.owner; delete n.ownerName; delete n.srcId;
-    saveRecipe(n); S.activeRecipeId = n.id; saveSettings();
+    saveRecipe(n); PLAN_RC.id = n.id; saveSettings();
     toast(`'${n.name}'을(를) 내 레시피로 복사했습니다 — 이제 자유롭게 고칠 수 있습니다`, "ok");
     rerender();
   };
@@ -4326,7 +4363,7 @@ function bindRecipeBar(rerender) {
   if (unpub) unpub.onclick = async () => {
     const c = cur(); if (!c) return;
     if (!confirm(`'${c.name}'을(를) 랩 공용에서 내릴까요?\n(내 레시피 사본은 그대로 남습니다)`)) return;
-    try { await Sync.labUnpublish(c.id); S.activeRecipeId = null; saveSettings();
+    try { await Sync.labUnpublish(c.id); PLAN_RC.id = null; saveSettings();
       toast("랩 공용에서 내렸습니다", "ok"); rerender(); }
     catch (e) { toast("내리기 실패: " + (e && e.message || e), "err"); }
   };
@@ -4352,7 +4389,7 @@ function bindRecipeBar(rerender) {
           const rec = Object.assign({}, r, { id, name: uniqName(r.name || "가져온 레시피") });
           delete rec.owner; delete rec.ownerName; delete rec.srcId; delete rec.deleted;
           recipeMissingPrecs(rec).forEach(x => missing.add(x));
-          saveRecipe(rec); S.activeRecipeId = id; n++;
+          saveRecipe(rec); PLAN_RC.id = id; n++;
         }
         saveSettings();
         toast(n ? `레시피 ${n}개를 가져왔습니다` : "레시피를 찾지 못했습니다", n ? "ok" : "warn");
@@ -4551,7 +4588,7 @@ function finishWizard(ov) {
   if (W.saveRecipe) {
     const nm = (W.rcName || W.formula || "새 레시피").trim();
     const r = recipeFromPlanner(ctx, nm);
-    recipeStore()[r.id] = r; state.db.settings.activeRecipeId = r.id; saveSettings();
+    recipeStore()[r.id] = r; PLAN_RC.id = r.id; saveSettings();
   }
   _wiz = null; ov.remove();
   go("plan");
@@ -4631,6 +4668,7 @@ function editLotInPlanner(serial) {
     if (isNum(lot.naExcessUsed) && lot.naExcessUsed !== S.naExcess) (ctx.local = ctx.local || {}).naExcess = lot.naExcessUsed;
     if (isNum(lot.fExcessUsed) && lot.fExcessUsed !== (S.fExcess ?? 1)) (ctx.local = ctx.local || {}).fExcess = lot.fExcessUsed;
     ctx.proto = protoFromLot(lot);
+    ctx.recipeId = lot.recipeId || guessRecipeForLot(lot); ctx.recipeGuess = !lot.recipeId && !!ctx.recipeId; ctx.recipeName = lot.recipeName || "";
     state.plannerCtx = ctx;
   } else {
     const ctx = defaultPlannerCtx("shell");
@@ -4657,6 +4695,7 @@ function editLotInPlanner(serial) {
     if (Array.isArray(lot.solPrecs) && lot.solPrecs.length) ctx.solPrecs = lot.solPrecs.map(r => ({ name: r.name, mmol: r.mmol, kind: r.kind || "solute" }));
     if (lot.inj) ctx.inj = lot.inj.slice();
     ctx.proto = protoFromLot(lot);
+    ctx.recipeId = lot.recipeId || guessRecipeForLot(lot); ctx.recipeGuess = !lot.recipeId && !!ctx.recipeId; ctx.recipeName = lot.recipeName || "";
     state.plannerCtx = ctx;
   }
   go("plan");
