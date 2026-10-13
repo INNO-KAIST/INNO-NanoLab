@@ -319,6 +319,10 @@ input.slim,select.slim{padding:4px 7px;border-radius:6px}
   #printArea .printCol{display:flex;flex-direction:column;gap:4mm;width:96mm}
   .cardsWrap{gap:4mm}
   .cardsWrap .synCard,.cardsWrap .synCard2{width:96mm;break-inside:avoid;page-break-inside:avoid}
+  #printArea .printPage.land{page:land}
+  #printArea .printLand{display:flex;flex-direction:column;gap:4mm;align-items:flex-start}
+  .cardsWrap .synCard2.wide,#printArea .synCard2.wide{width:277mm}
+  @page land{size:A4 landscape;margin:6mm}
   @page{size:A4 portrait;margin:6mm}
 }
 .print-only{display:none}
@@ -359,6 +363,13 @@ body.printing .overlay{display:none !important}
 .synCard2 .c2badge.vac{background:#dbeafe;color:#1e40af} .synCard2 .c2badge.n2{background:#fee2e2;color:#991b1b} .synCard2 .c2badge.inj{background:#dcfce7;color:#166534} .synCard2 .c2badge.addp{background:#fef3c7;color:#92400e}
 .synCard2 .c2full{padding:8px 11px}
 .synCard2 .stp.stpA{padding:4px 5px}
+/* WIDECARD-1013: A4 가로 전폭 카드 — 절차 칸이 좁아 글자가 깨질 때 */
+.synCard2.wide{width:277mm}
+.synCard2.wide .c2cols{grid-template-columns:82mm 1fr}
+.synCard2.wide .c2pg{column-gap:10px}
+.synCard2.wide .stp{padding:3px 4px 3px 0}
+.cardFit{overflow:hidden}
+
 .synCard2 .srg{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;column-gap:6px;font-size:9.5px;line-height:1.35;color:#334155;margin-top:1px} .synCard2 .srg .nm{flex:1 1 64px;min-width:0;word-break:keep-all;overflow-wrap:break-word;font-weight:600} .synCard2 .srg b{white-space:nowrap;margin-left:auto;font-variant-numeric:tabular-nums;font-size:10px}
 .synCard2 .c2rt{display:inline-block;font-size:9px;font-weight:700;color:#334155;background:#eef2f7;padding:1px 6px;border-radius:3px;margin:0 0 2px 3px;vertical-align:middle}
 @media print{ .synCard2{box-shadow:none} }
@@ -657,7 +668,7 @@ body{word-break:keep-all}
 <div id="app">
   <div id="mainUI">
     <div class="topbar">
-      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.6.0 · deploy</span></div>
+      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.6.1 · deploy</span></div>
       <div class="spacer"></div>
       <button class="chipbtn" id="chipBackup" title="클릭하여 즉시 백업"><span class="dot"></span>백업</button>
       <button class="chipbtn" id="chipSync" title="동기화 설정으로 이동"><span class="dot"></span>로컬 저장</button>
@@ -3267,6 +3278,31 @@ function openRgCalc(ctx, preferBlockId, onDone) {
 }
 /* ===== /DIRECTRG-1013 ===== */
 
+/* WIDECARD-1013 */
+/* 카드 형식: lot/계획의 cardFmt = "auto" | "narrow"(A4 세로 반장) | "wide"(A4 가로 전폭, 세로 절반 이하) */
+const CARD_FMTS = [["auto", "자동"], ["narrow", "세로 반장"], ["wide", "가로 전폭"]];
+/* 자동: 좁은 절차 칸(가로 1~2칸)에 전구체·시약 줄이 들어가 글자가 깨질 때만 가로 전폭 */
+function cardWideAuto(steps) {
+  return (steps || []).some(m => m && (
+    (posW(m.gw) < 3 && Array.isArray(m.pr) && m.pr.length) ||
+    (posW(m.gw) === 1 && rgLines(m).length)));
+}
+function cardIsWide(lot) {
+  const f = lot && lot.cardFmt;
+  if (f === "wide") return true;
+  if (f === "narrow") return false;
+  return protoDirectNow() && cardWideAuto(procMods("core"));
+}
+/* 화면에서 가로 전폭 카드를 칸 너비에 맞춰 축소 표시 */
+function fitCards(el) {
+  if (!el) return;
+  el.querySelectorAll(".synCard2.wide").forEach(c => {
+    c.style.zoom = "";
+    const w = c.getBoundingClientRect().width, avail = el.clientWidth;
+    if (w > 0 && avail > 0 && w > avail) c.style.zoom = (avail / w).toFixed(3);
+  });
+}
+
 /* PROTOSNAP-1012 */
 /* ===== 절차 스냅샷: lot·레시피·계획이 각자 자기 절차(온도·시간·문구)를 가진다 =====
  * 전에는 저장된 lot 카드도 '현재 활성 프로토콜'의 절차로 그려져, 한 곳에서 온도를 바꾸면
@@ -3480,7 +3516,7 @@ function coreCardHtml(lot, recipe) {
   }
   /* 비-바인딩(기본/레거시): 전구체 왼쪽 / 절차 오른쪽 2열 유지 */
   const leftCol = `<div class="c2col c2l"><div class="c2sec">전구체</div><table class="c2tb"><thead><tr><th class="lft">전구체</th><th>mmol</th><th>mg</th></tr></thead><tbody>${precRows}</tbody></table>${rgRows ? `<div class="c2sec c2mt">시약${_direct ? " <span style=\"font-weight:500\">(넣는 순서)</span>" : ""}</div><table class="c2tb"><thead><tr><th class="lft">시약</th><th colspan="2">부피</th></tr></thead><tbody>${rgRows}</tbody></table>` : ""}</div>`;
-  return `<div class="synCard2">${hd}${meta}${stir}<div class="c2cols">${leftCol}<div class="c2col"><div class="c2sec">절차</div>${stepRows}</div></div>${warn}</div>`;
+  return `<div class="synCard2${_direct && cardIsWide(lot) ? " wide" : ""}">${hd}${meta}${stir}<div class="c2cols">${leftCol}<div class="c2col"><div class="c2sec">절차</div>${stepRows}</div></div>${warn}</div>`;
 }
 
 /* ---- Shell Synthesis card ---- */
@@ -3602,6 +3638,7 @@ function openCardModal(serial) {
     </div>
   </div></div>`);
   document.body.appendChild(ov);
+  if (ov.querySelector("#cardEditBox .synCard2.wide")) { ov.querySelector(".modal").style.maxWidth = "1140px"; ov.querySelector(".modal").style.width = "96vw"; fitCards(ov.querySelector("#cardEditBox")); }
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
   ov.querySelector(".closex").onclick = () => ov.remove();
   bindLotCardEditing(ov.querySelector("#cardEditBox"), lot);
@@ -3635,45 +3672,62 @@ function printCards(htmlList, title) {
    · 페이지 수가 이론 최소치보다 많으면 1%씩 축소(zoom)해 한 페이지에 밀어 넣는다.
    · 카드 한 장이 페이지보다 크면 그 카드에 맞춰 먼저 축소한다. */
 function paginateCardsA4(area) {
-  const cards = [...area.querySelectorAll(".synCard, .synCard2")];
-  if (!cards.length) return;
+  /* WIDECARD-1013: 가로 전폭 카드(.wide)는 A4 가로 페이지에 위아래 2장씩, 나머지는 A4 세로 2열 */
+  const all = [...area.querySelectorAll(".synCard, .synCard2")];
+  if (!all.length) return;
   const mm = px => px / 96 * 25.4;
-  const PAGE_H = 283;   // A4 297 − 인쇄여백 6×2 − 여유 2 (mm)
-  const COL_GAP = 4;    // 카드 세로 간격 (mm)
-  const COLS = 2;       // 페이지당 열 수
-  const H = cards.map(c => mm(c.getBoundingClientRect().height || 0));
   const EPS = 0.05;
-  const pack = s => {
-    const pages = []; let page, col, colH;
-    const addPage = () => { col = []; page = { cols: [col] }; pages.push(page); colH = 0; };
-    addPage();
-    for (let i = 0; i < cards.length; i++) {
-      const h = H[i] * s;
-      if (col.length === 0)                          colH = h;
-      else if (colH + COL_GAP + h <= PAGE_H + EPS)   colH += COL_GAP + h;
-      else if (page.cols.length < COLS)            { col = []; page.cols.push(col); colH = h; }
-      else                                         { addPage(); colH = h; }
-      col.push(cards[i]);
+  const cards = all.filter(c => !c.classList.contains("wide")), wides = all.filter(c => c.classList.contains("wide"));
+  let html = "";
+  if (cards.length) {
+    const PAGE_H = 283;   // A4 297 − 인쇄여백 6×2 − 여유 2 (mm)
+    const COL_GAP = 4;    // 카드 세로 간격 (mm)
+    const COLS = 2;       // 페이지당 열 수
+    const H = cards.map(c => mm(c.getBoundingClientRect().height || 0));
+    const pack = s => {
+      const pages = []; let page, col, colH;
+      const addPage = () => { col = []; page = { cols: [col] }; pages.push(page); colH = 0; };
+      addPage();
+      for (let i = 0; i < cards.length; i++) {
+        const h = H[i] * s;
+        if (col.length === 0)                          colH = h;
+        else if (colH + COL_GAP + h <= PAGE_H + EPS)   colH += COL_GAP + h;
+        else if (page.cols.length < COLS)            { col = []; page.cols.push(col); colH = h; }
+        else                                         { addPage(); colH = h; }
+        col.push(cards[i]);
+      }
+      return pages;
+    };
+    const maxH = Math.max(...H);
+    let scale = maxH > PAGE_H ? Math.max(0.5, PAGE_H / maxH) : 1;
+    let pages = pack(scale);
+    const total = H.reduce((a, b) => a + b, 0) + COL_GAP * Math.max(0, cards.length - COLS);
+    const ideal = Math.max(1, Math.ceil(total * scale / (PAGE_H * COLS) - 1e-9));
+    if (pages.length > ideal) {
+      for (let s = scale - 0.01; s >= scale * 0.85; s -= 0.01) {
+        const p = pack(s);
+        if (p.length <= ideal) { scale = s; pages = p; break; }
+      }
     }
-    return pages;
-  };
-  /* 단일 카드가 한 페이지를 넘으면 먼저 그만큼 축소 */
-  const maxH = Math.max(...H);
-  let scale = maxH > PAGE_H ? Math.max(0.5, PAGE_H / maxH) : 1;
-  let pages = pack(scale);
-  /* 이론상 최소 페이지 수보다 많으면 조금씩 줄여 본다 (최대 15%) */
-  const total = H.reduce((a, b) => a + b, 0) + COL_GAP * Math.max(0, cards.length - COLS);
-  const ideal = Math.max(1, Math.ceil(total * scale / (PAGE_H * COLS) - 1e-9));
-  if (pages.length > ideal) {
-    for (let s = scale - 0.01; s >= scale * 0.85; s -= 0.01) {
-      const p = pack(s);
-      if (p.length <= ideal) { scale = s; pages = p; break; }
-    }
+    const z = (scale >= 0.999) ? "" : ` style="zoom:${scale.toFixed(3)}"`;
+    html += pages.map(p =>
+      `<div class="printPage"${z}><div class="printCols">${p.cols.map(c =>
+        `<div class="printCol">${c.map(x => x.outerHTML).join("")}</div>`).join("")}</div></div>`).join("");
   }
-  area.style.zoom = (scale >= 0.999) ? "" : scale.toFixed(3);
-  area.innerHTML = pages.map(p =>
-    `<div class="printPage"><div class="printCols">${p.cols.map(c =>
-      `<div class="printCol">${c.map(x => x.outerHTML).join("")}</div>`).join("")}</div></div>`).join("");
+  if (wides.length) {
+    const LAND_H = 196, GAP = 4, HALF = (LAND_H - GAP) / 2 - 4;   // A4 가로 210 − 여백 6×2 − 여유 2
+    /* 축소하면 가로가 남으므로, 축소율만큼 카드를 넓혀 다시 재고(넓을수록 낮아짐) 가로 277 mm를 꽉 채운다 */
+    const hAt = wMm => { wides.forEach(c => { c.style.width = wMm.toFixed(1) + "mm"; }); return Math.max(...wides.map(c => mm(c.getBoundingClientRect().height || 0))); };
+    let s = 1, hh = hAt(277);
+    for (let k = 0; k < 6 && hh * s > HALF + EPS; k++) { s = Math.max(0.55, Math.min(1, HALF / hh)); hh = hAt(277 / s); }
+    while (hh * s > HALF + EPS && s > 0.55) { s -= 0.01; hh = hAt(277 / s); }
+    const z = (s >= 0.999) ? "" : ` style="zoom:${s.toFixed(3)}"`;
+    const pages = [];
+    for (let i = 0; i < wides.length; i += 2) pages.push(wides.slice(i, i + 2));
+    html += pages.map(p => `<div class="printPage land"${z}><div class="printLand">${p.map(x => x.outerHTML).join("")}</div></div>`).join("");
+  }
+  area.style.zoom = "";
+  area.innerHTML = html;
 }
 
 </script>
@@ -3961,7 +4015,7 @@ function renderPlannerCore(root, ctx) {
         <button class="btn sm cDel" data-ci="${i}" title="행 삭제">✕</button></span></td></tr>`;
   }).join("");
   const preview = { serial: planTargetSerial(ctx), type: "Core", tgtMmol: ctx.tgtMmol,
-    stoich: plannerStoich(ctx), cardEdits: ctx.cardEdits, name: ctx.name || "" };
+    stoich: plannerStoich(ctx), cardEdits: ctx.cardEdits, name: ctx.name || "", cardFmt: ctx.cardFmt || "auto" };
   const autoGroup = layerElems(preview);
 
 
@@ -4029,7 +4083,8 @@ function renderPlannerCore(root, ctx) {
     <div class="card">
       <h3>Print Preview <span class="hint">${esc(lotFormula(preview))} · 클릭하여 수정 가능</span>
         <button class="btn sm" id="pCardReset" style="margin-left:auto">Reset Edits</button></h3>
-      <div style="zoom:.96" id="cardPrev">${coreCardHtml(preview, recipe)}</div>
+      <div class="row" style="gap:6px;align-items:center;margin:-4px 0 8px;font-size:12px"><span class="muted">카드 형식</span><select id="pCardFmt" class="slim" title="자동: 좁은 절차 칸에 전구체·시약이 들어가면 A4 가로 전폭(세로 절반 이하, 한 장에 위아래 2개)">${CARD_FMTS.map(o => `<option value="${o[0]}" ${(ctx.cardFmt || "auto") === o[0] ? "selected" : ""}>${o[1]}</option>`).join("")}</select><span class="muted" id="pCardFmtNow"></span><button class="btn sm" id="pCardBig" style="margin-left:auto" title="카드를 실제 크기로 크게 보고 수정">크게 보기</button></div>
+      <div style="zoom:.96" id="cardPrev" class="cardFit">${coreCardHtml(preview, recipe)}</div>
     </div>
    </div>
   </div>
@@ -4049,7 +4104,7 @@ function renderPlannerCore(root, ctx) {
     const host = $("#procInline"); if (!host) return;
     try {
       renderProcedurePanel(host, { inline: true, bare: true, groups: ["core"],
-        onChange: () => { const pv = $("#cardPrev"); if (pv) pv.innerHTML = coreCardHtml(preview, recipe); const rl = $("#pRgList"); if (rl) rl.innerHTML = rgListHtml(); refreshPlanDirtyUi(); } });
+        onChange: () => { const pv = $("#cardPrev"); if (pv) { pv.innerHTML = coreCardHtml(preview, recipe); fitCards(pv); fmtNow(); } const rl = $("#pRgList"); if (rl) rl.innerHTML = rgListHtml(); refreshPlanDirtyUi(); } });
     } catch (e) { console.warn("proc inline", e); }
   };
   if (secOpen("planProc", false)) drawProc();
@@ -4059,6 +4114,17 @@ function renderPlannerCore(root, ctx) {
     ctx.cardEdits[k] = v;
   });
   $("#pCardReset").onclick = () => { ctx.cardEdits = {}; ctx.name = ""; renderPlannerCore(root, ctx); };
+  const fmtNow = () => { const e = $("#pCardFmtNow"); const pv = $("#cardPrev"); if (e && pv) e.textContent = pv.querySelector(".synCard2.wide") ? "→ A4 가로 전폭 (인쇄 시 가로 한 장에 위아래 2개)" : "→ A4 세로 반장"; };
+  fitCards($("#cardPrev")); fmtNow();
+  requestAnimationFrame(() => fitCards($("#cardPrev")));
+  { const fs = $("#pCardFmt"); if (fs) fs.onchange = () => { ctx.cardFmt = fs.value === "auto" ? undefined : fs.value; if (!ctx.cardFmt) delete ctx.cardFmt; renderPlannerCore(root, ctx); }; }
+  { const bb = $("#pCardBig"); if (bb) bb.onclick = () => {
+      const ov2 = h(`<div class="overlay center"><div class="modal" style="max-width:1140px;width:96vw"><button class="closex">✕</button><h2>카드 크게 보기 <span class="hint" style="font-size:12px;font-weight:500">칸을 클릭해 수정 — 계획에 바로 반영</span></h2><div id="bigCard" class="cardFit"></div></div></div>`);
+      document.body.appendChild(ov2);
+      const box = ov2.querySelector("#bigCard"); box.innerHTML = coreCardHtml(preview, recipe); fitCards(box);
+      bindCardEditing(box, (k, v) => { if (k === "title") { ctx.name = (v === autoLotLabel(preview)) ? "" : v; return; } ctx.cardEdits[k] = v; });
+      ov2.querySelector(".closex").onclick = () => { ov2.remove(); renderPlannerCore(root, ctx); };
+    }; }
 
   /* events */
   const rr = () => renderPlannerCore(root, ctx);
@@ -4138,7 +4204,7 @@ function renderPlannerCore(root, ctx) {
   $("#pReset").onclick = () => { if (!plannerDiscardOK()) return; state.plannerCtx = defaultPlannerCtx("core"); renderView(); };
   $("#pEditProto").onclick = openProtocolEditor;
   { const cb = $("#pRgCalc"); if (cb) cb.onclick = () => openRgCalc(ctx, null, () => rr()); }
-  $("#pPrint").onclick = () => printCards([coreCardHtml(Object.assign({}, preview, { name: ctx.name || "", serial: planTargetSerial(ctx), cardEdits: ctx.cardEdits }), recipe)]);
+  $("#pPrint").onclick = () => printCards([coreCardHtml(Object.assign({}, preview, { name: ctx.name || "", serial: planTargetSerial(ctx), cardEdits: ctx.cardEdits, cardFmt: ctx.cardFmt || "auto" }), recipe)]);
   $("#pSave").onclick = () => {
     if (!sumOk) { if (!confirm("Dopant 계수 합이 1이 아닙니다. 그대로 저장할까요?")) return; }
     else if (state._planCheck && state._planCheck.problem && !confirm(`검증에 문제가 있습니다 — ${state._planCheck.text}\n그대로 저장할까요?`)) return;
@@ -4151,7 +4217,7 @@ function renderPlannerCore(root, ctx) {
            prec: compPrec(ctx, c) }))
         .map((c, i, arr) => { if (c.mode === "multiple" && c.ref) { const t = ensureComponents(ctx).find(x => x.id === c.ref); c.ref = t ? t.el : null; } return c; }),
       heat: ctx.heat, memo: ctx.memo, precursors: precs,
-      naExcessUsed: ctx.naExcess, fExcessUsed: ctx.fExcess, reagentsUsed: reagentsNow(), cardEdits: ctx.cardEdits, deleted: false });
+      naExcessUsed: ctx.naExcess, fExcessUsed: ctx.fExcess, reagentsUsed: reagentsNow(), cardEdits: ctx.cardEdits, cardFmt: ctx.cardFmt || "auto", deleted: false });
     if (serial === null) return;
     toast(ctx.editSerial !== null && serial !== ctx.editSerial ? `Lot ${ctx.editSerial} → ${serial} 번호 변경·저장 완료` : `Lot ${serial} 저장 완료`, "ok");
     if (state.plannerDrafts) delete state.plannerDrafts.core;
@@ -5034,6 +5100,7 @@ function editLotInPlanner(serial) {
     ctx.naExcess = lot.naExcessUsed ?? S.naExcess;
     ctx.fExcess = lot.fExcessUsed ?? S.fExcess ?? 1;
     ctx.cardEdits = Object.assign({}, lot.cardEdits || {});
+    if (lot.cardFmt && lot.cardFmt !== "auto") ctx.cardFmt = lot.cardFmt;
     /* 위치가 아니라 역할로 읽는다 — 성분 개수 제한이 사라졌다 */
     const st = (lot.stoich || []).filter(Boolean);
     ctx.components = (Array.isArray(lot.components) && lot.components.length)
