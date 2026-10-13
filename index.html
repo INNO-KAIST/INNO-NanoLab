@@ -654,7 +654,7 @@ body{word-break:keep-all}
 <div id="app">
   <div id="mainUI">
     <div class="topbar">
-      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.4.3 · deploy</span></div>
+      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.4.4 · deploy</span></div>
       <div class="spacer"></div>
       <button class="chipbtn" id="chipBackup" title="클릭하여 즉시 백업"><span class="dot"></span>백업</button>
       <button class="chipbtn" id="chipSync" title="동기화 설정으로 이동"><span class="dot"></span>로컬 저장</button>
@@ -2321,6 +2321,11 @@ function deleteLot(serial) {
   saveDb(); Sync.push();
 }
 /* LOTFIX-1012 */
+/* 브라우저가 확인창을 막으면(이 페이지의 대화상자 차단) confirm()이 창 없이 즉시 false를 돌려 작업이 조용히 취소된다 → 알려 준다 */
+(function(){ try { const _c = window.confirm.bind(window); window.confirm = function(msg){ const t0 = performance.now(); const r = _c(msg);
+  if (!r && performance.now() - t0 < 40) { try { toast("브라우저가 확인창을 차단해 작업이 취소됐습니다 — 이 탭을 닫고 앱을 새로 열면 다시 표시됩니다", "err"); } catch(e){} }
+  return r; }; } catch(e){} })();
+
 /* ---------- 두 번 눌러 확정 (브라우저 confirm 창이 막혀도 동작) + 되돌리기 ---------- */
 function armBtn(btn, armedText, fn) {
   if (!btn.dataset.armed) {
@@ -2428,7 +2433,7 @@ function commitLotSave(ctx, fields) {
   delete lot.renumberedTo;
   /* 프로토콜 스냅샷: 수정 중 프로토콜을 바꾸지 않았으면 원래 것을 유지, 바꿨으면 새로 찍음 */
   lot.protocol = planLotProtocol(ctx);
-  { const rid = ctx.recipeId || null, rr = recipeById(rid); lot.recipeId = rid; lot.recipeName = rr ? rr.name : (rid ? (ctx.recipeName || "") : ""); }
+  { const rid = ctx.recipeId || null, rr = recipeById(rid); lot.recipeId = rid; lot.recipeName = rr ? rr.name : (rid ? (ctx.recipeName || "") : ""); }   // 이름은 저장 당시 값으로 고정(기록 ↔ 레시피 분리)
   upsertLot(lot);
   if (old && ed !== target) {
     old.deleted = true; old.renumberedTo = target; old.updatedAt = Date.now();
@@ -3131,6 +3136,16 @@ function shellSolutionCardHtml(title, sol, ovStore) {
 }
 
 /* ---- card for an existing lot (recompute from stored inputs) ---- */
+/* PROCBADGE-1013 */
+/* 이 lot에 절차(온도·시간)가 기록돼 있는지 — 없으면 카드는 '현재 기본 절차'로 그려지므로 그 사실을 보여 준다 */
+function lotProcBadge(lot) {
+  const k = lot.type === "Shell" ? "shell" : "core";
+  const p = lot.protocol;
+  if (p && p.steps && Array.isArray(p.steps[k]))
+    return `<span class="badge ok" title="저장 당시의 절차가 이 lot에 기록돼 있어, 프로토콜을 바꿔도 이 카드는 바뀌지 않습니다">절차 기록됨${p.name ? " · " + esc(p.name) : ""}</span>`;
+  return `<span class="badge warn" title="이 lot은 절차(온도·시간)가 기록되지 않은 채 저장되었습니다(기본 프로토콜 사용, v1.4.2 이전). 카드의 절차는 현재 기본 절차를 보여 줄 뿐 실제 합성 조건이 아닐 수 있습니다. [플래너에서 수정]으로 실제 값을 맞춰 저장하면 기록됩니다.">절차 기록 없음 — 현재 기본 절차로 표시 중</span>`;
+}
+
 function cardForLot(lot) { return withProto(lotProtoOverride(lot), () => cardForLotRaw(lot)); }
 function cardForLotRaw(lot) {
   if (lot.type === "Core") {
@@ -3178,7 +3193,7 @@ function openCardModal(serial) {
   if (!lot) return;
   const ov = h(`<div class="overlay center"><div class="modal" style="max-width:480px">
     <button class="closex">✕</button>
-    <h2>합성 카드 — ${lotLabel(lot)} <span class="hint" style="font-weight:500;font-size:12px;color:var(--muted)">칸을 클릭해 바로 수정 (자동 저장)</span></h2>
+    <h2>합성 카드 — ${lotLabel(lot)} ${lotProcBadge(lot)} <span class="hint" style="font-weight:500;font-size:12px;color:var(--muted)">칸을 클릭해 바로 수정 (자동 저장)</span></h2>
     <div id="cardEditBox">${cardForLot(lot)}</div>
     <div class="row right" style="margin-top:12px">
       <button class="btn" id="ceReset">Reset Edits</button>
@@ -4214,7 +4229,7 @@ function planRecipeNoteHtml() {
   const c = state.plannerCtx; if (!c || c.editSerial === null || c.editSerial === undefined) return "";
   if (c.recipeId) {
     const r = recipeById(c.recipeId);
-    return `<span class="badge ${c.recipeGuess ? "warn" : "info"}" title="${c.recipeGuess ? "이 lot에는 레시피 기록이 없어, 성분·절차가 같은 레시피로 추정했습니다" : "이 lot을 만들 때 쓴 레시피"}">Lot ${c.editSerial}: ${r ? esc(r.name) : esc(c.recipeName || "삭제된 레시피")}${c.recipeGuess ? " (추정)" : ""}</span>`;
+    return `<span class="badge ${c.recipeGuess ? "warn" : "info"}" title="${c.recipeGuess ? "이 lot에는 레시피 기록이 없어, 성분·절차가 같은 레시피로 추정했습니다" : "이 lot을 만들 때 쓴 레시피 — 기록은 레시피와 분리되어 있어, 아래 값은 이 lot에 저장된 값입니다"}">Lot ${c.editSerial} 만들 때: ${esc(c.recipeName || (r && r.name) || "삭제된 레시피")}${c.recipeGuess ? " (추정)" : ""}</span>`;
   }
   return `<span class="badge gray" title="이 lot은 레시피 기록 없이 저장되었습니다(이전 버전). 수정 내용은 이 lot의 값 그대로입니다">Lot ${c.editSerial}: 레시피 기록 없음</span>`;
 }
@@ -4337,9 +4352,11 @@ function bindRecipeBar(rerender) {
   $("#rcDel").onclick = () => {
     if (isLab()) return toast("랩 공용 레시피는 [랩에서 내리기]로 처리하세요", "warn");
     const c = cur(); if (!c) return toast("선택된 레시피가 없습니다", "warn");
-    if (!confirm(`레시피 '${c.name}'을(를) 삭제할까요?`)) return;
-    deleteRecipe(c.id); PLAN_RC.id = null; saveSettings();
-    toast("삭제했습니다", "ok"); rerender();
+    const used = Object.values(activeLots()).filter(l => l.recipeId === c.id).map(l => l.serial);
+    armBtn($("#rcDel"), "한 번 더 눌러 삭제", () => {
+      deleteRecipe(c.id); PLAN_RC.id = null; saveSettings();
+      toast(used.length ? `레시피 삭제 — 이 레시피로 만든 Lot ${used.join(", ")}은(는) 저장 당시 값 그대로 남습니다` : "삭제했습니다", "ok"); rerender();
+    });
   };
   const fork = $("#rcFork");
   if (fork) fork.onclick = () => {
@@ -7302,6 +7319,7 @@ function openLotDrawer(serial) {
         <dt>열처리</dt><dd>${typeof lot.heat === "number" ? fmtN(lot.heat, 0) + " min" : "–"}</dd>
         <dt>Group (자동)</dt><dd>${esc(lotGroup(serial, activeLots()) || "–")}</dd>
         <dt>메모</dt><dd>${esc(lot.memo || "–")}</dd>
+        <dt>절차</dt><dd>${lotProcBadge(lot)}${lot.recipeName ? ` <span class="badge info" title="저장 당시 이름 — 기록은 레시피와 분리되어 있어 레시피를 고치거나 지워도 이 lot은 바뀌지 않습니다">만들 때 레시피: ${esc(lot.recipeName)}</span>` : ""}</dd>
       </dl></div>
       <div><h4 style="margin-bottom:6px">ICP 기록 (${icps.length})</h4>
         ${icps.length ? icps.map(r => `<div class="note icpnote" style="margin-bottom:6px;cursor:pointer" data-openicp="${esc(r.id)}" title="ICP 기록 상세"><b>${esc(r.icpLot)}</b> · ${esc(r.date)} · ${esc(icpDilText(r))}${r.method === "ICP-MS" ? " · MS" : ""}
