@@ -654,7 +654,7 @@ body{word-break:keep-all}
 <div id="app">
   <div id="mainUI">
     <div class="topbar">
-      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.4.6 · deploy</span></div>
+      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.4.8 · deploy</span></div>
       <div class="spacer"></div>
       <button class="chipbtn" id="chipBackup" title="클릭하여 즉시 백업"><span class="dot"></span>백업</button>
       <button class="chipbtn" id="chipSync" title="동기화 설정으로 이동"><span class="dot"></span>로컬 저장</button>
@@ -787,7 +787,7 @@ function defaultProtocol(C){ return { id:"p_naln_thermal", name:"NaLnF4 (thermal
   {id:"mtoh",name:"Methanol",unit:"mL",calc:{type:"proportionalToReagentMass",ref:{element:"F"},perMg:C.mtohPerMgF},round:{mode:"roundup",digits:0}},
 ]}; }
 var _protoOverride = null;
-function activeProtocol(C){ if(_protoOverride&&Array.isArray(_protoOverride.reagents)){ const b=withProto(null,()=>activeProtocol(C)); return Object.assign({}, b, {reagents:_protoOverride.reagents}); } try { const s=state.db.settings, id=s&&s.activeProtocolId; if(id&&id!=="lab_naln"&&s.protocols&&s.protocols[id]&&Array.isArray(s.protocols[id].reagents)) return s.protocols[id]; const did=s&&s.defaultProtocolId; if(did&&s.protocols&&s.protocols[did]&&Array.isArray(s.protocols[did].reagents)) return s.protocols[did]; } catch(e){} return defaultProtocol(C); }
+function activeProtocol(C){ if(_protoOverride&&_protoOverride.reagents==="builtin") return defaultProtocol(C); if(_protoOverride&&Array.isArray(_protoOverride.reagents)){ const b=withProto(null,()=>activeProtocol(C)); return Object.assign({}, b, {reagents:_protoOverride.reagents}); } try { const s=state.db.settings, id=s&&s.activeProtocolId; if(id&&id!=="lab_naln"&&s.protocols&&s.protocols[id]&&Array.isArray(s.protocols[id].reagents)) return s.protocols[id]; const did=s&&s.defaultProtocolId; if(did&&s.protocols&&s.protocols[did]&&Array.isArray(s.protocols[did].reagents)) return s.protocols[did]; } catch(e){} return defaultProtocol(C); }
 /* ===== /P1 엔진 ===== */
 
 /* ===== P5: 시퀀스 기반 용매 바인딩 (sequence-driven solvents) =====
@@ -2324,6 +2324,9 @@ function deleteLot(serial) {
 /* 브라우저가 확인창을 막으면(이 페이지의 대화상자 차단) confirm()이 창 없이 즉시 false를 돌려 작업이 조용히 취소된다 → 알려 준다 */
 (function(){ try { const _c = window.confirm.bind(window); window.confirm = function(msg){ const t0 = performance.now(); const r = _c(msg);
   if (!r && performance.now() - t0 < 40) { try { toast("브라우저가 확인창을 차단해 작업이 취소됐습니다 — 이 탭을 닫고 앱을 새로 열면 다시 표시됩니다", "err"); } catch(e){} }
+  return r; };
+  const _p = window.prompt.bind(window); window.prompt = function(msg, def){ const t0 = performance.now(); const r = _p(msg, def);
+  if (r === null && performance.now() - t0 < 40) { try { toast("브라우저가 입력창을 차단해 작업이 취소됐습니다 — 이 탭을 닫고 앱을 새로 열면 다시 표시됩니다", "err"); } catch(e){} }
   return r; }; } catch(e){} })();
 
 /* ---------- 두 번 눌러 확정 (브라우저 confirm 창이 막혀도 동작) + 되돌리기 ---------- */
@@ -2971,8 +2974,19 @@ function snapshotProcedures() {
       const t = {}; for (const k in node) if (k !== "mods") t[k] = node[k];
       cardText[g] = JSON.parse(JSON.stringify(t));
     }
-    return { steps, cardText, srcId: activeProtoId() || "lab_naln" };
+    const key = activeProtoId() || "lab_naln";
+    const reagents = (key !== "lab_naln" && S.protocols && S.protocols[key] && Array.isArray(S.protocols[key].reagents)) ? JSON.parse(JSON.stringify(S.protocols[key].reagents)) : "builtin";
+    return { steps, cardText, reagents, srcId: key };
   });
+}
+/* PLANREAG-1013 */
+/* 레시피의 시약 정의 결정: 내장 기본 프로토콜이었으면 'builtin', 아니면 레시피에 담긴 정의 → 없으면 그 프로토콜의 현재 정의 */
+function recipeReagents(rec) {
+  const pid = rec && rec.protocolId, S = state.db.settings;
+  if (!pid || pid === "lab_naln") return "builtin";
+  if (rec.proto && Array.isArray(rec.proto.reagents)) return JSON.parse(JSON.stringify(rec.proto.reagents));
+  if (S.protocols && S.protocols[pid] && Array.isArray(S.protocols[pid].reagents)) return JSON.parse(JSON.stringify(S.protocols[pid].reagents));
+  return "builtin";
 }
 function withProto(ov, fn) { const prev = _protoOverride; _protoOverride = ov; try { return fn(); } finally { _protoOverride = prev; } }
 function curProtoKey() { return withProto(null, () => activeProtoId() || "lab_naln"); }
@@ -2989,21 +3003,28 @@ function protoFromLot(lot) {
   const snap = snapshotProcedures();
   for (const g of ["core", "shell", "sol"]) if (Array.isArray(p.steps[g])) snap.steps[g] = JSON.parse(JSON.stringify(p.steps[g]));
   if (p.cardText) for (const g of ["core", "shell", "sol"]) if (p.cardText[g]) snap.cardText[g] = JSON.parse(JSON.stringify(p.cardText[g]));
+  if (!p.id || p.id === "lab_naln") snap.reagents = "builtin"; else if (Array.isArray(p.reagents)) snap.reagents = JSON.parse(JSON.stringify(p.reagents));
+  if (p.id) snap.srcId = p.id;
   snap.fromLot = lot.serial;
   return snap;
 }
 function planEnsureProto(ctx) {
   const key = curProtoKey();
-  if (!ctx.proto || !ctx.proto.steps || ctx.proto.srcId !== key) ctx.proto = snapshotProcedures();   // 프로토콜을 바꾸면 그 절차로
+  if (!ctx.proto || !ctx.proto.steps) ctx.proto = snapshotProcedures();   // 처음 한 번만 — 이후엔 사용자가 직접 프로토콜을 바꿀 때만(planAdoptActiveProto)
   return ctx.proto;
 }
 function planProtoCopy(ctx) { const p = planEnsureProto(ctx); const ap = withProto(null, () => activeProtocol(APP_DATA.constants)) || {};
+  const rg = (p.reagents === undefined) ? snapshotProcedures().reagents : p.reagents;
+  const srcP = (p.srcId && p.srcId !== "lab_naln" && state.db.settings.protocols) ? state.db.settings.protocols[p.srcId] : null;
   return { steps: JSON.parse(JSON.stringify(p.steps)), cardText: JSON.parse(JSON.stringify(p.cardText || {})),
-    reagents: Array.isArray(ap.reagents) ? JSON.parse(JSON.stringify(ap.reagents)) : null, protoName: ap.name || "", basis: ap.basis || "" }; }
+    reagents: Array.isArray(rg) ? JSON.parse(JSON.stringify(rg)) : "builtin", protoName: (srcP && srcP.name) || ap.name || "", basis: (srcP && srcP.basis) || ap.basis || "" }; }
+function planProtoId(ctx) { const p = planEnsureProto(ctx); return (p.srcId && p.srcId !== "lab_naln") ? p.srcId : null; }
 function planLotProtocol(ctx) {
   const base = withProto(null, () => JSON.parse(JSON.stringify(activeProtocol(APP_DATA.constants))));
   const c = planProtoCopy(ctx);
   base.steps = c.steps; base.cardText = c.cardText;
+  if (c.reagents === "builtin") { const d = defaultProtocol(APP_DATA.constants); base.reagents = JSON.parse(JSON.stringify(d.reagents)); base.id = "lab_naln"; base.name = d.name || "기본값"; }
+  else { base.reagents = c.reagents; const pid = planProtoId(ctx); if (pid) { base.id = pid; if (c.protoName) base.name = c.protoName; } }
   return base;
 }
 function planProtoDiffers(ctx) {
@@ -3011,6 +3032,31 @@ function planProtoDiffers(ctx) {
   return JSON.stringify(p.steps) !== JSON.stringify(cur.steps);
 }
 /* 계획 ↔ 레시피 차이 (성분·절차) — 레시피가 단 하나의 '저장 단위'다. 프로토콜은 처음 불러올 기본 틀일 뿐 */
+/* RCSAFE-1013 */
+/* 프로토콜 선택은 전역(동기화됨) 값이라, 다른 탭·기기에서 바뀌어도 계획의 절차가 따라 바뀌면 안 된다.
+   계획 절차는 '사용자가 이 화면에서 프로토콜을 직접 바꿨을 때'만 새 프로토콜의 절차로 교체한다. */
+function planAdoptActiveProto() { try { if (state.view === "plan" && state.plannerCtx) state.plannerCtx.proto = snapshotProcedures(); } catch (e) {} }
+/* 레시피 이전 버전 보기·불러오기 (불러오기는 계획에만 — [저장]을 눌러야 레시피에 반영) */
+function openRecipeHistory(rec) {
+  const hs = (rec && rec.history) || [];
+  const fmt = t => { if (!t) return "–"; const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; };
+  const desc = r => { const k = r.kind === "shell" ? "shell" : "core"; const st = r.proto && r.proto.steps && r.proto.steps[k];
+    return `${(r.components || []).filter(c => c && c.el).map(c => `${c.el}${c.coeff}`).join(" ")} · ${st ? `절차 블록 ${st.length}개` : "<span class='badge warn'>절차 없음</span>"}`; };
+  const rows = [rec].concat(hs).map((r, i) => `<tr><td>${i === 0 ? "<b>현재</b>" : "이전 " + i}</td><td class="mono">${fmt(r.updatedAt)}</td><td class="l">${desc(r)}</td>
+    <td>${i === 0 ? "" : `<button class="btn sm" data-hv="${i - 1}">계획에 불러오기</button>`}</td></tr>`).join("");
+  const ov = h(`<div class="overlay center"><div class="modal" style="max-width:720px"><button class="closex">✕</button>
+    <h2>레시피 '${esc(rec.name)}' 버전 기록 <span class="hint" style="font-size:12px;font-weight:500">저장할 때마다 직전 내용이 최대 10개까지 남습니다</span></h2>
+    ${hs.length ? `<div class="tblwrap" style="max-height:60vh"><table class="tbl"><thead><tr><th></th><th>저장 시각</th><th class="l">내용</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="note" style="margin-top:8px">불러오면 계획창에만 들어갑니다. 맞으면 레시피 칸의 <b>[저장]</b>으로 되돌리기를 확정하세요.</div>` : `<div class="muted">아직 이전 버전이 없습니다 (이번 업데이트 이후 저장부터 기록됩니다).</div>`}
+  </div></div>`);
+  document.body.appendChild(ov);
+  ov.querySelector(".closex").onclick = () => ov.remove();
+  ov.querySelectorAll("[data-hv]").forEach(b => b.onclick = () => {
+    const v = JSON.parse(JSON.stringify(hs[Number(b.dataset.hv)])); v.id = rec.id; v.name = rec.name;
+    ov.remove(); applyRecipe(v); PLAN_RC.id = rec.id; renderView(); toast("이전 버전을 계획에 불러왔습니다 — [저장]을 누르면 레시피가 이 버전으로 돌아갑니다", "ok");
+  });
+}
+
 function planRecipeDirty(ctx) {
   const r = recipeById(ctx.recipeId); if (!r) return null;
   if (!r.proto || !r.proto.steps) return "절차가 들어 있지 않은 옛 레시피";
@@ -3018,6 +3064,7 @@ function planRecipeDirty(ctx) {
   const p = planEnsureProto(ctx);
   const diffs = [];
   if (compKey(ensureComponents(ctx)) !== compKey(r.components)) diffs.push("성분");
+  { const a = p.reagents === undefined ? "builtin" : p.reagents, b = recipeReagents(r); if (JSON.stringify(a) !== JSON.stringify(b)) diffs.push("시약 구성"); }
   if (JSON.stringify(p.steps[k] || []) !== JSON.stringify(r.proto.steps[k] || [])
       || (k === "shell" && JSON.stringify(p.steps.sol || []) !== JSON.stringify(r.proto.steps.sol || []))) diffs.push("절차");
   return diffs.length ? diffs.join("·") : "";
@@ -4152,6 +4199,11 @@ function activeRecipes() {
 }
 function saveRecipe(rec) {
   if (!rec || !rec.id) return null;
+  const prev = recipeStore()[rec.id];
+  if (prev && prev !== rec && !prev.deleted) {
+    const snap = JSON.parse(JSON.stringify(prev)); delete snap.history;
+    rec.history = [snap].concat((prev.history || []).slice(0, 9));
+  } else if (prev && prev.history && !rec.history) rec.history = prev.history;
   rec.updatedAt = Date.now(); rec.deleted = false;
   recipeStore()[rec.id] = rec;
   state.dirty.recipes.add(rec.id);
@@ -4185,7 +4237,7 @@ function recipeFromPlanner(ctx, name) {
       shell: { volMl: ctx.volMl, oaMl: ctx.oaMl, odeMl: ctx.odeMl, radius: ctx.radius, thick: ctx.thick,
                inj: (ctx.inj || []).slice(), solVolMl: ctx.solVolMl,
                solPrecs: (ctx.solPrecs || []).map(r => ({ name: r.name, mmol: r.mmol, kind: r.kind || "solute" })) },
-      protocolId: S.activeProtocolId || null, proto: planProtoCopy(ctx),
+      protocolId: planProtoId(ctx), proto: planProtoCopy(ctx),
     };
   }
   return {
@@ -4198,7 +4250,7 @@ function recipeFromPlanner(ctx, name) {
       ref: (c.ref && (ensureComponents(ctx).find(x => x.id === c.ref) || {}).el) || null })),
     reagents: Object.assign({ oaPerMmol: S.oaPerMmol, odeTotalSmall: S.odeTotalSmall, odeTotalLarge: S.odeTotalLarge,
                 oamEq: S.oamEq, oamMw: S.oamMw, oamDens: S.oamDens, mtohPerMgF: S.mtohPerMgF }, reagentsNow()),
-    protocolId: S.activeProtocolId || null, proto: planProtoCopy(ctx),
+    protocolId: planProtoId(ctx), proto: planProtoCopy(ctx),
   };
 }
 /* RECIPEPERPLAN-1013 */
@@ -4267,7 +4319,7 @@ function applyRecipe(rec) {
     state.plannerCtx = c2;
     const S2 = state.db.settings;
     if (rec.protocolId && S2.protocols && S2.protocols[rec.protocolId]) { S2.activeProtocolId = rec.protocolId; }
-    c2.proto = (rec.proto && rec.proto.steps) ? Object.assign(JSON.parse(JSON.stringify(rec.proto)), { srcId: curProtoKey(), fromRecipe: rec.name || "" }) : null;
+    c2.proto = (rec.proto && rec.proto.steps) ? Object.assign(JSON.parse(JSON.stringify(rec.proto)), { srcId: rec.protocolId || "lab_naln", fromRecipe: rec.name || "", reagents: recipeReagents(rec) }) : null;
     PLAN_RC.id = rec.id; saveSettings();
     return;
   }
@@ -4290,7 +4342,7 @@ function applyRecipe(rec) {
     if (isNum(rg[k])) setPlanLocal(k, rg[k]);
   const S = state.db.settings;
   if (rec.protocolId && S.protocols && S.protocols[rec.protocolId]) { S.activeProtocolId = rec.protocolId; saveSettings(); }
-  ctx.proto = (rec.proto && rec.proto.steps) ? Object.assign(JSON.parse(JSON.stringify(rec.proto)), { srcId: curProtoKey(), fromRecipe: rec.name || "" }) : null;
+  ctx.proto = (rec.proto && rec.proto.steps) ? Object.assign(JSON.parse(JSON.stringify(rec.proto)), { srcId: rec.protocolId || "lab_naln", fromRecipe: rec.name || "", reagents: recipeReagents(rec) }) : null;
   PLAN_RC.id = rec.id;
   saveSettings();
 }
@@ -4317,6 +4369,7 @@ function recipeBarHtml(kind) {
     </select>
     <button class="btn sm${(!isLab && state.plannerCtx && (state.plannerCtx.editSerial === null || state.plannerCtx.editSerial === undefined) && planRecipeDirty(state.plannerCtx)) ? " primary" : ""}" id="rcSave" ${isLab ? "disabled" : ""} title="${isLab ? "랩 공용 레시피는 직접 못 고칩니다 — [내 것으로 복사] 후 편집하세요" : "현재 계획을 선택된 레시피에 덮어씁니다"}">저장</button>
     <button class="btn sm" id="rcSaveAs" title="현재 계획을 새 이름으로 내 레시피에 저장">새 이름으로</button>
+    <button class="btn sm" id="rcHist" ${(!isLab && sel) ? "" : "disabled"} title="이 레시피를 저장할 때마다 남은 이전 버전 보기·불러오기">버전</button>
     <button class="btn sm" id="rcDel" ${isLab ? "disabled" : ""} title="선택된 레시피 삭제">삭제</button>
     ${isLab ? `<button class="btn sm primary" id="rcFork" title="랩 공용 레시피를 내 레시피로 복사해 자유롭게 고칩니다">내 것으로 복사</button>` : ""}
     ${labOn && !isLab ? `<button class="btn sm" id="rcPub" ${(sel && online) ? "" : "disabled"} title="${online ? "선택된 내 레시피를 랩 공용 라이브러리에 올립니다" : "동기화가 켜져 있어야 합니다"}">랩에 올리기</button>` : ""}
@@ -4356,6 +4409,7 @@ function bindRecipeBar(rerender) {
     saveRecipe(n);
     toast(`'${c.name}' 저장 완료`, "ok"); rerender();
   };
+  { const hb = $("#rcHist"); if (hb) hb.onclick = () => { const c = cur(); if (c) openRecipeHistory(c); }; }
   $("#rcSaveAs").onclick = () => {
     const ctx = state.plannerCtx; if (!ctx) return;
     const name = prompt("레시피 이름", (cur() && cur().name + " 복사") || "내 레시피");
@@ -4640,7 +4694,8 @@ function renderPlanner(root) {
   if (!state.plannerCtx) state.plannerCtx = defaultPlannerCtx("core");
   const ctx = state.plannerCtx;
   planEnsureProto(ctx);
-  _protoOverride = { steps: ctx.proto.steps, cardText: ctx.proto.cardText };
+  if (ctx.proto.reagents === undefined) ctx.proto.reagents = snapshotProcedures().reagents;
+  _protoOverride = { steps: ctx.proto.steps, cardText: ctx.proto.cardText, reagents: ctx.proto.reagents };
   root.innerHTML = `<div class="row" style="margin-bottom:12px">
     <div class="seg"><button id="segCore" class="${ctx.mode === "core" ? "active" : ""}">Core 합성</button><button id="segShell" class="${ctx.mode === "shell" ? "active" : ""}">Shell 성장</button></div>
     ${ctx.editSerial !== null ? `<span class="badge warn">Lot ${ctx.editSerial} 수정 중</span><button class="btn sm" id="segCancelEdit">수정 취소</button>` : ""}
@@ -6639,7 +6694,7 @@ const Sync = (() => {
     });
     recSnap.forEach(doc => {                         // 레시피도 문서 단위 병합(Phase 4a)
       const r = fsDecode(doc.data()); const cur = recipeStore()[r.id];
-      if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0)) { recipeStore()[r.id] = r; pulled++; }
+      if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0)) { if (cur && cur.proto && !r.proto && !r.deleted) r.proto = cur.proto; if (cur && cur.history && !r.history) r.history = cur.history; recipeStore()[r.id] = r; pulled++; }
     });
     if (setSnap.exists) {
       const r = fsDecode(setSnap.data());
@@ -6711,7 +6766,7 @@ const Sync = (() => {
       let changed = 0;
       snap.docChanges().forEach(ch => {
         const r = fsDecode(ch.doc.data()); const cur = recipeStore()[r.id];
-        if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0)) { recipeStore()[r.id] = r; changed++; }
+        if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0)) { if (cur && cur.proto && !r.proto && !r.deleted) r.proto = cur.proto; if (cur && cur.history && !r.history) r.history = cur.history; recipeStore()[r.id] = r; changed++; }
       });
       if (changed) { saveDb(); render(); }
     }, e => setStatus("err", friendly(e))));
@@ -7524,11 +7579,13 @@ function protoRoundEx(mode,digits){ return _applyRound(12.3456,{mode:mode,digits
 function renderProtocolPanel(root){
   const S=state.db.settings, store=protoStore();
   const defId=(S.defaultProtocolId && store[S.defaultProtocolId]) ? S.defaultProtocolId : null;
-  let activeId=S.activeProtocolId||"lab_naln";
+  const _pc = (state.view === "plan" && state.plannerCtx && state.plannerCtx.proto) ? state.plannerCtx.proto : null;
+  let activeId=(_pc && _pc.srcId) ? _pc.srcId : (S.activeProtocolId||"lab_naln");
   if(activeId!=="lab_naln" && !store[activeId]) activeId="lab_naln";
-  if(defId && activeId==="lab_naln") activeId=defId;   // 내장 기본값 숨김 → 사용자 기본값으로 대체
+  if(defId && activeId==="lab_naln" && !(_pc && _pc.reagents==="builtin")) activeId=defId;   // 내장 기본값 숨김 → 사용자 기본값으로 대체
   const isDefault=(activeId==="lab_naln");
-  const proto=isDefault ? defaultProtocol(APP_DATA.constants) : store[activeId];
+  let proto=isDefault ? defaultProtocol(APP_DATA.constants) : store[activeId];
+  if (_pc && !isDefault && Array.isArray(_pc.reagents)) proto = Object.assign({}, proto, { reagents: _pc.reagents });   // 계획 안에서는 이 계획의 시약 정의를 고친다
   const isBound=(!isDefault) && protoHasBind(proto);
   const card=document.createElement("div"); card.className="card"; card.style.marginTop="14px";
   const h=document.createElement("h3"); h.textContent="화학물질 개요"; card.appendChild(h);
@@ -7538,7 +7595,7 @@ function renderProtocolPanel(root){
   if(defId){ const ks=[defId].concat(Object.keys(store).filter(k=>k!==defId)); opts=ks.map(k=>[k,(store[k].name||k)+(k===defId?" · 기본값":"")]); }
   else { opts=[["lab_naln","기본값"]].concat(Object.keys(store).map(k=>[k,(store[k].name||k)])); }
   sel.innerHTML=opts.map(o=>`<option value="${o[0]}" ${o[0]===activeId?"selected":""}>${esc(o[1])}</option>`).join("");
-  sel.onchange=()=>{ S.activeProtocolId=sel.value; persistProto(); render(); };
+  sel.onchange=()=>{ S.activeProtocolId=sel.value; planAdoptActiveProto(); persistProto(); render(); };
   const addNew=document.createElement("button"); addNew.className="btn sm primary"; addNew.textContent="+ 새 프로토콜";
   addNew.onclick=()=>{ const C=APP_DATA.constants; const names=Object.values(store).map(p=>p.name||""); let base="새 프로토콜", nm=base, i=2; while(names.indexOf(nm)>=0){ nm=base+" "+i; i++; }
     const uid=()=>"m"+Date.now().toString(36)+(_pmSeq++);
@@ -7548,7 +7605,7 @@ function renderProtocolPanel(root){
       {id:uid(),k:"add", temp:"",time:"",note:"Host Anion + 분산",gw:3,gh:1,bind:{prec:"F",solv:[solvDefault("mtoh")]}},
       {id:uid(),k:"heat",temp:"",time:"",note:"승온·반응",gw:3,gh:1},
     ];
-    const c={ id:"p_"+Date.now().toString(36), name:nm, basis:"solvothermal", reagents:[], steps:{core:seedCore,shell:JSON.parse(JSON.stringify(globalMods("shell"))),sol:JSON.parse(JSON.stringify(globalMods("sol")))} }; store[c.id]=c; S.activeProtocolId=c.id; persistProto(); render(); };
+    const c={ id:"p_"+Date.now().toString(36), name:nm, basis:"solvothermal", reagents:[], steps:{core:seedCore,shell:JSON.parse(JSON.stringify(globalMods("shell"))),sol:JSON.parse(JSON.stringify(globalMods("sol")))} }; store[c.id]=c; S.activeProtocolId=c.id; planAdoptActiveProto(); persistProto(); render(); };
   ctrl.append(document.createTextNode("활성: "), sel, addNew);
   if(!isDefault){
     const nmI=document.createElement("input"); nmI.type="text"; nmI.value=proto.name||""; nmI.placeholder="프로토콜 이름"; nmI.title="프로토콜 이름"; nmI.style.cssText="padding:4px 8px;border:1px solid var(--line2);border-radius:6px;font-size:12px;min-width:150px";
