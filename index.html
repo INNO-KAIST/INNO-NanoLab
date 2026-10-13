@@ -325,6 +325,8 @@ input.slim,select.slim{padding:4px 7px;border-radius:6px}
 #printArea{display:none}
 body.printing #printArea{display:block}
 body.printing #mainUI{display:none}
+body.printing .overlay{display:none !important}
+@media print{ .overlay{display:none !important} }
 @media print{ body.printing #printArea{display:block} }
 
 
@@ -654,7 +656,7 @@ body{word-break:keep-all}
 <div id="app">
   <div id="mainUI">
     <div class="topbar">
-      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.4.9 · deploy</span></div>
+      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.5.0 · deploy</span></div>
       <div class="spacer"></div>
       <button class="chipbtn" id="chipBackup" title="클릭하여 즉시 백업"><span class="dot"></span>백업</button>
       <button class="chipbtn" id="chipSync" title="동기화 설정으로 이동"><span class="dot"></span>로컬 저장</button>
@@ -787,7 +789,7 @@ function defaultProtocol(C){ return { id:"p_naln_thermal", name:"NaLnF4 (thermal
   {id:"mtoh",name:"Methanol",unit:"mL",calc:{type:"proportionalToReagentMass",ref:{element:"F"},perMg:C.mtohPerMgF},round:{mode:"roundup",digits:0}},
 ]}; }
 var _protoOverride = null;
-function activeProtocol(C){ if(_protoOverride&&_protoOverride.reagents==="builtin") return defaultProtocol(C); if(_protoOverride&&Array.isArray(_protoOverride.reagents)){ const b=withProto(null,()=>activeProtocol(C)); return Object.assign({}, b, {reagents:_protoOverride.reagents}); } try { const s=state.db.settings, id=s&&s.activeProtocolId; if(id&&id!=="lab_naln"&&s.protocols&&s.protocols[id]&&Array.isArray(s.protocols[id].reagents)) return s.protocols[id]; const did=s&&s.defaultProtocolId; if(did&&s.protocols&&s.protocols[did]&&Array.isArray(s.protocols[did].reagents)) return s.protocols[did]; } catch(e){} return defaultProtocol(C); }
+function activeProtocol(C){ if(_protoOverride){ const ov=_protoOverride; if(ov.reagents==="builtin") { const d=defaultProtocol(C); return ov.steps ? Object.assign({}, d, {steps:ov.steps}) : d; } if(Array.isArray(ov.reagents) || ov.steps){ const b=withProto(null,()=>activeProtocol(C)); return Object.assign({}, b, Array.isArray(ov.reagents)?{reagents:ov.reagents}:{}, ov.steps?{steps:ov.steps}:{}); } } try { const s=state.db.settings, id=s&&s.activeProtocolId; if(id&&id!=="lab_naln"&&s.protocols&&s.protocols[id]&&Array.isArray(s.protocols[id].reagents)) return s.protocols[id]; const did=s&&s.defaultProtocolId; if(did&&s.protocols&&s.protocols[did]&&Array.isArray(s.protocols[did].reagents)) return s.protocols[did]; } catch(e){} return defaultProtocol(C); }
 /* ===== /P1 엔진 ===== */
 
 /* ===== P5: 시퀀스 기반 용매 바인딩 (sequence-driven solvents) =====
@@ -1906,7 +1908,12 @@ function parseIcpAoa(aoa) {
     row.kind = "sample";
     if (/^blank/i.test(L)) { row.kind = "standard"; row.stdConc = 0; }
     else if (/^(standard|std)[\s\-_]*(\d+)?/i.test(L)) { row.kind = "standard"; row.stdConc = null; }
-    else if (asNum !== null) { row.kind = "standard"; row.stdConc = asNum; }
+    else if (asNum !== null) {
+      /* 숫자 라벨: 측정값 중앙값이 그 숫자와 비슷할 때만 표준(예: '5' → 5 ppm 근처). '157' 같은 lot 번호는 샘플 */
+      const rv = []; for (const el of Object.keys(row.vals)) for (const wl of Object.keys(row.vals[el])) { const v = row.vals[el][wl].v; if (v !== null) rv.push(v); }
+      rv.sort((a, b) => a - b); const md = rv.length ? rv[Math.floor(rv.length / 2)] : null;
+      if (asNum === 0 || md === null || (md > asNum * 0.5 && md < asNum * 2)) { row.kind = "standard"; row.stdConc = asNum; }
+    }
     else if (/^di([\s_\-]|$)|di water/i.test(L)) { row.kind = "blank"; }
     if (row.kind === "standard" && row.stdConc !== null) stdVals.push(row.stdConc);
   }
@@ -2290,7 +2297,7 @@ function derivedOf(serial) {
   return state.derived[serial] || null;
 }
 function nextSerial() {
-  const ns = Object.values(state.db.lots).filter(l => !l.deleted).map(l => Number(l.serial)).filter(isFinite);
+  const ns = Object.values(state.db.lots).map(l => Number(l.serial)).filter(isFinite);   // 지운 번호도 건너뜀(ICP 기록·되돌리기와 섞이지 않게)
   return ns.length ? Math.max(...ns) + 1 : 1;
 }
 function lotOf(serial) { const l = state.db.lots[serial]; return (l && !l.deleted) ? l : null; }
@@ -2305,7 +2312,7 @@ function usedVolume(serial) {
 /* ---------- mutations ---------- */
 function upsertLot(lot) {
   /* P1b: lot에 사용 프로토콜 스냅샷 스탬프(재현성·기록에서 템플릿 불러오기 기반). 기존 값이 있으면 유지 */
-  if (!lot.protocol && typeof activeProtocol === "function") { try { lot.protocol = JSON.parse(JSON.stringify(activeProtocol(APP_DATA.constants))); } catch (e) {} }
+  /* (2026-10-13) 절차 스냅샷은 계획창 저장(commitLotSave)에서만 남긴다 — 여기서 현재 프로토콜을 찍으면 옛 lot이 '기록됨'으로 둔갑한다 */
   lot.updatedAt = Date.now();
   state.db.lots[lot.serial] = lot;
   state.dirty.lots.add(String(lot.serial));
@@ -2427,30 +2434,57 @@ function renumberLotRefs(oldS, newS) {
 function commitLotSave(ctx, fields) {
   const target = planTargetSerial(ctx);
   const ed = ctx.editSerial;
+  if (ed !== null && ed !== undefined) {
+    const cur = state.db.lots[ed];
+    if (!cur || cur.deleted) {
+      toast(cur && cur.renumberedTo ? `수정 중이던 Lot ${ed}은(는) Lot ${cur.renumberedTo}(으)로 번호가 바뀌었습니다 — [수정 취소] 후 Lot ${cur.renumberedTo}을(를) 다시 여세요`
+                                    : `수정 중이던 Lot ${ed}이(가) 삭제되었습니다 — [수정 취소] 후 새로 저장하세요`, "err");
+      return null;
+    }
+  }
   if (planSerialClash(ctx) !== null) {
     toast(`Lot ${target}은(는) 이미 있습니다 — 다른 번호를 쓰거나, 그 lot을 합성 기록에서 [수정]으로 여세요`, "err");
     return null;
   }
-  const old = (ed !== null && state.db.lots[ed] && !state.db.lots[ed].deleted) ? state.db.lots[ed] : null;
+  const old = (ed !== null && ed !== undefined && state.db.lots[ed] && !state.db.lots[ed].deleted) ? state.db.lots[ed] : null;
   const lot = Object.assign({}, old || {}, fields, { serial: target, deleted: false });
   delete lot.renumberedTo;
-  /* 프로토콜 스냅샷: 수정 중 프로토콜을 바꾸지 않았으면 원래 것을 유지, 바꿨으면 새로 찍음 */
-  lot.protocol = planLotProtocol(ctx);
-  { const rid = ctx.recipeId || null, rr = recipeById(rid); lot.recipeId = rid; lot.recipeName = rr ? rr.name : (rid ? (ctx.recipeName || "") : ""); }   // 이름은 저장 당시 값으로 고정(기록 ↔ 레시피 분리)
+  if (typeof lot.name === "string") lot.name = lot.name.replace(/[<>&"]/g, "").trim();
+  lot.protocol = planLotProtocol(ctx, old);
+  /* 레시피: 사용자가 고른 것만 기록(추정은 기록하지 않음), 이름은 저장 당시 값으로 고정 */
+  if (ctx.recipeGuess) { lot.recipeId = old ? (old.recipeId || null) : null; lot.recipeName = old ? (old.recipeName || "") : ""; }
+  else { const rid = ctx.recipeId || null, rr = recipeById(rid); lot.recipeId = rid; lot.recipeName = rr ? rr.name : (rid ? (ctx.lotRecipeName || "") : ""); }
+  /* 카드에서 손으로 고친 전구체 숫자는 성분·목표량이 바뀌면 낡은 값이 되므로 버린다 */
+  if (old && (old.tgtMmol !== lot.tgtMmol || compKey(old.components) !== compKey(lot.components))) {
+    const ce = Object.assign({}, lot.cardEdits || {}); let dropped = 0;
+    for (const k of Object.keys(ce)) if (/^prec\d+\./.test(k)) { delete ce[k]; dropped++; }
+    lot.cardEdits = ce;
+    if (dropped) toast(`성분·목표량이 바뀌어 카드에서 손으로 고친 전구체 값 ${dropped}개를 지웠습니다`, "warn");
+  }
+  if (old && lot.type === "Shell" && JSON.stringify(old.solPrecs || []) !== JSON.stringify(lot.solPrecs || [])) {
+    const se = Object.assign({}, lot.solCardEdits || {});
+    for (const k of Object.keys(se)) if (/^p\d+\./.test(k)) delete se[k];
+    lot.solCardEdits = se;
+  }
   upsertLot(lot);
   if (old && ed !== target) {
     old.deleted = true; old.renumberedTo = target; old.updatedAt = Date.now();
     state.dirty.lots.add(String(ed));
     renumberLotRefs(ed, target);
     state.derived = null; saveDb(); Sync.push();
+    if (state.plannerDrafts) state.plannerDrafts = {};
   }
   return target;
 }
 /* 레시피·새 프로세스 마법사를 적용해도 '지금 수정 중인 lot'과 입력한 번호·이름·날짜는 유지 */
 function carryPlanIdentity(prev, next) {
   if (!prev || prev.mode !== next.mode) return next;
-  for (const k of ["editSerial", "serialWant", "name", "date", "stockVol", "heat", "memo", "protoIdAtLoad"])
+  for (const k of ["editSerial", "serialWant", "name", "date", "stockVol", "heat", "memo", "protoIdAtLoad", "lotRecipeName"])
     if (prev[k] !== undefined) next[k] = prev[k];
+  if (prev.editSerial !== null && prev.editSerial !== undefined) {   // 수정 중인 lot의 카드 손편집은 레시피를 바꿔도 유지
+    if (prev.cardEdits) next.cardEdits = JSON.parse(JSON.stringify(prev.cardEdits));
+    if (prev.solCardEdits) next.solCardEdits = JSON.parse(JSON.stringify(prev.solCardEdits));
+  }
   if (next.mode === "shell" && prev.src !== undefined) next.src = prev.src;
   return next;
 }
@@ -2583,6 +2617,7 @@ function bindPlanLocalBar(root, ctx, rr) {
 function syncPlannerFromSettings() {
   const ctx = state.plannerCtx, S = state.db.settings;
   if (!ctx) return;
+  if ((ctx.editSerial !== null && ctx.editSerial !== undefined) || ctx.recipeId) return;   // 수정 중인 lot·레시피에서 온 계획은 자기 값을 가진다
   const L = ctx.local || {};
   if (ctx.mode === "shell") {
     if (!("shellSyn.aliquotMl" in L)) ctx.volMl = S.shellSyn.aliquotMl;
@@ -2785,14 +2820,14 @@ function buildSynthesisLogAoa() {
 
 /* ICP logbook — original layout + extended detail sheet */
 function buildIcpLogAoa() {
-  const head = ["ICP lot", "Serial", "Core / Shell", "Date", "Source serial", "Elements", "Dilution [1/n]", "",
+  const head = ["ICP lot", "Serial", "Core / Shell", "Date", "Source serial", "Elements", "Total dilution", "",
     "Out of Range", "OoR elem.", "OoR value",
     "Elem.1", "[%] 1", "Elem.2", "[%] 2", "Elem.3", "[%] 3", "Elem.4", "[%] 4", "Elem.5", "[%] 5", "Elem.6", "[%] 6"];
   const rows = [["Logbook | ICP Analysis"], [], head];
   const recs = activeIcp().sort((a, b) => (a.serial - b.serial) || String(a.icpLot).localeCompare(String(b.icpLot)));
   for (const r of recs) {
-    const row = [r.icpLot, r.serial, r.type, r.date, r.srcSerial ?? "", (r.elements || []).join(", "), r.dil, "",
-      r.oor ? "Out" : "", r.oor ? r.oor.el : "", r.oor ? r.oor.val : ""];
+    const row = [r.icpLot, r.serial, r.type, r.date, r.srcSerial ?? "", (r.elements || []).join(", "), icpDilText(r), "",
+      r.oor ? "Out" : "", r.oor ? r.oor.el : "", r.oor ? `${r.oor.val ?? ""} ${r.method === "ICP-MS" ? "ppb" : "ppm"}` : ""];
     const vals = r.values || [];
     for (let i = 0; i < 6; i++) {
       row.push(vals[i] ? vals[i][0] : "");
@@ -2805,7 +2840,7 @@ function buildIcpLogAoa() {
 function buildIcpDetailAoa() {
   const head = ["ICP lot", "Serial", "Date", "File", "Element", "λ [nm] / isotope", "ppm (measured)",
     "Stock conc [mg/L]", "Stock mass [mg]", "Stock mmol", "at%", "Target mmol", "Yield %",
-    "Stock vol [mL]", "Aliquot [μL]", "Final [mL]", "Extra dilution", "비고"];
+    "Stock vol [mL]", "Aliquot [μL]", "Final [mL]", "Extra dilution", "비고 / 분석법", "Dilution used", "Status", "±2σ at%"];
   const rows = [["ICP Analysis — 상세 (파장·수율)"], [], head];
   for (const r of activeIcp().sort((a, b) => (a.serial - b.serial) || String(a.icpLot).localeCompare(String(b.icpLot)))) {
     if (!r.detail || !r.detail.rows) continue;
@@ -2813,7 +2848,7 @@ function buildIcpDetailAoa() {
       rows.push([r.icpLot, r.serial, r.date, r.file || "", d.el, r.chosenIso ? (r.chosenIso[d.el] ?? "") : r.chosenWl ? (r.chosenWl[d.el] ?? "") : "",
         d.ppm ?? "", d.stockConc ?? "", d.stockMg ?? "", d.mmol ?? "", d.atPct ?? "", d.targetMmol ?? "", d.yieldPct ?? "",
         r.prep ? r.prep.stockMl : "", r.prep ? r.prep.aliquotUl : "", r.prep ? r.prep.finalMl : "", r.prep ? r.prep.extra : "",
-        r.legacy ? "구 로그북 이관" : ""]);
+        r.legacy ? "구 로그북 이관" : (r.method || "ICP-OES"), d.dil ? `1/${d.dil}` : "", d.status || "", d.atSd2 ?? ""]);
     }
   }
   return rows;
@@ -2965,6 +3000,7 @@ function renderMods(group, ov){ return '<div class="c2pg">'+procMods(group).map(
 /* ===== 절차 스냅샷: lot·레시피·계획이 각자 자기 절차(온도·시간·문구)를 가진다 =====
  * 전에는 저장된 lot 카드도 '현재 활성 프로토콜'의 절차로 그려져, 한 곳에서 온도를 바꾸면
  * 모든 lot 카드가 같이 바뀌었다. 레시피도 프로토콜 id만 저장해 같은 프로토콜을 가리키는 레시피는 절차가 같았다. */
+function fsId(x) { return String(x).replace(/\//g, "∕"); }   // Firestore 문서 id에 '/' 금지
 function snapshotProcedures() {
   return withProto(null, () => {
     const S = state.db.settings, steps = {}, cardText = {};
@@ -3019,7 +3055,13 @@ function planProtoCopy(ctx) { const p = planEnsureProto(ctx); const ap = withPro
   return { steps: JSON.parse(JSON.stringify(p.steps)), cardText: JSON.parse(JSON.stringify(p.cardText || {})),
     reagents: Array.isArray(rg) ? JSON.parse(JSON.stringify(rg)) : "builtin", protoName: (srcP && srcP.name) || ap.name || "", basis: (srcP && srcP.basis) || ap.basis || "" }; }
 function planProtoId(ctx) { const p = planEnsureProto(ctx); return (p.srcId && p.srcId !== "lab_naln") ? p.srcId : null; }
-function planLotProtocol(ctx) {
+function planLotProtocol(ctx, old) {
+  if (old && old.protocol && ctx.proto && ctx.proto.fromLot === old.serial) {
+    const c0 = planProtoCopy(ctx), base0 = JSON.parse(JSON.stringify(old.protocol));
+    base0.steps = c0.steps; base0.cardText = c0.cardText;
+    if (Array.isArray(c0.reagents)) base0.reagents = c0.reagents;
+    return base0;
+  }
   const base = withProto(null, () => JSON.parse(JSON.stringify(activeProtocol(APP_DATA.constants))));
   const c = planProtoCopy(ctx);
   base.steps = c.steps; base.cardText = c.cardText;
@@ -3053,20 +3095,29 @@ function openRecipeHistory(rec) {
   ov.querySelector(".closex").onclick = () => ov.remove();
   ov.querySelectorAll("[data-hv]").forEach(b => b.onclick = () => {
     const v = JSON.parse(JSON.stringify(hs[Number(b.dataset.hv)])); v.id = rec.id; v.name = rec.name;
-    ov.remove(); applyRecipe(v); PLAN_RC.id = rec.id; renderView(); toast("이전 버전을 계획에 불러왔습니다 — [저장]을 누르면 레시피가 이 버전으로 돌아갑니다", "ok");
+    ov.remove(); if (applyRecipe(v) !== true) return; PLAN_RC.id = rec.id; renderView(); toast("이전 버전을 계획에 불러왔습니다 — [저장]을 누르면 레시피가 이 버전으로 돌아갑니다", "ok");
   });
 }
 
+function recipeSig(r, reag) {
+  const k = r.kind === "shell" ? "shell" : "core", p = r.proto || {}, st = p.steps || {}, ct = p.cardText || {};
+  const comps = (r.components || []).filter(c => c && c.el).map(c => [c.role || "", c.el, Number(c.coeff) || 0, isNum(c.excess) ? c.excess : 1, c.prec || "", c.mode || "ratio", c.ref || null]);
+  const rg = Object.assign({}, r.reagents || {}); for (const x of Object.keys(rg)) if (!isNum(rg[x])) delete rg[x];
+  return {
+    comp: JSON.stringify(comps),
+    cond: JSON.stringify(k === "shell" ? (r.shell || {}) : { t: r.tgtMmol, rg: Object.keys(rg).sort().map(x => [x, rg[x]]) }),
+    steps: JSON.stringify(k === "shell" ? [st.shell || [], st.sol || []] : [st.core || []]),
+    text: JSON.stringify(k === "shell" ? [ct.shell || {}, ct.sol || {}] : [ct.core || {}]),
+    reag: JSON.stringify(reag === undefined ? null : reag),
+  };
+}
 function planRecipeDirty(ctx) {
   const r = recipeById(ctx.recipeId); if (!r) return null;
   if (!r.proto || !r.proto.steps) return "절차가 들어 있지 않은 옛 레시피";
-  const k = ctx.mode === "shell" ? "shell" : "core";
-  const p = planEnsureProto(ctx);
-  const diffs = [];
-  if (compKey(ensureComponents(ctx)) !== compKey(r.components)) diffs.push("성분");
-  { const a = p.reagents === undefined ? "builtin" : p.reagents, b = recipeReagents(r); if (JSON.stringify(a) !== JSON.stringify(b)) diffs.push("시약 구성"); }
-  if (JSON.stringify(p.steps[k] || []) !== JSON.stringify(r.proto.steps[k] || [])
-      || (k === "shell" && JSON.stringify(p.steps.sol || []) !== JSON.stringify(r.proto.steps.sol || []))) diffs.push("절차");
+  let mine; try { mine = recipeFromPlanner(ctx, r.name); } catch (e) { return null; }
+  const a = recipeSig(mine, (mine.proto || {}).reagents), b = recipeSig(r, recipeReagents(r));
+  const L = { comp: "성분", cond: ctx.mode === "shell" ? "부피·주입 조건" : "목표량·시약 조건", steps: "절차", text: "카드 문구", reag: "시약 구성" };
+  const diffs = Object.keys(L).filter(k => a[k] !== b[k]).map(k => L[k]);
   return diffs.length ? diffs.join("·") : "";
 }
 function planProtoBarHtml(ctx) {
@@ -3174,8 +3225,8 @@ function shellSolutionCardHtml(title, sol, ovStore) {
   const _allRows = (sol.all && sol.all.length) ? sol.all
     : (sol.rows || []).concat([{ name: "Na-TFA", mmol: sol.naTfaMmol, mg: sol.naTfaMg, kind: "aux" }]);
   const precRows = _allRows.map((r, i) => r ? `<tr><td class="nm"><span class="c2dot ${r.kind === "aux" ? "cNa" : "cLn"}"></span>${ced(ov, "p"+i+".n", esc(r.name), "cin")}</td><td class="r">${ced(ov, "p"+i+".mmol", fmtFix(r.mmol, 3), "cin")}</td><td class="r"><b>${ced(ov, "p"+i+".mg", fmtN(r.mg, 1), "cin")}</b></td></tr>` : "").join("");
-  const rgRows = `<tr><td class="nm"><span class="c2dot cRg"></span>${ced(ov, "oa.n", "Oleic acid", "cin")}</td><td class="r" colspan="2"><b>${ced(ov, "oa.v", fmtN(S.shellSol.oaMl, 1) + " mL", "cin")}</b></td></tr><tr><td class="nm"><span class="c2dot cRg"></span>${ced(ov, "ode.n", "1-Octadecene", "cin")}</td><td class="r" colspan="2"><b>${ced(ov, "ode.v", fmtN(S.shellSol.odeMl, 1) + " mL", "cin")}</b></td></tr>`;
-  const tfaNote = ced(ov, "tfa.note", String(cs("sol", "tfanote")).replace("{mtoh}", fmtN(S.shellSol.mtohMl, 1)), "cin");
+  const rgRows = `<tr><td class="nm"><span class="c2dot cRg"></span>${ced(ov, "oa.n", "Oleic acid", "cin")}</td><td class="r" colspan="2"><b>${ced(ov, "oa.v", fmtN((isNum(sol.cardOaMl) ? sol.cardOaMl : S.shellSol.oaMl), 1) + " mL", "cin")}</b></td></tr><tr><td class="nm"><span class="c2dot cRg"></span>${ced(ov, "ode.n", "1-Octadecene", "cin")}</td><td class="r" colspan="2"><b>${ced(ov, "ode.v", fmtN((isNum(sol.cardOdeMl) ? sol.cardOdeMl : S.shellSol.odeMl), 1) + " mL", "cin")}</b></td></tr>`;
+  const tfaNote = ced(ov, "tfa.note", String(cs("sol", "tfanote")).replace("{mtoh}", fmtN((isNum(sol.cardMtohMl) ? sol.cardMtohMl : S.shellSol.mtohMl), 1)), "cin");
   /* 전구체 이름을 고정 문자열("Ln-oleate")로 찍으면 실제 투입물과 달라질 수 있어
      실제 성분 기준으로 표기한다. */
   const _lnNames = (sol.rows || []).map(r => r && r.elem).filter(Boolean);
@@ -3193,7 +3244,7 @@ function lotProcBadge(lot) {
   const p = lot.protocol;
   if (p && p.steps && Array.isArray(p.steps[k]))
     return `<span class="badge ok" title="저장 당시의 절차·시약이 이 lot에 그대로 기록돼 있어, 레시피나 프로토콜을 바꿔도 이 카드는 바뀌지 않습니다">이 lot의 절차 기록됨${lot.recipeName ? " · 레시피 " + esc(lot.recipeName) : ""}</span>`;
-  return `<span class="badge warn" title="이 lot은 절차(온도·시간)가 기록되지 않은 채 저장되었습니다(기본 프로토콜 사용, v1.4.2 이전). 카드의 절차는 현재 기본 절차를 보여 줄 뿐 실제 합성 조건이 아닐 수 있습니다. [플래너에서 수정]으로 실제 값을 맞춰 저장하면 기록됩니다.">절차 기록 없음 — 현재 기본 절차로 표시 중</span>`;
+  return `<span class="badge warn" title="이 lot은 절차(온도·시간)가 기록되지 않은 채 저장되었습니다(기본 프로토콜 사용, v1.4.2 이전). 카드의 절차는 현재 기본 절차를 보여 줄 뿐 실제 합성 조건이 아닐 수 있습니다. [플래너에서 수정]으로 실제 값을 맞춰 저장하면 기록됩니다.">절차 기록 없음 — 현재 기본 절차로 표시 중${lot.recipeName ? " · 레시피 " + esc(lot.recipeName) : ""}</span>`;
 }
 
 function cardForLot(lot) { return withProto(lotProtoOverride(lot), () => cardForLotRaw(lot)); }
@@ -3231,13 +3282,24 @@ function cardForLotRaw(lot) {
       }
       const sol = shellSolutionCalc(solPrecs, { volMl: lot.solVolMl,
         tfaConcM: (isNum(lot.solTfaMmol) && lot.solVolMl > 0) ? lot.solTfaMmol / lot.solVolMl : undefined });
-      solHtml = shellSolutionCardHtml(lotFormula(lot) + " solution", sol, lot.solCardEdits || {});
+      solHtml = shellSolutionCardHtml(lotFormula(lot) + " solution", Object.assign(sol, { cardOaMl: lot.solOaMl, cardOdeMl: lot.solOdeMl, cardMtohMl: lot.solMtohMl }), lot.solCardEdits || {});
     } catch (e) { console.warn("sol card", e); }
     return solHtml + shellCardHtml(lot, calc, lotFormula(lot));
   }
 }
 
 /* ---- 카드 편집 모달 (저장된 lot의 카드 수정) ---- */
+function bindLotCardEditing(box, lot) {
+  const cards = [...box.querySelectorAll(".synCard2")];
+  const solCard = (lot.type === "Shell" && cards.length > 1) ? cards[0] : null;
+  const save = (store, k, v) => {
+    if (store === "cardEdits" && k === "title") { const nm = String(v || "").replace(/[<>&"]/g, "").trim(); lot.name = (nm === autoLotLabel(lot)) ? "" : nm; }
+    else { lot[store] = Object.assign({}, lot[store] || {}); lot[store][k] = v; }
+    upsertLot(lot);
+  };
+  if (solCard) bindCardEditing(solCard, (k, v) => save("solCardEdits", k, v));
+  cards.filter(c => c !== solCard).forEach(c => bindCardEditing(c, (k, v) => save("cardEdits", k, v)));
+}
 function openCardModal(serial) {
   const lot = lotOf(serial);
   if (!lot) return;
@@ -3253,18 +3315,12 @@ function openCardModal(serial) {
   document.body.appendChild(ov);
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
   ov.querySelector(".closex").onclick = () => ov.remove();
-  bindCardEditing(ov.querySelector("#cardEditBox"), (k, v) => {
-    lot.cardEdits = lot.cardEdits || {};
-    lot.cardEdits[k] = v;
-    upsertLot(lot);
-  });
+  bindLotCardEditing(ov.querySelector("#cardEditBox"), lot);
   ov.querySelector("#ceReset").onclick = () => {
-    lot.cardEdits = {};
+    lot.cardEdits = {}; lot.solCardEdits = {};
     upsertLot(lot);
     ov.querySelector("#cardEditBox").innerHTML = cardForLot(lot);
-    bindCardEditing(ov.querySelector("#cardEditBox"), (k, v) => {
-      lot.cardEdits = lot.cardEdits || {}; lot.cardEdits[k] = v; upsertLot(lot);
-    });
+    bindLotCardEditing(ov.querySelector("#cardEditBox"), lot);
     toast("카드 편집을 초기화했습니다", "ok");
   };
   ov.querySelector("#cePrint").onclick = () => printCards([cardForLot(lot)]);
@@ -3767,7 +3823,7 @@ function renderPlannerCore(root, ctx) {
   if (secOpen("planProc", false)) drawProc();
   bindSecs(root, k => { if (k === "planProc") drawProc(); });
   bindCardEditing($("#cardPrev"), (k, v) => {
-    if (k === "title") { ctx.name = (v === autoLotLabel(preview)) ? "" : v; planSerialFromName(ctx, "Core"); const f = $("#pName"); if (f) f.value = ctx.name; return; }
+    if (k === "title") { const _b = planTargetSerial(ctx); ctx.name = (v === autoLotLabel(preview)) ? "" : v; planSerialFromName(ctx, "Core"); const f = $("#pName"); if (f) f.value = ctx.name; if (planTargetSerial(ctx) !== _b) rr(); return; }
     ctx.cardEdits[k] = v;
   });
   $("#pCardReset").onclick = () => { ctx.cardEdits = {}; ctx.name = ""; renderPlannerCore(root, ctx); };
@@ -3775,7 +3831,7 @@ function renderPlannerCore(root, ctx) {
   /* events */
   const rr = () => renderPlannerCore(root, ctx);
   _solvWire.forEach(w => { const el = $("#" + w.id); if (!el) return;
-    const handler = () => { try { const step = ((_proto.steps && _proto.steps.core) || [])[w.bi]; if (!step || !step.bind || !step.bind.solv || !step.bind.solv[w.si]) return; let v = el.value; if (w.num) v = parseFloat(v); step.bind.solv[w.si][w.field] = v; persistProto(); rr(); } catch (e) {} };
+    const handler = () => { try { const step = ((_proto.steps && _proto.steps.core) || [])[w.bi]; if (!step || !step.bind || !step.bind.solv || !step.bind.solv[w.si]) return; let v = el.value; if (w.num) v = parseFloat(v); step.bind.solv[w.si][w.field] = v; if (!_protoOverride) persistProto(); rr(); } catch (e) {} };
     if (el.tagName === "SELECT") el.onchange = handler; else el.onchange = handler; });
   $("#pTgt").onchange = e => { ctx.tgtMmol = parseFloat(e.target.value) || 0; rr(); };
   $("#pName").onchange = e => { ctx.name = e.target.value.trim(); planSerialFromName(ctx, "Core"); rr(); };
@@ -3849,7 +3905,7 @@ function renderPlannerCore(root, ctx) {
   $("#pAddComp").onclick = () => { comps.push({ id: newCompId(), role: "dopant", el: "", coeff: 0, excess: 1 }); rr(); };
   $("#pReset").onclick = () => { if (!plannerDiscardOK()) return; state.plannerCtx = defaultPlannerCtx("core"); renderView(); };
   $("#pEditProto").onclick = openProtocolEditor;
-  $("#pPrint").onclick = () => printCards([coreCardHtml(preview, recipe)]);
+  $("#pPrint").onclick = () => printCards([coreCardHtml(Object.assign({}, preview, { name: ctx.name || "", serial: planTargetSerial(ctx), cardEdits: ctx.cardEdits }), recipe)]);
   $("#pSave").onclick = () => {
     if (!sumOk) { if (!confirm("Dopant 계수 합이 1이 아닙니다. 그대로 저장할까요?")) return; }
     else if (state._planCheck && state._planCheck.problem && !confirm(`검증에 문제가 있습니다 — ${state._planCheck.text}\n그대로 저장할까요?`)) return;
@@ -3875,7 +3931,11 @@ function renderPlannerCore(root, ctx) {
 function renderPlannerShell(root, ctx) {
   syncConstants();
   const R = APP_DATA.roles, S = state.db.settings;
-  const lots = Object.values(activeLots()).sort((a, b) => b.serial - a.serial);
+  /* 수정 중인 shell lot 자신과 그 후손은 source 후보에서 뺀다(순환 방지) */
+  const _desc = new Set();
+  if (ctx.editSerial !== null && ctx.editSerial !== undefined) { _desc.add(Number(ctx.editSerial)); let grew = true;
+    while (grew) { grew = false; for (const l of Object.values(activeLots())) if (l.src && _desc.has(Number(l.src.serial)) && !_desc.has(Number(l.serial))) { _desc.add(Number(l.serial)); grew = true; } } }
+  const lots = Object.values(activeLots()).filter(l => !_desc.has(Number(l.serial))).sort((a, b) => b.serial - a.serial);
   if (!ctx.src && lots.length) ctx.src = lots[0].serial;
   const srcLot = ctx.src ? lotOf(ctx.src) : null;
   const srcD = srcLot ? derivedOf(srcLot.serial) : null;
@@ -4059,7 +4119,7 @@ function renderPlannerShell(root, ctx) {
   if (secOpen("planProcS", false)) drawProcS();
   bindSecs(root, k => { if (k === "planProcS") drawProcS(); });
   bindCardEditing($("#cardPrevS"), (k, v) => {
-    if (k === "title") { ctx.name = (v === autoLotLabel(preview)) ? "" : v; planSerialFromName(ctx, "Shell"); const f = $("#sName"); if (f) f.value = ctx.name; return; }
+    if (k === "title") { const _b = planTargetSerial(ctx); ctx.name = (v === autoLotLabel(preview)) ? "" : v; planSerialFromName(ctx, "Shell"); const f = $("#sName"); if (f) f.value = ctx.name; if (planTargetSerial(ctx) !== _b) rr(); return; }
     ctx.cardEdits[k] = v;
   });
   bindCardEditing($("#cardPrevSol"), (k, v) => { (ctx.solCardEdits = ctx.solCardEdits || {})[k] = v; });
@@ -4155,7 +4215,7 @@ function renderPlannerShell(root, ctx) {
   $("#solPrint").onclick = () => printCards([shellSolutionCardHtml(lotFormula(preview) + " solution", sol, ctx.solCardEdits)]);
   $("#sReset").onclick = () => { if (!plannerDiscardOK()) return; state.plannerCtx = defaultPlannerCtx("shell"); renderView(); };
   $("#sEditProto").onclick = openProtocolEditor;
-  $("#sPrint").onclick = () => printCards([shellCardHtml(preview, calc, lotFormula(preview))]);
+  $("#sPrint").onclick = () => { const pv = Object.assign({}, preview, { name: ctx.name || "", serial: planTargetSerial(ctx), cardEdits: ctx.cardEdits }); printCards([shellCardHtml(pv, calc, lotFormula(pv))]); };
   $("#sSave").onclick = () => {
     if (state._planCheck && state._planCheck.problem && !confirm(`검증에 문제가 있습니다 — ${state._planCheck.text}\n그대로 저장할까요?`)) return;
     const serial = commitLotSave(ctx, { type: "Shell", date: ctx.date, stockVol: ctx.stockVol, tgtMmol: null,
@@ -4165,7 +4225,8 @@ function renderPlannerShell(root, ctx) {
         ({ role: c.role, el: c.el, coeff: c.coeff, excess: isNum(c.excess) ? c.excess : 1, prec: c.prec || "" })),
       solLnMmol: solLnActual, solVolMl: ctx.solVolMl, solTfaMmol: ctx.solTfaMmol, inj: ctx.inj.slice(),
       solPrecs: (ctx.solPrecs || []).map(r => ({ name: r.name, mmol: r.mmol, kind: r.kind || "solute" })),
-      cardEdits: ctx.cardEdits, solCardEdits: ctx.solCardEdits || {}, deleted: false });
+      cardEdits: ctx.cardEdits, solCardEdits: ctx.solCardEdits || {}, deleted: false,
+      solOaMl: S.shellSol.oaMl, solOdeMl: S.shellSol.odeMl, solMtohMl: S.shellSol.mtohMl });
     if (serial === null) return;
     toast(ctx.editSerial !== null && serial !== ctx.editSerial ? `Lot ${ctx.editSerial} → ${serial} 번호 변경·저장 완료` : `Lot ${serial} 저장 완료`, "ok");
     if (state.plannerDrafts) delete state.plannerDrafts.shell;
@@ -4282,11 +4343,9 @@ function guessRecipeForLot(lot) {
 }
 function planRecipeNoteHtml() {
   const c = state.plannerCtx; if (!c || c.editSerial === null || c.editSerial === undefined) return "";
-  if (c.recipeId) {
-    const r = recipeById(c.recipeId);
-    return `<span class="badge ${c.recipeGuess ? "warn" : "info"}" title="${c.recipeGuess ? "이 lot에는 레시피 기록이 없어, 성분·절차가 같은 레시피로 추정했습니다" : "이 lot을 만들 때 쓴 레시피 — 기록은 레시피와 분리되어 있어, 아래 값은 이 lot에 저장된 값입니다"}">Lot ${c.editSerial} 만들 때: ${esc(c.recipeName || (r && r.name) || "삭제된 레시피")}${c.recipeGuess ? " (추정)" : ""}</span>`;
-  }
-  return `<span class="badge gray" title="이 lot은 레시피 기록 없이 저장되었습니다(이전 버전). 수정 내용은 이 lot의 값 그대로입니다">Lot ${c.editSerial}: 레시피 기록 없음</span>`;
+  if (c.lotRecipeName) return `<span class="badge info" title="이 lot을 만들 때 쓴 레시피(저장 당시 이름) — 기록은 레시피와 분리되어 있습니다">Lot ${c.editSerial} 만들 때: ${esc(c.lotRecipeName)}</span>`;
+  if (c.recipeGuess && c.recipeId) { const r = recipeById(c.recipeId); return `<span class="badge warn" title="이 lot에는 레시피 기록이 없어, 성분·절차가 같은 레시피로 추정했습니다(저장해도 기록되지 않음)">Lot ${c.editSerial}: ${esc(r ? r.name : "?")} (추정)</span>`; }
+  return `<span class="badge gray" title="이 lot은 레시피 기록 없이 저장되었습니다(이전 버전)">Lot ${c.editSerial}: 레시피 기록 없음</span>`;
 }
 
 /* 레시피가 가리키는 프로토콜이 지워졌으면 레시피에 담긴 시약 정의로 되살린다 */
@@ -4319,10 +4378,9 @@ function applyRecipe(rec) {
     }
     state.plannerCtx = c2;
     const S2 = state.db.settings;
-    if (rec.protocolId && S2.protocols && S2.protocols[rec.protocolId]) { S2.activeProtocolId = rec.protocolId; }
     c2.proto = (rec.proto && rec.proto.steps) ? Object.assign(JSON.parse(JSON.stringify(rec.proto)), { srcId: rec.protocolId || "lab_naln", fromRecipe: rec.name || "", reagents: recipeReagents(rec) }) : null;
-    PLAN_RC.id = rec.id; saveSettings();
-    return;
+    PLAN_RC.id = rec.id;
+    return true;
   }
   const ctx = carryPlanIdentity(state.plannerCtx, defaultPlannerCtx("core"));
   ctx.tgtMmol = isNum(rec.tgtMmol) ? rec.tgtMmol : ctx.tgtMmol;
@@ -4342,10 +4400,9 @@ function applyRecipe(rec) {
   for (const k of ["oaPerMmol", "odeTotalSmall", "odeTotalLarge", "oamEq", "oamMw", "oamDens", "mtohPerMgF"])
     if (isNum(rg[k])) setPlanLocal(k, rg[k]);
   const S = state.db.settings;
-  if (rec.protocolId && S.protocols && S.protocols[rec.protocolId]) { S.activeProtocolId = rec.protocolId; saveSettings(); }
   ctx.proto = (rec.proto && rec.proto.steps) ? Object.assign(JSON.parse(JSON.stringify(rec.proto)), { srcId: rec.protocolId || "lab_naln", fromRecipe: rec.name || "", reagents: recipeReagents(rec) }) : null;
   PLAN_RC.id = rec.id;
-  saveSettings();
+  return true;
 }
 function recipeBarHtml(kind) {
   const S = state.db.settings, K = kind || "core";
@@ -4388,16 +4445,16 @@ function bindRecipeBar(rerender) {
   const S = state.db.settings;
   const store = recipeStore();
   const isLab = () => /^lab:/.test(PLAN_RC.id || "");
-  const cur = () => isLab() ? activeLabRecipes()[String(PLAN_RC.id).slice(4)] : store[PLAN_RC.id];
+  const cur = () => isLab() ? activeLabRecipes()[String(PLAN_RC.id).slice(4)] : activeRecipes()[PLAN_RC.id];   // 지운 레시피는 대상 아님
   const uniqName = nm => { const names = Object.values(activeRecipes()).map(x => x.name);
     let n = nm; while (names.includes(n)) n += " (2)"; return n; };
   $("#rcSel").onchange = e => {
     const id = e.target.value;
-    if (!id) { PLAN_RC.id = null; saveSettings(); return rerender(); }
-    const r = /^lab:/.test(id) ? activeLabRecipes()[id.slice(4)] : store[id];
-    if (!r) return;
-    applyRecipe(JSON.parse(JSON.stringify(r)));
-    PLAN_RC.id = id; saveSettings();          // applyRecipe가 rec.id로 덮으므로 뒤에서 다시 지정
+    if (!id) { PLAN_RC.id = null; return rerender(); }
+    const r = /^lab:/.test(id) ? activeLabRecipes()[id.slice(4)] : activeRecipes()[id];
+    if (!r) return rerender();
+    if (applyRecipe(JSON.parse(JSON.stringify(r))) !== true) return rerender();   // 취소·실패면 선택도 그대로
+    PLAN_RC.id = id;
     toast(`레시피 '${r.name}' 적용`, "ok");
     renderView();
   };
@@ -4434,7 +4491,7 @@ function bindRecipeBar(rerender) {
     const n = JSON.parse(JSON.stringify(c));
     n.id = "r" + Date.now().toString(36) + Math.floor(Math.random() * 1e4);
     n.name = uniqName(c.name);
-    delete n.owner; delete n.ownerName; delete n.srcId;
+    delete n.owner; delete n.ownerName; delete n.srcId; delete n.history;
     saveRecipe(n); PLAN_RC.id = n.id; saveSettings();
     toast(`'${n.name}'을(를) 내 레시피로 복사했습니다 — 이제 자유롭게 고칠 수 있습니다`, "ok");
     rerender();
@@ -4456,7 +4513,7 @@ function bindRecipeBar(rerender) {
   };
   $("#rcExport").onclick = () => {
     const c = cur();
-    const payload = c ? c : recipeFromPlanner(state.plannerCtx, "현재 계획");
+    const payload = c ? Object.assign({}, c, { history: undefined }) : recipeFromPlanner(state.plannerCtx, "현재 계획");
     downloadFile(`NanoLab_recipe_${(payload.name || "recipe").replace(/[^\w가-힣.-]+/g, "_")}.json`,
       JSON.stringify(payload, null, 1), "application/json");
     toast("레시피 파일을 내려받았습니다", "ok");
@@ -4474,9 +4531,9 @@ function bindRecipeBar(rerender) {
           if (!r || !Array.isArray(r.components)) continue;
           const id = "r" + Date.now().toString(36) + Math.floor(Math.random() * 1e4) + n;
           const rec = Object.assign({}, r, { id, name: uniqName(r.name || "가져온 레시피") });
-          delete rec.owner; delete rec.ownerName; delete rec.srcId; delete rec.deleted;
+          delete rec.owner; delete rec.ownerName; delete rec.srcId; delete rec.deleted; delete rec.history;
           recipeMissingPrecs(rec).forEach(x => missing.add(x));
-          saveRecipe(rec); PLAN_RC.id = id; n++;
+          saveRecipe(rec); n++;   // 가져오기만 — 지금 계획의 레시피 선택은 바꾸지 않는다
         }
         saveSettings();
         toast(n ? `레시피 ${n}개를 가져왔습니다` : "레시피를 찾지 못했습니다", n ? "ok" : "warn");
@@ -4649,6 +4706,7 @@ function mapCompositionToPlan(list) {
 }
 function finishWizard(ov) {
   const W = _wiz, list = W.parsed.list, map = mapCompositionToPlan(list);
+  const _prevCtx = state.plannerCtx;
   const ctx = carryPlanIdentity(state.plannerCtx, defaultPlannerCtx("core"));
   ctx.tgtMmol = W.tgtMmol;
   /* 성분표에 그대로 옮긴다 — 개수·역할 제한이 없으므로 조성을 있는 그대로 표현 */
@@ -4671,11 +4729,12 @@ function finishWizard(ov) {
   if (W.procFrom && state.db.settings.protocols && state.db.settings.protocols[W.procFrom]) {
     state.db.settings.activeProtocolId = W.procFrom;
     saveSettings();
-  }
+    ctx.proto = snapshotProcedures();
+  } else if (_prevCtx && _prevCtx.mode === "core" && _prevCtx.proto) ctx.proto = JSON.parse(JSON.stringify(_prevCtx.proto));   // '현재 절차' = 이 계획이 보던 절차
   if (W.saveRecipe) {
     const nm = (W.rcName || W.formula || "새 레시피").trim();
     const r = recipeFromPlanner(ctx, nm);
-    recipeStore()[r.id] = r; PLAN_RC.id = r.id; saveSettings();
+    saveRecipe(r); PLAN_RC.id = r.id;
   }
   _wiz = null; ov.remove();
   go("plan");
@@ -4721,6 +4780,7 @@ function editLotInPlanner(serial) {
   const lot = lotOf(serial);
   if (!lot) return;
   if (!plannerDiscardOK()) return;
+  state.plannerDrafts = {};
   const S = state.db.settings;
   if (lot.type === "Core") {
     const ctx = defaultPlannerCtx("core");
@@ -4756,13 +4816,16 @@ function editLotInPlanner(serial) {
     if (isNum(lot.naExcessUsed) && lot.naExcessUsed !== S.naExcess) (ctx.local = ctx.local || {}).naExcess = lot.naExcessUsed;
     if (isNum(lot.fExcessUsed) && lot.fExcessUsed !== (S.fExcess ?? 1)) (ctx.local = ctx.local || {}).fExcess = lot.fExcessUsed;
     ctx.proto = protoFromLot(lot);
-    ctx.recipeId = lot.recipeId || guessRecipeForLot(lot); ctx.recipeGuess = !lot.recipeId && !!ctx.recipeId; ctx.recipeName = lot.recipeName || "";
+    { const live = lot.recipeId && recipeById(lot.recipeId) ? lot.recipeId : null;
+      ctx.recipeId = live || (lot.recipeId ? null : guessRecipeForLot(lot)); ctx.recipeGuess = !live && !!ctx.recipeId;
+      ctx.lotRecipeName = lot.recipeName || ""; ctx.recipeName = lot.recipeName || ""; }
     state.plannerCtx = ctx;
   } else {
     const ctx = defaultPlannerCtx("shell");
     ctx.editSerial = lot.serial; ctx.src = lot.src ? lot.src.serial : null;
     ctx.protoIdAtLoad = S.activeProtocolId || null;
     ctx.volMl = lot.src ? lot.src.volMl : 1; ctx.radius = lot.radius; ctx.thick = lot.thick;
+    if (isNum(lot.oaMl)) ctx.oaMl = lot.oaMl; if (isNum(lot.odeMl)) ctx.odeMl = lot.odeMl;
     ctx.stockVol = lot.stockVol; ctx.date = lot.date; ctx.memo = lot.memo || "";
     ctx.heat = (typeof lot.heat === "number") ? lot.heat : null;
     ctx.cardEdits = Object.assign({}, lot.cardEdits || {});
@@ -4783,7 +4846,9 @@ function editLotInPlanner(serial) {
     if (Array.isArray(lot.solPrecs) && lot.solPrecs.length) ctx.solPrecs = lot.solPrecs.map(r => ({ name: r.name, mmol: r.mmol, kind: r.kind || "solute" }));
     if (lot.inj) ctx.inj = lot.inj.slice();
     ctx.proto = protoFromLot(lot);
-    ctx.recipeId = lot.recipeId || guessRecipeForLot(lot); ctx.recipeGuess = !lot.recipeId && !!ctx.recipeId; ctx.recipeName = lot.recipeName || "";
+    { const live = lot.recipeId && recipeById(lot.recipeId) ? lot.recipeId : null;
+      ctx.recipeId = live || (lot.recipeId ? null : guessRecipeForLot(lot)); ctx.recipeGuess = !live && !!ctx.recipeId;
+      ctx.lotRecipeName = lot.recipeName || ""; ctx.recipeName = lot.recipeName || ""; }
     state.plannerCtx = ctx;
   }
   go("plan");
@@ -5181,7 +5246,9 @@ function sampleComputed(ctx, s) {
     }
     if (vs.length >= 2) {
       const cv = s.vals[el][ctx.chosen[el]];
-      const ref = cv && cv.v !== null ? cv.v : vs[0].v;
+      const cvIn = cv && cv.v !== null && vs.some(x => Math.abs(x.wl - Number(ctx.chosen[el])) < 1e-6);
+      const ref = cvIn ? cv.v : vs.map(x => x.v).sort((a, b) => a - b)[Math.floor(vs.length / 2)];
+      if (!(ref > 0)) continue;
       const devs = vs.map(x => (x.v / ref - 1) * 100);
       lamAgree[el] = { n: vs.length, dev: Math.max(...devs.map(Math.abs)), list: vs };
     }
@@ -5199,7 +5266,8 @@ function sampleComputed(ctx, s) {
     const rv = icpReverse(entries, { stockMl: lot.stockVol, aliquotUl: ctx.prep.aliquotUl, finalMl: ctx.prep.finalMl, extra: effExtra });
     yields = rv.rows; totalMmol = rv.totalMmol;
     const tgtSum = entries.reduce((a, e) => a + (isNum(e.targetMmol) ? e.targetMmol : 0), 0);
-    if (tgtSum > 0 && isNum(totalMmol)) overallYield = totalMmol / tgtSum * 100;
+    const tgtMm = (rv.rows || []).filter(y => isNum(y.targetMmol) && y.targetMmol > 0 && isNum(y.mmol)).reduce((a, y) => a + y.mmol, 0);
+    if (tgtSum > 0) overallYield = tgtMm / tgtSum * 100;   // 목표가 있는 원소끼리만
     targetComp = {};
     const cs = lotCations(lot).filter(c => inc.includes(c.el));
     const csum = cs.reduce((a, c) => a + (c.coeff || 0), 0);
@@ -5371,12 +5439,13 @@ function renderImportWizard(root, ctx) {
 
 function saveImport(ctx) {
   let n = 0, superseded = 0;
-  const mergedSerials = new Set();
+  const mergedSerials = new Set(), _savedIds = new Set();
   if (ctx.merge) for (const m of oesMergeGroups(ctx)) {
     const r = oesMergedCompute(ctx, m);
     const lot = r.lot, serial = m.serial, type = lot ? lot.type : "";
     const icpLot = `${serial}${type === "Shell" ? "s" : "c"}`;
     const els = r.els.filter(el => r.per[el] && r.per[el].chosen);
+    if (!els.length) { toast(`${lotLabel(r.lot)}: 검정범위 안의 값이 없어 통합 기록을 만들지 않았습니다`, "warn"); continue; }
     const dils = [...new Set(els.map(el => r.per[el].chosen.D))];
     const worst = els.map(el => ({ el, rd: r.per[el].chosen })).filter(x => x.rd.st !== "ok").sort((a, b) => b.rd.rank - a.rd.rank)[0];
     const chosenWl = {}, ppmSel = {}, dilByEl = {};
@@ -5389,7 +5458,8 @@ function saveImport(ctx) {
       oor: worst ? { el: worst.el, val: excelRound(worst.rd.m, 4) } : null,
       values: els.map(el => [el, isNum(r.comp[el]) ? excelRound(r.comp[el], 6) : null]), vtype: "pct", chosenWl, ppm: ppmSel,
       prep: { stockMl: lot ? lot.stockVol : null, aliquotUl: ctx.prep.aliquotUl, finalMl: ctx.prep.finalMl, extra: 1, preDil: !!ctx.preDil, effExtra: 1, dilByEl, merged: true },
-      detail: r.yields ? { rows: r.yields } : null,
+      detail: { rows: (r.yields || els.map(el => ({ el, ppm: r.per[el].chosen.u, stockConc: null, stockMg: null, mmol: null, atPct: r.comp[el] ?? null, targetMmol: null, yieldPct: null })))
+        .filter(y => els.includes(y.el)).map(y => Object.assign({}, y, { dil: r.per[y.el].chosen.D, status: r.per[y.el].chosen.st })) },
       totalMmol: r.totalMmol, overallYield: r.overallYield,
       file: ctx.file, labels: m.members.map(x => x.label), legacy: false, deleted: false,
     });
@@ -5402,7 +5472,8 @@ function saveImport(ctx) {
     const lot = c.lot;
     const type = lot ? lot.type : "";
     const suffix = s.extra > 1 ? (s.extra === 20 ? "_20k" : s.extra === 10 ? "_10k" : `_${s.extra}x`) : "";
-    const icpLot = serial !== null ? `${serial}${type === "Shell" ? "s" : "c"}${suffix}` : `${s.label}`;
+    let icpLot = serial !== null ? `${serial}${type === "Shell" ? "s" : "c"}${suffix}` : fsId(s.label);
+    { const b0 = icpLot; let k = 2; while (_savedIds.has(`${icpLot}@${ctx.date}`)) icpLot = `${b0}_${k++}`; _savedIds.add(`${icpLot}@${ctx.date}`); }
     const values = c.inc.map(el => [el, c.comp[el] !== undefined ? excelRound(c.comp[el], 6) : null]);
     const chosenWl = {}; c.inc.forEach(el => chosenWl[el] = ctx.chosen[el]);
     const ppmSel = {}; c.inc.forEach(el => ppmSel[el] = c.ppm[el]);
@@ -5767,6 +5838,7 @@ function msOffsetSd(ctx, k) {
 function msJudge(ctx, k, c, rsd) {
   const ci = ctx.cal[k];
   if (!isNum(c)) return { st: "na", label: "값 없음", rank: 9 };
+  if (c <= 0) return { st: "lod", label: "0 이하 — 검출되지 않음", rank: 4 };
   if (ci.stdMax !== null && c > ci.stdMax * 1.05) return { st: "high", label: `검정 상한(${fmtG(ci.stdMax, 4)} ppb) 초과`, rank: 3 };
   if (ci.lod !== null && c < ci.lod) return { st: "lod", label: `검출한계(LoD ${fmtG(ci.lod, 3)} ppb) 미만 — 정량 불가`, rank: 4 };
   if (ci.loq !== null && c < ci.loq) return { st: "loq", label: `정량한계(LoQ ${fmtG(ci.loq, 3)} ppb) 미만 — 반정량`, rank: 2 };
@@ -5837,7 +5909,7 @@ function msCompute(ctx) {
       const userIdx = ctx.dilPick[`${g.key}|${el}`];
       const chosen = (userIdx !== undefined && reads.find(r => r.label === userIdx)) || pick;
       /* 희석 간 일치도: 둘 다 LoQ 이상·상한 이하인 판독끼리 */
-      const goods = reads.filter(r => ["ok", "low", "rsd"].includes(r.j.st));
+      const goods = reads.filter(r => ["ok", "low", "rsd"].includes(r.j.st) && r.u > 0);
       let agree = null;
       if (goods.length >= 2) {
         const us = goods.map(r => r.u); const mn = Math.min(...us), mx = Math.max(...us);
@@ -5866,7 +5938,7 @@ function msCompute(ctx) {
       const csum = cs.reduce((a, c) => a + (c.coeff || 0), 0);
       if (csum > 0) { targetComp = {}; cs.forEach(c => targetComp[c.el] = (c.coeff || 0) / csum * 100); }
       if (d && isNum(d.AB) && isNum(lot.stockVol)) {
-        yields = []; totalMmol = 0; let tgt = 0;
+        yields = []; totalMmol = 0; let tgt = 0, tgtMm = 0;
         for (const el of els) {
           const p = per[el]; const aw = Materials.awICP(el); const co = cs.find(c => c.el === el);
           const targetMmol = co && isNum(co.coeff) ? d.AB * co.coeff : null;
@@ -5874,11 +5946,11 @@ function msCompute(ctx) {
           const stockConc = Math.max(p.chosen.u, 0) / 1000;          // mg/L
           const stockMg = stockConc * lot.stockVol / 1000;
           const mmol = stockMg / aw;
-          totalMmol += mmol; if (isNum(targetMmol)) tgt += targetMmol;
+          totalMmol += mmol; if (isNum(targetMmol) && targetMmol > 0) { tgt += targetMmol; tgtMm += mmol; }
           yields.push({ el, ppm: p.chosen.c / 1000, ppb: p.chosen.c, stockConc, stockMg, mmol, atPct: comp[el] ?? null, targetMmol,
             yieldPct: isNum(targetMmol) && targetMmol > 0 ? mmol / targetMmol * 100 : null, iso: p.k, dil: p.chosen.D, status: p.chosen.j.st });
         }
-        overallYield = tgt > 0 ? totalMmol / tgt * 100 : null;
+        overallYield = tgt > 0 ? tgtMm / tgt * 100 : null;
       }
     }
     /* 간섭: 조성 몰비(목표 조성이 있으면 그것 — 미측정 원소(Na 등) 포함) */
@@ -5934,7 +6006,7 @@ function msBuildCtx(model, fileName) {
   });
   const ctx = { file: fileName, model, cal, samples, isoChosen, elsMeasured, baseMode: "auto", offManual: {},
     dilPick: {}, f: Object.assign({}, M.f), date: "", showAll: false };
-  const dm = String(fileName || "").match(/(\d{6})/);
+  const dm = (String(fileName || "").match(/(?:^|[^\d])(?:20)?(\d{6})(?![\d])/) || null);
   if (dm) ctx.date = dm[1];
   else {
     const t = (model.started || (model.analyses[0] || {}).started || "").match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
@@ -6034,7 +6106,7 @@ function aoaHasSolutionLabel(aoa) {
 }
 function startOesFromAoa(aoa, name) {
   const parsed = parseIcpAoa(aoa);
-  const dm = String(name).match(/(\d{6})/);
+  const dm = (String(name).match(/(?:^|[^\d])(?:20)?(\d{6})(?![\d])/) || null);
   const P = state.db.settings.icpPrep;
   const samples = parsed.rows.filter(r => r.kind === "sample").map(r => ({
     label: r.label, serial: r.serialGuess, extra: r.extraGuess, include: true, vals: r.vals, elsInclude: null }));
@@ -6348,8 +6420,9 @@ function saveMs(ctx, res) {
   for (const r of res) {
     const lot = r.lot, serial = r.g.serial;
     const type = lot ? lot.type : "";
-    const icpLot = serial !== null ? `${serial}${type === "Shell" ? "s" : "c"}_MS` : r.g.members[0].label;
+    const icpLot = serial !== null ? `${serial}${type === "Shell" ? "s" : "c"}_MS` : fsId(r.g.members[0].label);
     const els = r.els.filter(el => r.per[el] && r.per[el].chosen);
+    if (!els.length) { toast(`${r.lot ? lotLabel(r.lot) : r.g.members[0].label}: 쓸 수 있는 원소 값이 없어 저장하지 않았습니다`, "warn"); continue; }
     const dils = [...new Set(els.map(el => r.per[el].chosen.D))];
     const dilLabel = dils.length === 1 ? `×1/${msFmtDil(dils[0])}` : "×1/" + dils.map(D => `${msFmtDil(D)}(${els.filter(el => r.per[el].chosen.D === D).join("·")})`).join(", ");
     const worstEl = els.map(el => ({ el, j: r.per[el].chosen.j, c: r.per[el].chosen.c })).filter(x => x.j.st !== "ok").sort((a, b) => b.j.rank - a.j.rank)[0];
@@ -6443,7 +6516,8 @@ function oesMergedCompute(ctx, m) {
       const rv = icpReverse(entries, { stockMl: lot.stockVol, aliquotUl: ctx.prep.aliquotUl, finalMl: ctx.prep.finalMl, extra: 1 });
       yields = rv.rows; totalMmol = rv.totalMmol;
       const tg = entries.reduce((a, e) => a + (isNum(e.targetMmol) ? e.targetMmol : 0), 0);
-      if (tg > 0) overallYield = totalMmol / tg * 100;
+      const tgtMm = rv.rows.filter(y => isNum(y.targetMmol) && y.targetMmol > 0 && isNum(y.mmol)).reduce((a, y) => a + y.mmol, 0);
+      if (tg > 0) overallYield = tgtMm / tg * 100;
     }
   }
   return { lot, d, els, per, comp, targetComp, yields, totalMmol, overallYield };
@@ -6701,7 +6775,7 @@ const Sync = (() => {
       const r = fsDecode(setSnap.data());
       if ((r.updatedAt || 0) > (state.db.settings.updatedAt || 0)) {
         const fbKeep = state.db.settings.firebase;
-        state.db.settings = Object.assign(defaultSettings(), r); state.db.settings.firebase = fbKeep;
+        state.db.settings = Object.assign(defaultSettings(), r); state.db.settings.firebase = fbKeep; pulled++;
       }
     }
     await syncRefData();
@@ -6718,7 +6792,7 @@ const Sync = (() => {
       const entries = Object.values(items);
       for (let i = 0; i < entries.length; i += 400) {
         const batch = fb.db.batch();
-        for (const it of entries.slice(i, i + 400)) batch.set(col(name).doc(String(it[key])), sanitize(it));
+        for (const it of entries.slice(i, i + 400)) batch.set(col(name).doc(fsId(it[key])), sanitize(it));
         await batch.commit();
       }
     };
@@ -6753,7 +6827,7 @@ const Sync = (() => {
         const r = fsDecode(ch.doc.data()); const cur = state.db.lots[r.serial];
         if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0)) { state.db.lots[r.serial] = r; changed++; }
       });
-      if (changed) { state.derived = null; saveDb(); render(); }
+      if (changed) { state.derived = null; saveDb(); renderUnlessPlanning(); }
     }, e => setStatus("err", friendly(e))));
     unsubs.push(col("icp").onSnapshot(snap => {
       let changed = 0;
@@ -6761,7 +6835,7 @@ const Sync = (() => {
         const r = fsDecode(ch.doc.data()); const cur = state.db.icp[r.id];
         if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0)) { state.db.icp[r.id] = r; changed++; }
       });
-      if (changed) { saveDb(); render(); }
+      if (changed) { saveDb(); renderUnlessPlanning(); }
     }, e => setStatus("err", friendly(e))));
     unsubs.push(col("recipes").onSnapshot(snap => {
       let changed = 0;
@@ -6769,7 +6843,7 @@ const Sync = (() => {
         const r = fsDecode(ch.doc.data()); const cur = recipeStore()[r.id];
         if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0)) { if (cur && cur.proto && !r.proto && !r.deleted) r.proto = cur.proto; if (cur && cur.history && !r.history) r.history = cur.history; recipeStore()[r.id] = r; changed++; }
       });
-      if (changed) { saveDb(); render(); }
+      if (changed) { saveDb(); renderUnlessPlanning(); }
     }, e => setStatus("err", friendly(e))));
     subscribeLab();
   }
@@ -6798,7 +6872,7 @@ const Sync = (() => {
         const r = fsDecode(ch.doc.data()); const cur = labRecipeStore()[r.id];
         if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0)) { labRecipeStore()[r.id] = r; changed++; }
       });
-      if (changed) { saveDb(); render(); }
+      if (changed) { saveDb(); renderUnlessPlanning(); }
     }, e => {
       state.sync.labErr = (String(e && e.code || "").includes("permission"))
         ? `랩 '${labId()}'의 멤버로 등록되어 있지 않습니다 (Firebase 콘솔에서 UID 등록 필요)`
@@ -6819,6 +6893,7 @@ const Sync = (() => {
       id, srcId: rec.id, owner: fb.user.uid,
       ownerName: state.db.settings.firebase.email || fb.user.email || "",
       updatedAt: Date.now(), deleted: false });
+    delete doc.history;   // 개인 버전 기록은 랩에 올리지 않는다
     await c.doc(id).set(sanitize(doc));
     labRecipeStore()[id] = doc; saveDb();
   }
@@ -6837,9 +6912,9 @@ const Sync = (() => {
       try {
         const batch = fb.db.batch();
         let n = 0;
-        for (const s of state.dirty.lots) { const it = state.db.lots[s]; if (it) { batch.set(col("lots").doc(String(s)), sanitize(it)); n++; } }
-        for (const id of state.dirty.icp) { const it = state.db.icp[id]; if (it) { batch.set(col("icp").doc(id), sanitize(it)); n++; } }
-        for (const id of state.dirty.recipes) { const it = recipeStore()[id]; if (it) { batch.set(col("recipes").doc(id), sanitize(it)); n++; } }
+        for (const s of state.dirty.lots) { const it = state.db.lots[s]; if (it) { batch.set(col("lots").doc(fsId(s)), sanitize(it)); n++; } }
+        for (const id of state.dirty.icp) { const it = state.db.icp[id]; if (it) { batch.set(col("icp").doc(fsId(id)), sanitize(it)); n++; } }
+        for (const id of state.dirty.recipes) { const it = recipeStore()[id]; if (it) { batch.set(col("recipes").doc(fsId(id)), sanitize(it)); n++; } }
         if (state.dirty.settings) { batch.set(metaDoc("settings"), sanitize(state.db.settings)); n++; }
         if (n) await batch.commit();
         if (state.dirty.refData) {          // 물질 DB·파라미터 수정 → 클라우드 기준 DB 갱신
@@ -7097,6 +7172,8 @@ function fmtSci(x, digits = 2) {
 /* ---------------- router ---------------- */
 const VIEWS = [["dash", "대시보드"], ["plan", "합성 계획"], ["log", "합성 기록"], ["icp", "ICP 분석"], ["icpdb", "ICP 기록"], ["set", "설정·백업"]];
 function go(v) { state.view = v; try { syncConstants(); } catch (e) {} render(); }
+/* AUDIT-1013 */
+function renderUnlessPlanning() { if (state.view === "plan") return; render(); }   // 계획 작성 중엔 원격 변경으로 화면을 다시 그리지 않음
 function render() {
   _protoOverride = null;
   const nav = $("#nav");
@@ -7203,8 +7280,8 @@ function renderDash(root) {
     </div></div>` : ""}
   <div class="tiles">
     <div class="tile accent"><div class="v">${lots.length}</div><div class="k">총 Lot</div><div class="s">Core ${cores} · Shell ${shells}</div></div>
-    <div class="tile"><div class="v">${icp.length}</div><div class="k">ICP 분석 기록</div><div class="s">분석된 lot ${icpDone.size}개</div></div>
-    <div class="tile ${pending.length ? "warn" : ""}"><div class="v">${lots.length - icpDone.size}</div><div class="k">ICP 미분석 lot</div><div class="s">아래 목록 참조</div></div>
+    <div class="tile"><div class="v">${icp.length}</div><div class="k">ICP 분석 기록</div><div class="s">분석된 lot ${lots.length - lots.filter(l => !icpDone.has(Number(l.serial))).length}개</div></div>
+    <div class="tile ${pending.length ? "warn" : ""}"><div class="v">${lots.filter(l => !icpDone.has(Number(l.serial))).length}</div><div class="k">ICP 미분석 lot</div><div class="s">아래 목록 참조</div></div>
     <div class="tile"><div class="v">${lots.length ? "#" + Math.max(...lots.map(l => l.serial)) : "–"}</div><div class="k">최근 Serial</div><div class="s">다음 번호 ${nextSerial()}</div></div>
     <div class="tile ${age > state.db.settings.backupReminderDays ? "warn" : ""}"><div class="v">${age === Infinity ? "–" : Math.floor(age) + "d"}</div><div class="k">마지막 백업</div><div class="s">${age === Infinity ? "아직 백업 안 함" : ""}</div></div>
   </div>
@@ -7344,7 +7421,7 @@ function renderLog(root) {
   root.querySelectorAll("[data-open]").forEach(el => el.onclick = () => openLotDrawer(Number(el.dataset.open)));
   root.querySelectorAll("[data-card]").forEach(b => b.onclick = () => openCardModal(Number(b.dataset.card)));
   root.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => editLotInPlanner(Number(b.dataset.edit)));
-  root.querySelectorAll("[data-del]").forEach(b => b.onclick = ev => { ev.stopPropagation(); armDeleteLot(b, Number(b.dataset.del), () => renderLog(root)); });
+  root.querySelectorAll("[data-del]").forEach(b => b.onclick = ev => { ev.stopPropagation(); armDeleteLot(b, Number(b.dataset.del), () => renderView()); });
 }
 
 /* lot detail drawer */
@@ -7369,7 +7446,7 @@ function openLotDrawer(serial) {
         <dt>합성일</dt><dd>${esc(lot.date)}</dd>
         <dt>Stock</dt><dd>${fmtN(d.D, 4)} mmol / ${fmtN(lot.stockVol, 1)} mL <span class="muted" title="core-trace: 입자 계보 추적량 (코어 합성 시점 양이온 mmol 기준 — 실제 입자수 아님)">(core-trace 농도 ${fmtN(d.F, 5)} mmol/mL)</span></dd>
         <dt>잔량 추정</dt><dd>${fmtN(remain, 2)} mL ${kids.length ? `(자식 lot ${kids.length}개 사용분 반영)` : ""}</dd>
-        ${lot.type === "Shell" ? `<dt>Source</dt><dd>lot ${lot.src.serial}에서 ${fmtN(lot.src.volMl, 1)} mL <span class="muted" title="투입한 core 입자의 core-trace 양">(core-trace ${fmtN(d.I, 4)} mmol)</span></dd>
+        ${lot.type === "Shell" && lot.src ? `<dt>Source</dt><dd>lot ${lot.src.serial}에서 ${fmtN(lot.src.volMl, 1)} mL <span class="muted" title="투입한 core 입자의 core-trace 양">(core-trace ${fmtN(d.I, 4)} mmol)</span></dd>
         <dt>r + t</dt><dd>${fmtN(lot.radius, 2)} + ${fmtN(lot.thick, 2)} nm (V=${fmtN(d.L, 1)} nm³)</dd>
         <dt>Shell precursor</dt><dd>${fmtN(d.M, 4)} mmol</dd>` : `<dt>Target</dt><dd>${fmtN(lot.tgtMmol, 3)} mmol</dd>`}
         <dt>물질량 총합</dt><dd><b>${fmtN(d.AB, 5)}</b> mmol</dd>
@@ -7390,7 +7467,7 @@ function openLotDrawer(serial) {
         <dt>열처리</dt><dd>${typeof lot.heat === "number" ? fmtN(lot.heat, 0) + " min" : "–"}</dd>
         <dt>Group (자동)</dt><dd>${esc(lotGroup(serial, activeLots()) || "–")}</dd>
         <dt>메모</dt><dd>${esc(lot.memo || "–")}</dd>
-        <dt>절차</dt><dd>${lotProcBadge(lot)}${lot.recipeName ? ` <span class="badge info" title="저장 당시 이름 — 기록은 레시피와 분리되어 있어 레시피를 고치거나 지워도 이 lot은 바뀌지 않습니다">만들 때 레시피: ${esc(lot.recipeName)}</span>` : ""}</dd>
+        <dt>절차</dt><dd>${lotProcBadge(lot)}</dd>
       </dl></div>
       <div><h4 style="margin-bottom:6px">ICP 기록 (${icps.length})</h4>
         ${icps.length ? icps.map(r => `<div class="note icpnote" style="margin-bottom:6px;cursor:pointer" data-openicp="${esc(r.id)}" title="ICP 기록 상세"><b>${esc(r.icpLot)}</b> · ${esc(r.date)} · ${esc(icpDilText(r))}${r.method === "ICP-MS" ? " · MS" : ""}
@@ -7466,7 +7543,7 @@ const icpDbCtx = { q: "" };
 /* 수율 정보: 새 기록은 저장값, 구(舊) ppm 기록은 lot 조건으로 자동 추정 */
 function recordYieldInfo(rec) {
   if (rec.overallYield !== undefined && rec.overallYield !== null)
-    return { overall: rec.overallYield, perEl: (rec.detail && rec.detail.rows || []).filter(r => r.yieldPct !== null).map(r => ({ el: r.el, y: r.yieldPct })), est: false };
+    return { overall: rec.overallYield, perEl: (rec.detail && rec.detail.rows || []).filter(r => r.yieldPct != null).map(r => ({ el: r.el, y: r.yieldPct })), est: false };
   if (rec.vtype !== "ppm" || rec.serial === null || rec.serial === undefined) return null;
   const lot = lotOf(rec.serial);
   const d = lot ? derivedOf(lot.serial) : null;
@@ -7481,7 +7558,7 @@ function recordYieldInfo(rec) {
   const tgtSum = entries.reduce((a, e) => a + (isNum(e.targetMmol) ? e.targetMmol : 0), 0);
   if (!(tgtSum > 0) || !isNum(rv.totalMmol) || rv.totalMmol <= 0) return null;
   return { overall: rv.totalMmol / tgtSum * 100,
-    perEl: rv.rows.filter(r => r.yieldPct !== null).map(r => ({ el: r.el, y: r.yieldPct })), est: true };
+    perEl: rv.rows.filter(r => r.yieldPct != null).map(r => ({ el: r.el, y: r.yieldPct })), est: true };
 }
 function renderIcpDb(root) {
   const recs = activeIcp().sort((a, b) => (b.serial - a.serial) || String(b.icpLot).localeCompare(String(a.icpLot)));
@@ -7532,7 +7609,7 @@ function renderIcpDb(root) {
   root.querySelectorAll("[data-detail]").forEach(b => b.onclick = () => openIcpDrawer(b.dataset.detail));
   root.querySelectorAll("[data-idel]").forEach(b => b.onclick = () => {
     armBtn(b, "한 번 더", () => { const id = b.dataset.idel; deleteIcp(id); renderIcpDb(root);
-      undoToast("ICP 기록 삭제됨", () => { const r = state.db.icp[id]; if (r) { r.deleted = false; r.updatedAt = Date.now(); state.dirty.icp.add(id); saveDb(); Sync.push(); } renderIcpDb(root); }); });
+      undoToast("ICP 기록 삭제됨", () => { const r = state.db.icp[id]; if (r) { r.deleted = false; r.updatedAt = Date.now(); state.dirty.icp.add(id); saveDb(); Sync.push(); } renderView(); }); });
   });
 }
 function openIcpDrawer(id) {
@@ -7543,7 +7620,7 @@ function openIcpDrawer(id) {
     <td><b>${d.el}</b></td><td class="num mono">${r.chosenIso && r.chosenIso[d.el] ? esc(r.chosenIso[d.el]) : r.chosenWl && r.chosenWl[d.el] ? Number(r.chosenWl[d.el]).toFixed(3) : "–"}</td>
     <td class="num">${r.method === "ICP-MS" && isNum(d.ppb) ? fmtN(d.ppb, 4) + " ppb" : fmtN(d.ppm, 4)}${d.dil ? `<div class="muted" style="font-size:10px">×1/${esc(msFmtDil(d.dil))}${d.status && d.status !== "ok" ? " · " + esc(MS_ST_KO[d.status] || d.status) : ""}</div>` : ""}</td><td class="num">${fmtN(d.stockConc)}</td><td class="num">${fmtN(d.stockMg)}</td>
     <td class="num">${fmtN(d.mmol)}</td><td class="num"><b>${fmtN(d.atPct, 2)}</b>${isNum(d.atSd2) ? `<span class="muted"> ±${fmtN(d.atSd2, 2)}</span>` : ""}</td>
-    <td class="num">${fmtN(d.targetMmol)}</td><td class="num">${d.yieldPct !== null ? fmtN(d.yieldPct, 1) + "%" : "–"}</td></tr>`).join("");
+    <td class="num">${fmtN(d.targetMmol)}</td><td class="num">${d.yieldPct != null ? fmtN(d.yieldPct, 1) + "%" : "–"}</td></tr>`).join("");
   const ov = h(`<div class="overlay"><div class="drawer">
     <button class="closex">✕</button>
     <h2>ICP ${esc(r.icpLot)} <span class="muted">${esc(r.date)}</span> ${r.legacy ? `<span class="badge gray">구 로그북 이관</span>` : ""}</h2>
@@ -7553,7 +7630,7 @@ function openIcpDrawer(id) {
       <dt>총 희석</dt><dd>${esc(icpDilText(r))}</dd>
       <dt>Elements</dt><dd>${esc((r.elements || []).join(", "))}</dd>
       <dt>Out of Range</dt><dd>${r.oor ? `${esc(r.oor.el)} = ${esc(String(r.oor.val))}` : "없음"}</dd>
-      ${r.method === "ICP-MS" && r.prep ? `<dt>조건</dt><dd>stock ${fmtN(r.prep.stockMl, 1)} mL · 원소별 희석 ${esc(icpDilText(r))} · 바탕선 보정 ${r.prep.baseline ? "자동/수동 적용" : "끔"}</dd>` : ""}${r.prep && r.method !== "ICP-MS" ? `<dt>조건</dt><dd>stock ${fmtN(r.prep.stockMl, 1)} mL · aliquot ${fmtN(r.prep.aliquotUl, 0)} μL → ${fmtN(r.prep.finalMl, 0)} mL · 추가희석 ×${fmtN(r.prep.extra, 0)}${r.prep.preDil ? ` <span class="badge info" title="장비에 희석배율 사전입력 — 결과값에 이미 반영되어 계산에는 ×1 적용">사전입력</span>` : ""}</dd>` : ""}
+      ${r.method === "ICP-MS" && r.prep ? `<dt>조건</dt><dd>stock ${fmtN(r.prep.stockMl, 1)} mL · 원소별 희석 ${esc(icpDilText(r))} · 바탕선 보정 ${(r.prep.baseline && Object.values(r.prep.baseline).some(v => v)) ? "적용" : "없음"}</dd>` : ""}${r.prep && r.method !== "ICP-MS" ? `<dt>조건</dt><dd>stock ${fmtN(r.prep.stockMl, 1)} mL · aliquot ${fmtN(r.prep.aliquotUl, 0)} μL → ${fmtN(r.prep.finalMl, 0)} mL · ${r.prep.merged ? "원소별 희석 " + esc(icpDilText(r)) : "추가희석 ×" + fmtN(r.prep.extra, 0)}${r.prep.preDil ? ` <span class="badge info" title="장비에 희석배율 사전입력 — 결과값에 이미 반영되어 계산에는 ×1 적용">사전입력</span>` : ""}</dd>` : ""}
       ${r.file ? `<dt>파일</dt><dd class="mono">${esc(r.file)}</dd>` : ""}
       ${r.totalMmol ? `<dt>측정 총량</dt><dd>${fmtN(r.totalMmol)} mmol</dd>` : ""}
       ${(() => { const y = recordYieldInfo(r); return y ? `<dt>수율</dt><dd><b>${fmtN(y.overall, 1)}%</b>${y.est ? ` <span class="muted">(구 기록 ppm 기반 자동 추정)</span>` : ""}${y.perEl.length ? " · " + y.perEl.map(p => `${p.el} ${fmtN(p.y, 0)}%`).join(" · ") : ""}</dd>` : ""; })()}
@@ -7610,7 +7687,7 @@ function renderProtocolPanel(root){
   ctrl.append(document.createTextNode("활성: "), sel, addNew);
   if(!isDefault){
     const nmI=document.createElement("input"); nmI.type="text"; nmI.value=proto.name||""; nmI.placeholder="프로토콜 이름"; nmI.title="프로토콜 이름"; nmI.style.cssText="padding:4px 8px;border:1px solid var(--line2);border-radius:6px;font-size:12px;min-width:150px";
-    nmI.onchange=()=>{ const v=nmI.value.trim(); if(v){ proto.name=v; persistProto(); render(); } };
+    nmI.onchange=()=>{ const v=nmI.value.trim(); if(v){ (store[activeId]||proto).name=v; persistProto(); render(); } };
     ctrl.append(document.createTextNode("이름:"), nmI);
     if(activeId===defId){
       const tag=document.createElement("span"); tag.style.cssText="font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:3px 8px;border-radius:6px"; tag.textContent="★ 기본값";
@@ -7714,7 +7791,7 @@ function renderProcedurePanel(root, opts){
     ? "블록을 <b>클릭</b>하면 왼쪽에서 상세값을 고치고, <b>드래그</b>로 배치·<b>모서리 손잡이</b>로 크기를 바꿉니다. <b>Ctrl+C / Ctrl+D / Ctrl+V</b>로 복사·복제·붙여넣기 (그룹 간 이동 가능)."
     : "오른쪽 <b>카드(출력 영역)</b>에서 블록을 <b>드래그</b>해 원하는 칸에 자유 배치(<b>빈칸 허용</b>)하고 <b>모서리 손잡이</b>를 끌어 가로 1~3칸·세로 1~6칸를 조절합니다. 블록을 <b>클릭</b>하면 왼쪽에 상세 입력칸이 나타나고, <b>카드 밖으로</b> 드래그하면 삭제됩니다.<br>블록 <b>복사·복제·붙여넣기</b>는 왼쪽 상세창의 버튼 또는 <b>Ctrl+C / Ctrl+D / Ctrl+V</b> — 복사한 블록은 Core·Shell·용액 조제 사이에서도 붙여넣을 수 있습니다.";
   card.appendChild(nt);
-  if(!opts.inline){ const apid=S.activeProtocolId; const apName=(apid&&apid!=="lab_naln"&&S.protocols&&S.protocols[apid])?S.protocols[apid].name:"기본값"; const apLine=document.createElement("div"); apLine.style.cssText="font-size:12px;margin:2px 0 9px;padding:6px 10px;background:var(--chip);border-radius:6px;color:var(--ink2)"; apLine.innerHTML="편집 대상 프로토콜: <b>"+esc(apName)+"</b>"+((apid&&apid!=="lab_naln")?" <span style=\"color:var(--muted)\">— 이 프로토콜 전용 절차</span>":" <span style=\"color:var(--muted)\">— 전역. 상단 \u2018화학물질 개요\u2019에서 + 새 프로토콜을 만들면 전용 절차가 됩니다.</span>"); card.appendChild(apLine); }
+  if(!opts.inline){ const apid=S.activeProtocolId; const apName=(apid&&apid!=="lab_naln"&&S.protocols&&S.protocols[apid])?S.protocols[apid].name:"기본값"; const apLine=document.createElement("div"); apLine.style.cssText="font-size:12px;margin:2px 0 9px;padding:6px 10px;background:var(--chip);border-radius:6px;color:var(--ink2)"; apLine.innerHTML=(_protoOverride && state.view==="plan") ? "편집 대상: <b>이 계획의 절차</b> <span style=\"color:var(--muted)\">— 여기서 고친 내용은 이 계획(과 [저장]한 레시피·lot)에만 반영됩니다. 프로토콜 원본은 바뀌지 않습니다.</span>" : "편집 대상 프로토콜: <b>"+esc(apName)+"</b>"+((apid&&apid!=="lab_naln")?" <span style=\"color:var(--muted)\">— 이 프로토콜 전용 절차</span>":" <span style=\"color:var(--muted)\">— 전역. 상단 \u2018화학물질 개요\u2019에서 + 새 프로토콜을 만들면 전용 절차가 됩니다.</span>"); card.appendChild(apLine); }
   const tabs=document.createElement("div"); tabs.className="row"; tabs.style.cssText="gap:6px;flex-wrap:wrap;margin-bottom:8px"; card.appendChild(tabs);
   const split=document.createElement("div"); split.style.cssText="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap"; card.appendChild(split);
   const leftP=document.createElement("div"); leftP.style.cssText="flex:0 0 236px;max-width:236px;min-width:206px"; split.appendChild(leftP);
@@ -7723,7 +7800,7 @@ function renderProcedurePanel(root, opts){
   const canvasWrap=document.createElement("div"); rightP.appendChild(canvasWrap);
   function mods(){ const s=protoSteps(group,true); if(s) return s; return globalMods(group); }
   function persist(){
-    try{ state.dirty.settings=true; saveDb(); if(typeof Sync!=="undefined"&&Sync.push) Sync.push(); }catch(e){}
+    if(!_protoOverride){ try{ state.dirty.settings=true; saveDb(); if(typeof Sync!=="undefined"&&Sync.push) Sync.push(); }catch(e){} }
     if(opts.onChange){ try{ opts.onChange(); }catch(e){} }
   }
   function selMod(){ return mods().filter(m=>m.id===selId)[0]||null; }
