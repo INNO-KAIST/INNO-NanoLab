@@ -654,7 +654,7 @@ body{word-break:keep-all}
 <div id="app">
   <div id="mainUI">
     <div class="topbar">
-      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.4.8 · deploy</span></div>
+      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.4.9 · deploy</span></div>
       <div class="spacer"></div>
       <button class="chipbtn" id="chipBackup" title="클릭하여 즉시 백업"><span class="dot"></span>백업</button>
       <button class="chipbtn" id="chipSync" title="동기화 설정으로 이동"><span class="dot"></span>로컬 저장</button>
@@ -3091,7 +3091,8 @@ function coreCardHtml(lot, recipe) {
     const kind = (r.role === "anion") ? "cF" : (["Na","Li","K"].includes(r.el) ? "cNa" : "cLn");
     return `<tr><td class="nm"><span class="c2dot ${kind}"></span>${ced(ov, "prec"+i+".n", esc(r.prec || r.el), "cin")}</td><td class="r">${ced(ov, "prec"+i+".mmol", fmtFix(r.precMmol, 3), "cin")}</td><td class="r"><b>${ced(ov, "prec"+i+".mg", fmtFix(r.wprecMg, 2), "cin")}</b></td></tr>`;
   }).join("");
-  const rgRows = (proto.reagents || []).filter(rg => rgVals[rg.id] !== 0).map(rg => {
+  const _anyRg = Object.values(rgVals).some(v => v != null);
+  const rgRows = (proto.reagents || []).filter(rg => rgVals[rg.id] !== 0 && !(_anyRg && rgVals[rg.id] == null)).map(rg => {
     const v = rgVals[rg.id];
     const dg = (rg.round && rg.round.digits != null) ? rg.round.digits : 1;
     const vs = (v == null ? "-" : fmtN(v, dg)) + (rg.unit ? " " + rg.unit : "");
@@ -3191,7 +3192,7 @@ function lotProcBadge(lot) {
   const k = lot.type === "Shell" ? "shell" : "core";
   const p = lot.protocol;
   if (p && p.steps && Array.isArray(p.steps[k]))
-    return `<span class="badge ok" title="저장 당시의 절차가 이 lot에 기록돼 있어, 프로토콜을 바꿔도 이 카드는 바뀌지 않습니다">절차 기록됨${p.name ? " · " + esc(p.name) : ""}</span>`;
+    return `<span class="badge ok" title="저장 당시의 절차·시약이 이 lot에 그대로 기록돼 있어, 레시피나 프로토콜을 바꿔도 이 카드는 바뀌지 않습니다">이 lot의 절차 기록됨${lot.recipeName ? " · 레시피 " + esc(lot.recipeName) : ""}</span>`;
   return `<span class="badge warn" title="이 lot은 절차(온도·시간)가 기록되지 않은 채 저장되었습니다(기본 프로토콜 사용, v1.4.2 이전). 카드의 절차는 현재 기본 절차를 보여 줄 뿐 실제 합성 조건이 아닐 수 있습니다. [플래너에서 수정]으로 실제 값을 맞춰 저장하면 기록됩니다.">절차 기록 없음 — 현재 기본 절차로 표시 중</span>`;
 }
 
