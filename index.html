@@ -654,7 +654,7 @@ body{word-break:keep-all}
 <div id="app">
   <div id="mainUI">
     <div class="topbar">
-      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.4.5 · deploy</span></div>
+      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.4.6 · deploy</span></div>
       <div class="spacer"></div>
       <button class="chipbtn" id="chipBackup" title="클릭하여 즉시 백업"><span class="dot"></span>백업</button>
       <button class="chipbtn" id="chipSync" title="동기화 설정으로 이동"><span class="dot"></span>로컬 저장</button>
@@ -3010,28 +3010,28 @@ function planProtoDiffers(ctx) {
   const p = planEnsureProto(ctx), cur = snapshotProcedures();
   return JSON.stringify(p.steps) !== JSON.stringify(cur.steps);
 }
+/* 계획 ↔ 레시피 차이 (성분·절차) — 레시피가 단 하나의 '저장 단위'다. 프로토콜은 처음 불러올 기본 틀일 뿐 */
+function planRecipeDirty(ctx) {
+  const r = recipeById(ctx.recipeId); if (!r) return null;
+  if (!r.proto || !r.proto.steps) return "절차가 들어 있지 않은 옛 레시피";
+  const k = ctx.mode === "shell" ? "shell" : "core";
+  const p = planEnsureProto(ctx);
+  const diffs = [];
+  if (compKey(ensureComponents(ctx)) !== compKey(r.components)) diffs.push("성분");
+  if (JSON.stringify(p.steps[k] || []) !== JSON.stringify(r.proto.steps[k] || [])
+      || (k === "shell" && JSON.stringify(p.steps.sol || []) !== JSON.stringify(r.proto.steps.sol || []))) diffs.push("절차");
+  return diffs.length ? diffs.join("·") : "";
+}
 function planProtoBarHtml(ctx) {
-  const p = planEnsureProto(ctx), diff = planProtoDiffers(ctx);
-  const src = p.fromLot ? `Lot ${p.fromLot} 기록` : p.fromRecipe ? `레시피 '${esc(p.fromRecipe)}'` : `프로토콜 '${esc(curProtoName())}'`;
-  return `<div class="row" style="gap:6px;flex-wrap:wrap;align-items:center;margin:-4px 0 10px;padding:6px 10px;border:1px dashed var(--line2);border-radius:10px;font-size:12px">
-    <span><b>절차(온도·시간)</b>는 이 계획에 따로 저장됩니다 · 불러온 곳: ${src}</span>
-    ${diff ? `<span class="badge warn" title="프로토콜 '${esc(curProtoName())}'의 절차와 다릅니다">프로토콜과 다름</span>
-      <button class="btn sm" id="ppPush" title="이 계획의 절차를 프로토콜 '${esc(curProtoName())}'에 덮어씁니다 — 저장된 lot·레시피에는 영향 없음">프로토콜에 반영</button>
-      <button class="btn sm" id="ppPull" title="프로토콜 '${esc(curProtoName())}'의 절차로 되돌립니다">프로토콜 값으로</button>` : ""}
-  </div>`;
+  const ed = ctx.editSerial;
+  if (ed !== null && ed !== undefined)
+    return `<div class="note" style="margin:-4px 0 10px;font-size:12px">Lot ${ed}에 저장된 성분·절차를 보고 있습니다. <b>Save Changes</b>는 이 lot만 바꾸고 레시피에는 영향이 없습니다. 이 구성을 레시피로도 남기려면 위의 [저장]/[새 이름으로].</div>`;
+  const r = recipeById(ctx.recipeId);
+  if (!r) return `<div class="note" style="margin:-4px 0 10px;font-size:12px">레시피 없이 작성 중 — 성분·절차(블록 구성 포함)를 다음에 다시 쓰려면 위의 <b>[새 이름으로]</b>로 저장하세요.</div>`;
+  const d = planRecipeDirty(ctx);
+  return d ? `<div class="note warn" style="margin:-4px 0 10px;font-size:12px">레시피 '${esc(r.name)}'과 다른 점: <b>${esc(d)}</b> — 위의 <b>[저장]</b>을 누르면 지금 보이는 그대로 레시피에 덮어씁니다. (lot 저장은 레시피와 별개)</div>` : "";
 }
-function bindPlanProtoBar(ctx) {
-  const push = $("#ppPush"), pull = $("#ppPull");
-  if (push) push.onclick = () => armBtn(push, "한 번 더 눌러 반영", () => {
-    const S = state.db.settings, id = curProtoKey(), c = planProtoCopy(ctx);
-    if (id !== "lab_naln" && S.protocols && S.protocols[id]) { S.protocols[id].steps = c.steps; }
-    else { if (!S.cardSteps) S.cardSteps = {}; for (const g of ["core", "shell", "sol"]) { S.cardSteps[g] = S.cardSteps[g] || {}; S.cardSteps[g].mods = c.steps[g]; } }
-    state.dirty.settings = true; saveDb(); if (typeof Sync !== "undefined" && Sync.push) Sync.push();
-    ctx.proto = snapshotProcedures();
-    toast(`프로토콜 '${curProtoName()}'에 반영했습니다`, "ok"); renderView();
-  });
-  if (pull) pull.onclick = () => armBtn(pull, "한 번 더 눌러 되돌리기", () => { ctx.proto = snapshotProcedures(); renderView(); });
-}
+function bindPlanProtoBar(ctx) {}
 /* ===== /P3 engine ===== */
 
 function coreCardHtml(lot, recipe) {
@@ -4315,7 +4315,7 @@ function recipeBarHtml(kind) {
       ${lab.length ? `<optgroup label="랩 공용">${lab.map(r => opt("lab:" + r.id, r.name,
           r.ownerName ? ` — ${esc(r.ownerName)}` : "")).join("")}</optgroup>` : ""}
     </select>
-    <button class="btn sm" id="rcSave" ${isLab ? "disabled" : ""} title="${isLab ? "랩 공용 레시피는 직접 못 고칩니다 — [내 것으로 복사] 후 편집하세요" : "현재 계획을 선택된 레시피에 덮어씁니다"}">저장</button>
+    <button class="btn sm${(!isLab && state.plannerCtx && (state.plannerCtx.editSerial === null || state.plannerCtx.editSerial === undefined) && planRecipeDirty(state.plannerCtx)) ? " primary" : ""}" id="rcSave" ${isLab ? "disabled" : ""} title="${isLab ? "랩 공용 레시피는 직접 못 고칩니다 — [내 것으로 복사] 후 편집하세요" : "현재 계획을 선택된 레시피에 덮어씁니다"}">저장</button>
     <button class="btn sm" id="rcSaveAs" title="현재 계획을 새 이름으로 내 레시피에 저장">새 이름으로</button>
     <button class="btn sm" id="rcDel" ${isLab ? "disabled" : ""} title="선택된 레시피 삭제">삭제</button>
     ${isLab ? `<button class="btn sm primary" id="rcFork" title="랩 공용 레시피를 내 레시피로 복사해 자유롭게 고칩니다">내 것으로 복사</button>` : ""}
