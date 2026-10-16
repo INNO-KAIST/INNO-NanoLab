@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>INNO NanoLab — 실행 · 초기설정 메뉴</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Cdefs%3E%3ClinearGradient id=%22inan%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%235a3526%22/%3E%3Cstop offset=%22.62%22 stop-color=%22%233a241b%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%2264%22 height=%2264%22 rx=%2215%22 fill=%22url%28%23inan%29%22/%3E%3Crect x=%22.75%22 y=%22.75%22 width=%2262.5%22 height=%2262.5%22 rx=%2214.3%22 fill=%22none%22 stroke=%22%23fff%22 stroke-opacity=%22.10%22 stroke-width=%221.5%22/%3E%3Cpath d=%22M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13%22 stroke=%22%23e8b598%22 stroke-width=%224.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 fill=%22none%22/%3E%3Cpath d=%22M19.6 40.5a12.5 12.5 0 0 0 24.8 0z%22 fill=%22%23e8b598%22 opacity=%22.38%22/%3E%3Ccircle cx=%2232%22 cy=%2239.5%22 r=%225.2%22 fill=%22%23F4F6F1%22/%3E%3Ccircle cx=%2232%22 cy=%2239.5%22 r=%228.4%22 fill=%22none%22 stroke=%22%23F4F6F1%22 stroke-width=%221.8%22 opacity=%22.7%22/%3E%3C/svg%3E">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#3a241b">
+<script>(function(){try{var t=localStorage.getItem("innolab_theme");if(t!=="light"&&t!=="dark"){t=(matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","light");}})();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+<style>
+/* INNO suite — 공통 틀 + NanoLab 강조색. 테마는 NanoLab 본 앱에서 고른 값(innolab_theme)을 따른다 */
+:root{color-scheme:light;--page:#f5f6f3;--surface:#ffffff;--surface-2:#eef1ed;--surface-3:#e6eae5;--ink:#243433;--ink-2:#4a5a56;--muted:#62706b;--faint:#8b978f;--border:#dde3dc;--border-strong:#c9d3c8;--grid:#e4e8e2;--ok:#2a7141;--ok-soft:#e3f0e5;--warn:#8a5f0a;--warn-soft:#f7ecd3;--risk:#ab3f35;--risk-soft:#f6e1dd;--info:#2f5f9e;--info-soft:#e2eaf5;--scrim:rgba(20,32,30,.42);--shadow:0 1px 2px rgba(24,40,37,.05),0 6px 20px rgba(24,40,37,.06);--shadow-lg:0 24px 70px rgba(24,40,37,.18);--accent:#9b4d2e;--accent-strong:#7e3d24;--accent-soft:#f5e8e1;--focus:#b8745a;--chrome:#3a241b;--chrome-mark:#e5b9a2;--on-accent:#ffffff;--toast-bg:#3a241b;--toast-ink:#f1f4ef;--chrome-ink:#f1f4ef;--chrome-ink-2:rgba(241,244,239,.72);--chrome-line:rgba(255,255,255,.09);--chrome-soft:rgba(255,255,255,.08);--chrome-soft-2:rgba(255,255,255,.14);--font:"DM Sans","Noto Sans KR",system-ui,-apple-system,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif;--mono:ui-monospace,"Cascadia Mono",Consolas,"D2Coding",monospace;}
+html[data-theme="dark"]{color-scheme:dark;--page:#1b2422;--surface:#232f2c;--surface-2:#2b3733;--surface-3:#33403b;--ink:#e3ebe2;--ink-2:#c3cfc5;--muted:#a3b0a6;--faint:#7f8c84;--border:#3a4841;--border-strong:#4d5d54;--grid:#33403b;--ok:#6cc68a;--ok-soft:#1f3a2a;--warn:#e3b04f;--warn-soft:#3a3018;--risk:#e8847a;--risk-soft:#3d2320;--info:#8fb3e6;--info-soft:#1f2d44;--scrim:rgba(5,12,10,.60);--shadow:0 1px 2px rgba(0,0,0,.30),0 8px 24px rgba(0,0,0,.28);--shadow-lg:0 24px 70px rgba(0,0,0,.50);--accent:#e0a07f;--accent-strong:#eab596;--accent-soft:#43291f;--focus:#e8b093;--chrome:#2c1b14;--chrome-mark:#e5b9a2;--on-accent:#2c1b14;--toast-bg:#e3ebe2;--toast-ink:#2c1b14;--chrome-ink:#f1f4ef;--chrome-ink-2:rgba(241,244,239,.72);--chrome-line:rgba(255,255,255,.09);--chrome-soft:rgba(255,255,255,.08);--chrome-soft-2:rgba(255,255,255,.14);}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font-family:var(--font);font-synthesis:none;-webkit-font-smoothing:antialiased;min-height:100vh}
+.band{background:var(--chrome);color:var(--chrome-ink);padding:34px 16px 64px}
+.band .in{max-width:560px;margin:0 auto;padding:0 16px}
+.band{padding-left:0;padding-right:0}
+.head{display:flex;align-items:baseline;gap:10px;margin:0 2px}
+.head h1{font-size:20px;margin:0;font-weight:700;letter-spacing:.01em;color:var(--chrome-ink)}
+.head h1 em{font-style:normal;color:var(--chrome-mark)}
+.head .v{font-size:11px;color:var(--chrome-ink-2);letter-spacing:.14em;text-transform:uppercase}
+.sub{margin:8px 2px 0;color:var(--chrome-ink-2);font-size:13.5px;line-height:1.55}
+.sub b{color:var(--chrome-ink);font-weight:600}
+.wrap{width:100%;max-width:560px;margin:-44px auto 40px;padding:0 16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);padding:8px}
+.hint{background:var(--info-soft);border:1px solid color-mix(in srgb,var(--info) 25%,transparent);color:var(--ink);border-radius:10px;padding:10px 13px;font-size:12.5px;line-height:1.55;margin:14px 0 0}
+a.item{display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin:6px;background:var(--surface);transition:border-color .15s,background .15s}
+a.item:hover{border-color:var(--border-strong);background:var(--surface-2)}
+a.item:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.ic{width:38px;height:38px;flex:0 0 38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;background:var(--surface-2);color:var(--ink-2)}
+.go .ic,.go .badge{background:var(--ok-soft);color:var(--ok)}
+.own .ic,.own .badge{background:var(--accent-soft);color:var(--accent)}
+.warn .ic,.warn .badge{background:var(--warn-soft);color:var(--warn)}
+.txt{flex:1;min-width:0}
+.lbl{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fn{font-size:11.5px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.role{font-size:12.5px;color:var(--ink-2);margin-top:2px}
+.arrow{color:var(--faint);font-size:20px;flex:0 0 auto}
+.foot{color:var(--muted);font-size:11.5px;line-height:1.6;margin:14px 4px 0}
+.state{padding:26px 16px;text-align:center;color:var(--ink-2);font-size:13px;line-height:1.6}
+.spin{width:20px;height:20px;border:2.5px solid var(--border);border-top-color:var(--accent);border-radius:50%;display:inline-block;animation:sp .7s linear infinite;vertical-align:-4px;margin-right:8px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:2s}}
+.err{color:var(--risk)}
+
+.brand-mark{display:block;flex:none;width:30px;height:30px;border-radius:8px}
+</style>
+</head>
+<body>
+<header class="band"><div class="in">
+  <div class="head" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="30" height="30"><defs><linearGradient id="nlst" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3530"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlst)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><h1>INNO <em>NanoLab</em></h1><span class="v">실행 · 초기설정</span></div>
+  <div class="sub">연구실 구성원은 <b>“설정용”</b>을 여세요.</div>
+</div></header>
+<main class="wrap">
+  <div class="card" id="list"><div class="state"><span class="spin"></span>이 폴더의 파일을 확인하는 중…</div></div>
+  <div class="hint" id="hint">이 메뉴에서 파일을 열어야 Google 로그인 팝업이 정상 동작합니다(localhost 실행). 실행 중에는 함께 뜬 검은 창(로컬 서버)을 닫지 마세요.</div>
+  <div class="foot" id="foot"></div>
+</main>
+<script>
+(function(){
+  "use strict";
+  // 이 런처 자신은 목록에서 제외한다(자기 파일명을 URL에서 동적으로 파악).
+  var SELF = "";
+  try { SELF = decodeURIComponent((location.pathname.split("/").pop()||"")).toLowerCase(); }
+  catch(e){ SELF = (location.pathname.split("/").pop()||"").toLowerCase(); }
+  var EXCLUDE = { "start.html":1, "index.html":1, "inno nanolab (setup).html":1 };
+  if(SELF) EXCLUDE[SELF] = 1;
+
+  var CANDIDATES = [
+    "INNO NanoLab (설정용).html",
+    "INNO NanoLab (유원정).html",
+    "INNO NanoLab (본편).html",
+    "INNO NanoLab (배포용).html",
+    "INNO NanoLab 설정용.html",
+    "INNO NanoLab 유원정.html",
+    "INNO NanoLab 본편.html",
+    "INNO NanoLab 배포용.html",
+    "INNO NanoLab.html"
+  ];
+  function roleFor(name){
+    if(/설정/.test(name))        return {icon:"S", badge:"권장", role:"구성원 초기설정 — 기준 DB를 내 계정에 시딩", tone:"go",   pr:0};
+    if(/유원정|본편/.test(name)) return {icon:"O", badge:"소유자", role:"본편 — 연구데이터 + 기준 DB 시딩", tone:"own",  pr:1};
+    if(/배포/.test(name))        return {icon:"!", badge:"웹 전용", role:"웹 배포용 — 로컬에선 초기설정이 되지 않습니다", tone:"warn", pr:3};
+    return {icon:"N", badge:"", role:"", tone:"", pr:2};
+  }
+  function labelFor(name){
+    var m = name.replace(/\.html$/i,"").replace(/^INNO NanoLab\s*/i,"").trim();
+    m = m.replace(/^\(\s*/,"").replace(/\s*\)$/,"").trim();   // 괄호형 "(배포용)" → "배포용"
+    return m || name.replace(/\.html$/i,"");
+  }
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r,ms); }); }
+
+  async function fetchText(url, tries){
+    for(var i=0;i<(tries||10);i++){
+      try{ var r = await fetch(url,{cache:"no-store"}); if(r.ok) return await r.text(); }catch(e){}
+      await sleep(400);
+    }
+    return null;
+  }
+  async function fromIndex(){
+    var html = await fetchText("/");
+    if(html==null) return null;
+    var doc = new DOMParser().parseFromString(html,"text/html");
+    var out = [], seen = {};
+    var links = doc.querySelectorAll("a");
+    for(var i=0;i<links.length;i++){
+      var href = links[i].getAttribute("href")||"";
+      var txt  = (links[i].textContent||"").trim();
+      // 링크 텍스트가 파일명이 아닐 수도 있으니 href에서도 파일명을 복원해 함께 검사
+      var fromHref = "";
+      try{ fromHref = decodeURIComponent((href.split("?")[0].split("#")[0].split("/").pop())||""); }
+      catch(e){ fromHref = (href.split("/").pop()||""); }
+      var name = (/INNO NanoLab/i.test(txt) && /\.html$/i.test(txt)) ? txt : fromHref;
+      var low = name.toLowerCase();
+      if(/\.html$/i.test(name) && /INNO NanoLab/i.test(name) && !EXCLUDE[low] && !seen[low]){
+        seen[low]=1; out.push({name:name, href:href});
+      }
+    }
+    return out;
+  }
+  async function fromProbe(){
+    var out = [];
+    for(var i=0;i<CANDIDATES.length;i++){
+      var name = CANDIDATES[i];
+      if(EXCLUDE[name.toLowerCase()]) continue;
+      var href = encodeURI(name);
+      try{ var r = await fetch(href,{method:"HEAD",cache:"no-store"}); if(r.ok) out.push({name:name, href:href}); }catch(e){}
+    }
+    return out;
+  }
+  function esc(s){ return s.replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+
+  function render(files){
+    files.forEach(function(f){ f.meta = roleFor(f.name); f.label = labelFor(f.name); });
+    files.sort(function(a,b){ return a.meta.pr - b.meta.pr || a.label.localeCompare(b.label,"ko"); });
+    var html = "";
+    files.forEach(function(f){
+      var m = f.meta;
+      html += '<a class="item '+m.tone+'" href="'+esc(f.href)+'">'
+            +   '<div class="ic">'+esc(m.icon)+'</div>'
+            +   '<div class="txt">'
+            +     '<div class="lbl">'+esc(f.label)+(m.badge?'<span class="badge">'+esc(m.badge)+'</span>':'')+'</div>'
+            +     (m.role?'<div class="role">'+esc(m.role)+'</div>':'')
+            +     '<div class="fn">'+esc(f.name)+'</div>'
+            +   '</div>'
+            +   '<div class="arrow">›</div>'
+            + '</a>';
+    });
+    document.getElementById("list").innerHTML = html;
+    document.getElementById("foot").innerHTML =
+      "총 "+files.length+"개 파일 감지 · 이 목록은 폴더 안의 INNO NanoLab 파일을 자동으로 읽어 표시합니다.";
+  }
+  function showState(msg, isErr){
+    document.getElementById("list").innerHTML =
+      '<div class="state'+(isErr?' err':'')+'">'+msg+'</div>';
+  }
+
+  (async function(){
+    if(location.protocol==="file:"){
+      showState("이 페이지는 <b>INNO NanoLab (setup).bat</b> 으로 실행해 주세요.<br>파일을 직접 더블클릭해 연 상태에서는 로그인·자동 감지가 동작하지 않습니다.", true);
+      document.getElementById("hint").style.display="none";
+      return;
+    }
+    var files = await fromIndex();
+    if(files===null || files.length===0){
+      var probed = await fromProbe();
+      if(probed.length) files = probed;
+    }
+    if(!files || files.length===0){
+      showState("이 폴더에서 <b>INNO NanoLab</b> HTML 파일을 찾지 못했습니다.<br>HTML 파일이 <b>INNO NanoLab (setup).bat과 같은 폴더</b>에 있는지 확인하세요.", true);
+      return;
+    }
+    render(files);
+  })();
+})();
+</script>
+</body>
+</html>
