@@ -319,12 +319,11 @@ input.slim,select.slim{padding:4px 7px;border-radius:6px}
   #printArea .printCol{display:flex;flex-direction:column;gap:4mm;width:96mm}
   .cardsWrap{gap:4mm}
   .cardsWrap .synCard,.cardsWrap .synCard2{width:96mm;break-inside:avoid;page-break-inside:avoid}
-  #printArea .printPage.land{page:land}
   #printArea .printLand{display:flex;flex-direction:column;gap:4mm;align-items:flex-start}
   #printArea .printFit{overflow:hidden;break-inside:avoid;page-break-inside:avoid;flex:0 0 auto}
-  #printArea .printPage.land{break-inside:avoid;page-break-inside:avoid}
+  #printArea .rotLand{position:relative;overflow:hidden;break-inside:avoid;page-break-inside:avoid}
+  #printArea .rotLand>.printLand{position:absolute;left:0;top:0;transform-origin:0 0}
   .cardsWrap .synCard2.wide,#printArea .synCard2.wide{width:277mm}
-  @page land{size:A4 landscape;margin:6mm}
   @page{size:A4 portrait;margin:6mm}
 }
 .print-only{display:none}
@@ -672,7 +671,7 @@ body{word-break:keep-all}
 <div id="app">
   <div id="mainUI">
     <div class="topbar">
-      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.6.3 · lab</span></div>
+      <div class="brand" style="align-items:center"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26"><defs><linearGradient id="nlmk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3526"/><stop offset=".62" stop-color="#3a241b"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#nlmk)"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.3" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="1.5"/><path d="M27.5 13h9M29 13v12.2a14.5 14.5 0 1 0 6 0V13" stroke="#e8b598" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19.6 40.5a12.5 12.5 0 0 0 24.8 0z" fill="#e8b598" opacity=".38"/><circle cx="32" cy="39.5" r="5.2" fill="#F4F6F1"/><circle cx="32" cy="39.5" r="8.4" fill="none" stroke="#F4F6F1" stroke-width="1.8" opacity=".7"/></svg><span class="logo"><em>INNO</em> NanoLab</span><span class="ver">Synthesis &amp; ICP v1.6.4 · lab</span></div>
       <div class="spacer"></div>
       <button class="chipbtn" id="chipBackup" title="클릭하여 즉시 백업"><span class="dot"></span>백업</button>
       <button class="chipbtn" id="chipSync" title="동기화 설정으로 이동"><span class="dot"></span>로컬 저장</button>
@@ -3727,18 +3726,27 @@ function paginateCardsA4(area) {
         `<div class="printCol">${c.map(x => fitBox(x, scale)).join("")}</div>`).join("")}</div></div>`).join("");
   }
   if (wides.length) {
-    const LAND_H = 196, GAP = 4, HALF = (LAND_H - GAP) / 2 - 4;   // A4 가로 210 − 여백 6×2 − 여유 2
-    /* 축소하면 가로가 남으므로, 축소율만큼 카드를 넓혀 다시 재고(넓을수록 낮아짐) 가로 277 mm를 꽉 채운다 */
+    /* 인쇄창 여백이 기본값(약 10 mm)·조금 넓어도 들어가도록 여유: 카드 폭 265 mm, 2장 묶음 ≤ 180 mm */
+    const CW = 265, GAP = 4, HALF = 88;
+    /* 축소하면 가로가 남으므로, 축소율만큼 카드를 넓혀 다시 재고(넓을수록 낮아짐) 가로 CW mm를 꽉 채운다 */
     const hAt = wMm => { wides.forEach(c => { c.style.width = wMm.toFixed(1) + "mm"; }); return Math.max(...wides.map(c => mm(c.getBoundingClientRect().height || 0))); };
-    let s = 1, hh = hAt(277);
+    let s = 1, hh = hAt(CW);
     if (hh > HALF + EPS) {   // 가로를 넓히면(=더 축소하면) 낮아지므로, 세로 절반에 들어가는 가장 큰 축소율을 찾는다
       let lo = 0.55, hi = 1;
-      for (let k = 0; k < 9; k++) { const m = (lo + hi) / 2; if (hAt(277 / m) * m <= HALF + EPS) lo = m; else hi = m; }
-      s = lo; hh = hAt(277 / s);
+      for (let k = 0; k < 9; k++) { const m = (lo + hi) / 2; if (hAt(CW / m) * m <= HALF + EPS) lo = m; else hi = m; }
+      s = lo; hh = hAt(CW / s);
     }
     const pages = [];
     for (let i = 0; i < wides.length; i += 2) pages.push(wides.slice(i, i + 2));
-    html += pages.map(p => `<div class="printPage land"><div class="printLand">${p.map(x => fitBox(x, s)).join("")}</div></div>`).join("");
+    /* ROTLAND-1104 */
+    /* 가로 쪽을 따로 두지 않는다(쪽마다 방향이 다르면 Edge 인쇄창이 가로 쪽을 카드 1장씩 나눴다).
+       문서는 전부 A4 세로, 가로 전폭 카드 2장 묶음을 -90° 돌려 세로 쪽에 넣는다 — 종이를 가로로 들면 위아래 2장. */
+    const W = CW;
+    html += pages.map(p => {
+      const hs = p.map(x => mm(x.getBoundingClientRect().height || 0) * s);
+      const H = hs.reduce((a, b) => a + b, 0) + GAP * (p.length - 1) + 0.5;
+      return `<div class="printPage"><div class="rotLand" style="width:${H.toFixed(1)}mm;height:${W}mm"><div class="printLand" style="width:${W}mm;height:${H.toFixed(1)}mm;transform:translateY(${W}mm) rotate(-90deg)">${p.map(x => fitBox(x, s)).join("")}</div></div></div>`;
+    }).join("");
   }
   area.style.zoom = "";
   area.innerHTML = html;
